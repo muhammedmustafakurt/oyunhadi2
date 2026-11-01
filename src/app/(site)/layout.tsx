@@ -5,6 +5,7 @@ import Header from '@/components/site/header';
 import Footer from '@/components/site/footer';
 import WhatsAppButton from '@/components/site/whatsapp-button';
 import AosInit from '@/components/site/aos-init';
+import { CoverDefs } from '@/components/oyun/GameCover';
 import { SITE_URL } from '@/lib/site';
 
 // Tanıtım ve satış sitesi. Düzen gdevelop.io'dan esinlendi; renkler açık ve canlı.
@@ -28,6 +29,7 @@ export default function SiteRoot({ children }: { children: React.ReactNode }) {
     <html lang="tr" className={`${body.variable} ${head.variable} scroll-smooth`}>
       <body className="bg-cream font-sans text-ink antialiased">
         <AosInit />
+        <CoverDefs />
         <div className="flex min-h-screen flex-col overflow-hidden supports-[overflow:clip]:overflow-clip">
           <Header />
           <main className="grow">{children}</main>

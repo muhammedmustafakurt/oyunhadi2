@@ -1,4 +1,4 @@
-import GameFace from '@/components/oyun/GameFace';
+import GameCover from '@/components/oyun/GameCover';
 import { SPINE } from '@/lib/spines';
 
 const ROWS = [
@@ -35,7 +35,7 @@ export default function PhoneMock({ color = '#ff4f2e', accent = '#ffc83d', name 
                   <p className="text-[14px] font-extrabold leading-none">{r.name}</p>
                   <p className="mt-1 text-[10px] font-semibold opacity-85">{r.meta}</p>
                 </div>
-                <GameFace id={r.id} className="absolute right-1 top-1/2 h-11 w-11 -translate-y-1/2" />
+                <GameCover id={r.id} title={false} className="absolute right-1 top-1/2 h-11 w-11 -translate-y-1/2 overflow-hidden rounded-lg" />
               </div>
             );
           })}

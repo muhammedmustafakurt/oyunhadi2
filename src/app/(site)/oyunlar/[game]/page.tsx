@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import GameFace from '@/components/oyun/GameFace';
+import GameCover from '@/components/oyun/GameCover';
 import { GameCard } from '@/components/site/game-shelf';
 import Cta from '@/components/site/cta';
 import { SPINE } from '@/lib/spines';
@@ -54,7 +54,7 @@ export default async function GamePage({ params }: PageProps<'/oyunlar/[game]'>)
               {!g.tableOnly && <Link href={`/oyna/${g.id}`} className="btn" style={{ boxShadow: `inset 0 0 0 2px ${fg}` }}>Tek telefonda dene</Link>}
             </div>
           </div>
-          <div className="mx-auto h-56 w-56 animate-float md:h-80 md:w-80" aria-hidden="true"><GameFace id={g.id} className="h-full w-full" /></div>
+          <div className="mx-auto h-56 w-56 animate-float md:h-80 md:w-80" aria-hidden="true"><GameCover id={g.id} className="h-full w-full overflow-hidden rounded-[28px] border-[3px] border-ink shadow-[0_8px_0_rgba(0,0,0,.2)]" /></div>
         </div>
       </section>
 

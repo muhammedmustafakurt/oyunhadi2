@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import GameFace from '@/components/oyun/GameFace';
+import GameCover from '@/components/oyun/GameCover';
 import { SPINE } from '@/lib/spines';
 import { GAMES } from '@/lib/games';
 
@@ -11,7 +11,7 @@ export function GameCard({ g, className = '' }: { g: G; className?: string }) {
   return (
     <Link href={`/oyunlar/${g.id}`} className={`card card-hover group block overflow-hidden ${className}`}>
       <div className="relative grid h-44 place-items-center overflow-hidden" style={{ background: bg, color: fg }}>
-        <GameFace id={g.id} className="h-32 w-32 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
+        <GameCover id={g.id} title={false} className="absolute inset-0 h-full w-full transition-transform duration-300 group-hover:scale-105" />
       </div>
       <div className="p-5">
         <p className="font-display text-xl font-extrabold">{g.name}</p>

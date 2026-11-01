@@ -1,11 +1,11 @@
-import GameFace from '@/components/oyun/GameFace';
+import GameCover from '@/components/oyun/GameCover';
 import { SPINE } from '@/lib/spines';
 
 // Masalar arası sohbetin tanıtım görseli: yan masadan gelen istek, kabul ve yazışma (avatarlar oyun karakterleri).
 function Av({ id }: { id: string }) {
   return (
     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full" style={{ background: SPINE[id][0] }}>
-      <GameFace id={id} className="h-9 w-9" />
+      <GameCover id={id} title={false} className="h-10 w-10 overflow-hidden rounded-full" />
     </span>
   );
 }
@@ -42,7 +42,7 @@ export default function TableChat() {
         <Msg av="cizim" who="Mavi Baykuş 27 · Masa 3" text="Harika, sandalyeleri çekiyoruz, geliyoruz." delay={1400} />
         <Msg av="vampir" who="Turuncu Tilki 64 · Masa 7" text="Karekodu okutup masamızın odasına katılın, biz başlatıyoruz." me delay={1800} />
         <div className="chat-in flex items-center gap-3 rounded-2xl border-[2.5px] border-ink bg-sun p-3" style={{ animationDelay: '2200ms' }}>
-          <GameFace id="kimim" className="h-10 w-10 shrink-0" />
+          <GameCover id="kimim" title={false} className="h-10 w-10 shrink-0 overflow-hidden rounded-xl" />
           <div>
             <p className="font-display leading-tight font-extrabold">Adınız, numaranız görünmez</p>
             <p className="text-[13px]">Takma adla yazışın · istediğiniz an bitirin ya da engelleyin</p>

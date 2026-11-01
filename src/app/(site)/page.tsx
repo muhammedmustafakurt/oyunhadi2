@@ -2,7 +2,7 @@ import Link from 'next/link';
 import PhoneMock from '@/components/site/phone-mock';
 import CardFan from '@/components/site/card-fan';
 import TableChat from '@/components/site/table-chat';
-import GameFace from '@/components/oyun/GameFace';
+import GameCover from '@/components/oyun/GameCover';
 import { SPINE } from '@/lib/spines';
 import { GAMES } from '@/lib/games';
 import Accordion from '@/components/site/accordion';
@@ -85,7 +85,7 @@ export default function Home() {
               <li key={g.id} className="w-36 shrink-0 sm:w-auto">
                 <Link href={`/oyunlar/${g.id}`} className="group block overflow-hidden rounded-[14px] border-[2.5px] border-ink bg-[#fffdf8] shadow-[0_4px_0_var(--color-ink)] transition hover:-translate-y-1">
                   <span className="grid h-24 place-items-center border-b-[2.5px] border-ink" style={{ background: SPINE[g.id][0] }}>
-                    <GameFace id={g.id} className="h-[72px] w-[72px] transition-transform group-hover:-rotate-6" />
+                    <GameCover id={g.id} title={false} className="h-[72px] w-[72px] overflow-hidden rounded-2xl transition-transform group-hover:-rotate-6" />
                   </span>
                   <span className="block px-2.5 py-2 text-sm leading-tight font-extrabold">{g.name}</span>
                   <span className="block px-2.5 pb-2.5 text-xs text-muted">{g.players.replace('-', '–')} kişi</span>

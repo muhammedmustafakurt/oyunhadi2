@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import GameFace from '@/components/oyun/GameFace';
+import GameCover from '@/components/oyun/GameCover';
 import { SPINE } from '@/lib/spines';
 import { GAMES } from '@/lib/games';
 import { SITE_URL } from '@/lib/site';
@@ -99,8 +99,8 @@ export default function CardFan() {
             className="fan-card absolute top-8 left-1/2 w-[160px] overflow-hidden rounded-[18px] border-[3px] border-ink bg-[#fffdf8] text-ink shadow-[0_10px_0_rgba(0,0,0,.25)] sm:w-[190px]"
             style={{ '--i': i - 2, '--d': `${Math.abs(i - 2) * 60}ms`, zIndex: mid ? 15 : 13 - Math.abs(i - 2) } as React.CSSProperties}
           >
-            <div className="grid h-[118px] place-items-center border-b-[3px] border-ink sm:h-[140px]" style={{ background: bg }}>
-              <GameFace id={id} className={`h-24 w-24 sm:h-28 sm:w-28 ${mid ? 'animate-wiggle' : ''}`} />
+            <div className="relative h-[118px] overflow-hidden border-b-[3px] border-ink sm:h-[140px]" style={{ background: bg }}>
+              <GameCover id={id} title={false} className="absolute inset-0 h-full w-full" />
             </div>
             <div className="px-3.5 pt-3 pb-14">
               <p className="font-display text-xl leading-none font-extrabold sm:text-2xl">{g.name}</p>

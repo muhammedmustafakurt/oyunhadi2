@@ -11,6 +11,6 @@ export default function GameCover({ id, title = true, className }: { id: string;
   const entry = (COVERS as Record<string, { t: string[]; svg: string }>)[id];
   if (!entry) return <GameFace id={id} className={className} />;
   return (
-    <svg className={className} viewBox="0 0 120 114" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: buildCover(entry, title) }} />
+    <svg className={`cv${className ? ` ${className}` : ''}`} viewBox="0 0 120 114" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: buildCover(entry, title) }} />
   );
 }
