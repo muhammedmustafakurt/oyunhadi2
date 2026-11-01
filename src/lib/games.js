@@ -16,5 +16,7 @@ export const GAMES = [
   { id: 'scrabble', name: 'Scrabble', players: '2-4', minutes: '60', note: 'Harflerle kelime kur', play: true, tableOnly: true },
   { id: 'ticket', name: 'Ticket to Ride', players: '2-5', minutes: '45-60', note: 'Tren hatlarını birleştir', play: true, tableOnly: true },
   { id: 'carcassonne', name: 'Carcassonne', players: '2-5', minutes: '35', note: 'Karo koy, şehir kur', play: true, tableOnly: true },
+  { id: 'kadro', name: 'Kadro', players: '2-8', minutes: '5-8', note: 'Süper Lig kadronu kur, puanını kap', play: true, tableOnly: true },
+  { id: 'futbolcu', name: 'Futbolcuyu Bul', players: '2-10', minutes: '10-15', note: 'Evet-hayır sorularıyla futbolcuyu bul', play: true, tableOnly: true },
   { id: 'azul', name: 'Azul', players: '2-4', minutes: '30-45', note: 'Fayanslarla duvar ör', play: true, tableOnly: true },
 ];

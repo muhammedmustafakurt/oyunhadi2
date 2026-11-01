@@ -117,6 +117,24 @@ const A = {
       <path d="M22 110h76" stroke="currentColor" strokeWidth="5" strokeLinecap="round" opacity=".45" />
     </>
   ),
+  kadro: (
+    <>
+      <rect x="10" y="20" width="100" height="84" rx="6" fill="none" stroke="currentColor" strokeWidth="5" opacity=".5" />
+      <path d="M10 62h100" stroke="currentColor" strokeWidth="4" opacity=".5" />
+      <circle cx="60" cy="62" r="14" fill="none" stroke="currentColor" strokeWidth="4" opacity=".5" />
+      <circle cx="36" cy="40" r="6" opacity=".6" /><circle cx="84" cy="40" r="6" opacity=".6" />
+      <circle cx="60" cy="34" r="6" opacity=".6" /><circle cx="36" cy="86" r="6" opacity=".6" />
+      <circle cx="84" cy="86" r="6" opacity=".6" /><circle cx="60" cy="90" r="6" opacity=".6" />
+    </>
+  ),
+  futbolcu: (
+    <>
+      <circle cx="44" cy="62" r="34" opacity=".3" />
+      <polygon points="44,44 58,54 53,70 35,70 30,54" opacity=".6" />
+      <text x="90" y="58" textAnchor="middle" fontSize="56" fontWeight="800" fill="currentColor" opacity=".55">?</text>
+      <path d="M12 104h96" stroke="currentColor" strokeWidth="5" strokeLinecap="round" opacity=".45" />
+    </>
+  ),
   bil: (
     <>
       <circle cx="58" cy="62" r="44" opacity=".26" />

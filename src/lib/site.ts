@@ -119,6 +119,16 @@ export const GAME_INFO: Record<string, { intro: string; how: string[]; good: str
     how: ['2–10 oyuncu katılır, 10 soru gelir.', 'Her soruda 15 saniye; doğru cevap süre bitince açılır.', 'Hız ve seri bonuslarıyla puan toplanır.', 'Sonunda podyum: birinci kim?'],
     good: 'Sipariş beklerken 5 dakikalık yarış',
   },
+  kadro: {
+    intro: 'Kadro’da herkes bir formasyon seçip Süper Lig’den 11 kişilik hayalindeki kadroyu kurar. Oyuncuların puanları seçerken gizlidir; kadronun puan ortalaması en yüksek olan kazanır.',
+    how: ['2–8 oyuncu katılır; herkes 4-3-3, 4-4-2, 4-2-3-1, 3-5-2 ya da 5-3-2 dizilişinden birini seçer.', 'Her mevki için yalnızca o mevkideki oyuncular listelenir; puanları görmeden 90 saniyede 11 kişiyi seç.', 'Kadroyu sahada dokunarak yer değiştirip kilitle; boş kalan mevki 5.00 puan sayılır.', 'Herkes kilitleyince kadrolar açılır; puan ortalaması en yüksek kazanır.'],
+    good: 'Futbolu seven, hızlı ve kahkahalı masalar',
+  },
+  futbolcu: {
+    intro: 'Futbolcuyu Bul’da bir oyuncu aklından bir futbolcu tutar; diğerleri evet-hayır soruları sorarak kim olduğunu bulmaya çalışır. Futbolcunun adı hiçbir yere yazılmaz, tutan oyuncu dürüstçe cevap verir.',
+    how: ['2–10 oyuncu katılır; sırayla biri futbolcuyu aklından tutar (aktif ya da emekli, dünyanın her yerinden).', 'Sırası gelen oyuncu masada sesli bir soru sorar; tutan yalnızca EVET ya da HAYIR der.', 'Bildiğini düşünen oyuncu tahmin eder; yanlış tahmin elemez, sıra diğerine geçer.', 'Doğru tahmin eden 3 puan alır; sonraki turda tutan kişi değişir.'],
+    good: 'Futbol sohbetinin bitmediği, yüz yüze oynanan masalar',
+  },
   azul: {
     intro: 'Azul\'da fabrikalardan ve merkezden renkli fayanslar alıp desen çizgilerine yerleştirirsin. Dolan çizgi duvara geçer ve bitişik fayanslarla puan kazandırır.',
     how: ['2–4 oyuncu, sırası gelen fabrikadan ya da merkezden tek renk alır.', 'Fayansları 1–5 desen çizgisine ya da tabana koyarsın; taban puandan düşer.', 'Duvarda yatay satır, dikey sütun ve renk tamamlanınca bitiş bonusu gelir.', 'Bir oyuncu yatay bir satırı tamamlayınca oyun biter.'],

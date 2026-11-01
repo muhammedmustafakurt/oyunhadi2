@@ -19,9 +19,11 @@ import * as SC from './scrabble';
 import * as CC from './carcassonne';
 import * as CA from './catan';
 import * as TK from './ticket';
+import * as KD from './kadro';
+import * as FB from './futbolcu';
 
 // Oyun başına koltuk sayısı; satrançta 1. koltuk Beyaz, 2. koltuk Siyah.
-const CONFIG = { monopoly: { max: 4, min: 2 }, satranc: { max: 2, min: 2 }, spyfall: { max: 8, min: 3 }, ajanlar: { max: 8, min: 4 }, vampir: { max: 10, min: 5 }, tabu: { max: 10, min: 4 }, kimim: { max: 10, min: 3 }, cizim: { max: 10, min: 3 }, bil: { max: 10, min: 2 }, azul: { max: 4, min: 2 }, cluedo: { max: 6, min: 3 }, scrabble: { max: 4, min: 2 }, risk: { max: 6, min: 2 }, carcassonne: { max: 5, min: 2 }, catan: { max: 4, min: 3 }, ticket: { max: 5, min: 2 } };
+const CONFIG = { monopoly: { max: 4, min: 2 }, satranc: { max: 2, min: 2 }, spyfall: { max: 8, min: 3 }, ajanlar: { max: 8, min: 4 }, vampir: { max: 10, min: 5 }, tabu: { max: 10, min: 4 }, kimim: { max: 10, min: 3 }, cizim: { max: 10, min: 3 }, bil: { max: 10, min: 2 }, azul: { max: 4, min: 2 }, cluedo: { max: 6, min: 3 }, scrabble: { max: 4, min: 2 }, risk: { max: 6, min: 2 }, carcassonne: { max: 5, min: 2 }, catan: { max: 4, min: 3 }, ticket: { max: 5, min: 2 }, kadro: { max: 8, min: 2 }, futbolcu: { max: 10, min: 2 } };
 export const ROOM_GAMES = new Set(Object.keys(CONFIG));
 export const MASA_RE = /^masa-\d{1,3}$/;
 export const PID_RE = /^[a-zA-Z0-9]{16,64}$/;
@@ -98,7 +100,7 @@ export function view(room, pid, game) {
     // Vampirde kalan süre (ms); istemci geri sayım gösterebilsin diye.
     leftMs: game === 'vampir' && s.game?.endsAt ? Math.max(0, s.game.endsAt - Date.now()) : null,
     // Casus oyununda mekân ve casus sunucuda kalır; her oyuncuya yalnızca kendi kartı gider.
-    game: game === 'spyfall' ? S.viewFor(s.game, me) : game === 'ajanlar' ? A.viewFor(s.game, me) : game === 'vampir' ? V.viewFor(s.game, me) : game === 'tabu' ? T.viewFor(s.game, me) : game === 'kimim' ? K.viewFor(s.game, me) : game === 'cizim' ? P.viewFor(s.game, me) : game === 'bil' ? B.viewFor(s.game, me) : game === 'azul' ? Z.viewFor(s.game, me) : game === 'cluedo' ? CL.viewFor(s.game, me) : game === 'scrabble' ? SC.viewFor(s.game, me) : game === 'risk' ? R.viewFor(s.game, me) : game === 'carcassonne' ? CC.viewFor(s.game, me) : game === 'catan' ? CA.viewFor(s.game, me) : game === 'ticket' ? TK.viewFor(s.game, me) : s.game,
+    game: game === 'spyfall' ? S.viewFor(s.game, me) : game === 'ajanlar' ? A.viewFor(s.game, me) : game === 'vampir' ? V.viewFor(s.game, me) : game === 'tabu' ? T.viewFor(s.game, me) : game === 'kimim' ? K.viewFor(s.game, me) : game === 'cizim' ? P.viewFor(s.game, me) : game === 'bil' ? B.viewFor(s.game, me) : game === 'azul' ? Z.viewFor(s.game, me) : game === 'cluedo' ? CL.viewFor(s.game, me) : game === 'scrabble' ? SC.viewFor(s.game, me) : game === 'risk' ? R.viewFor(s.game, me) : game === 'carcassonne' ? CC.viewFor(s.game, me) : game === 'catan' ? CA.viewFor(s.game, me) : game === 'ticket' ? TK.viewFor(s.game, me) : game === 'kadro' ? KD.viewFor(s.game, me) : game === 'futbolcu' ? FB.viewFor(s.game, me) : s.game,
   };
 }
 
@@ -116,6 +118,8 @@ function leaveSeat(s, idx, game) {
   else if (game === 'cizim') s.game = P.onLeave(g, s.seats, idx);
   else if (game === 'bil') s.game = B.onLeave(g, s.seats, idx);
   else if (game === 'ticket') s.game = TK.onLeave(g, s.seats, idx);
+  else if (game === 'kadro') s.game = KD.onLeave(g, s.seats, idx);
+  else if (game === 'futbolcu') s.game = FB.onLeave(g, s.seats, idx);
   else if (game === 'risk') s.game = R.onLeave(g, s.seats, idx);
   else if (game === 'azul') s.game = Z.onLeave(g, s.seats, idx);
   else if (game === 'cluedo') s.game = CL.onLeave(g, s.seats, idx);
@@ -295,6 +299,10 @@ function apply(s, pid, a, game) {
         s.game = R.newGame(s.seats.length);
       } else if (game === 'ticket') {
         s.game = TK.newGame(s.seats.length);
+      } else if (game === 'kadro') {
+        s.game = KD.newGame(s.seats.length);
+      } else if (game === 'futbolcu') {
+        s.game = FB.newGame(s.seats);
       } else if (game === 'bil') {
         s.game = B.newGame(s.seats.length);
       } else if (game === 'cluedo') {
@@ -365,6 +373,31 @@ function apply(s, pid, a, game) {
       if (game !== 'ticket') return { error: 'Bilinmeyen işlem.' };
       if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
       const r = TK.act(g, idx, a);
+      if (r.error) return { error: r.error };
+      s.game = r;
+      return { state: s };
+    }
+    case 'kdformasyon':
+    case 'kdpick':
+    case 'kdswap':
+    case 'kdlock':
+    case 'kdtimeout': {
+      if (game !== 'kadro') return { error: 'Bilinmeyen işlem.' };
+      if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+      const r = KD.act(g, s.seats, idx, a.type, a);
+      if (r.error) return { error: r.error };
+      s.game = r;
+      return { state: s };
+    }
+    case 'fbready':
+    case 'fbask':
+    case 'fbanswer':
+    case 'fbguess':
+    case 'fbverdict':
+    case 'fbnext': {
+      if (game !== 'futbolcu') return { error: 'Bilinmeyen işlem.' };
+      if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+      const r = FB.act(g, s.seats, idx, a.type, { yes: a.yes });
       if (r.error) return { error: r.error };
       s.game = r;
       return { state: s };

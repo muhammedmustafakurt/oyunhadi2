@@ -134,6 +134,31 @@ const FACES: Record<string, React.ReactNode> = {
       <path d="M48 70q12 10 24 0" fill="none" {...s} />
     </>
   ),
+  // Futbolcuyu Bul: formalı, ter bantlı oyuncu ve soru işareti
+  futbolcu: (
+    <>
+      <path d="M14 112q4-24 26-28h40q22 4 26 28Z" fill="#fff" {...s} />
+      <path d="M46 84l14 14 14-14" fill="#1f9d3a" {...s} />
+      <circle cx="60" cy="52" r="32" fill="#f4c7a1" {...s} />
+      <path d="M28 46q2-30 32-30t32 30q-16-10-32-10T28 46Z" fill={K} />
+      <rect x="28" y="40" width="64" height="9" rx="4" fill="#1f9d3a" {...s} strokeWidth={4} />
+      <circle cx="49" cy="62" r="4.5" fill={K} />
+      <circle cx="71" cy="62" r="4.5" fill={K} />
+      <path d="M50 74q10 8 20 0" fill="none" {...s} strokeWidth={4} />
+      <text x="104" y="30" textAnchor="middle" fontSize="30" fontWeight="800" fill="#fff" stroke={K} strokeWidth="2.5" paintOrder="stroke">?</text>
+    </>
+  ),
+  // Kadro: gülen futbol topu
+  kadro: (
+    <>
+      <circle cx="60" cy="60" r="44" fill="#fff" {...s} />
+      <polygon points="60,26 78,38 71,58 49,58 42,38" fill={K} stroke={K} strokeWidth={3} strokeLinejoin="round" />
+      <path d="M60 26V16M78 38l12-6M42 38L30 32M71 58l10 12M49 58L39 70" fill="none" {...s} strokeWidth={4} />
+      <circle cx="51" cy="74" r="4.5" fill={K} />
+      <circle cx="69" cy="74" r="4.5" fill={K} />
+      <path d="M52 88q8 7 16 0" fill="none" {...s} strokeWidth={4} />
+    </>
+  ),
   // Bil Bakalım: gülen ampul
   bil: (
     <>
