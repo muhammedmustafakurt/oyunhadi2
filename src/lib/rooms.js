@@ -80,7 +80,10 @@ export async function readRoom(biz, tbl, game) {
     r = await get(SELECT, biz, tbl, game);
   }
   const stale = Date.now() - Number(r.updated_at) > STALE_MS;
-  return { id: r.id, version: r.version, state: stale ? fresh() : JSON.parse(r.state) };
+  let state = stale ? fresh() : JSON.parse(r.state);
+  // Eski tahtadan kalan (kare sayısı uyuşmayan) Emlak oyunu varsa masa sıfırlanır.
+  if (game === 'monopoly' && state.game && !E.validGame(state.game)) state = fresh();
+  return { id: r.id, version: r.version, state };
 }
 
 // İstemciye giden görünüm: başkalarının kimlik kodları (pid) gönderilmez.

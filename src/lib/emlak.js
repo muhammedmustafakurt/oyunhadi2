@@ -127,6 +127,15 @@ export function newGame(count, toks = []) {
   };
 }
 
+// Kayıtlı bir oyun durumu bu tahtayla uyumlu mu? (Eski 40 kareli tahtadan kalan oyunlar ekranı çökertmesin.)
+export function validGame(g) {
+  const n = TILES.length;
+  const ok = (i) => Number.isInteger(Number(i)) && Number(i) >= 0 && Number(i) < n;
+  return !!g && Array.isArray(g.players) && g.players.every((p) => ok(p.pos))
+    && Object.keys(g.owner || {}).every(ok) && Object.keys(g.houses || {}).every(ok) && (g.mort || []).every(ok)
+    && (!g.auction || ok(g.auction.tile));
+}
+
 // ---- Yardımcılar ----
 
 const reject = (g, text) => ({ ...g, msg: text });
