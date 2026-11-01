@@ -68,13 +68,15 @@ export function giveClue(g, seats, idx, word, num) {
   const w = String(word ?? '').trim();
   if (!/^[\p{L}'-]{1,24}$/u.test(w)) return { error: 'İpucu tek bir kelime olmalı (en fazla 24 harf, boşluksuz).' };
   const lw = w.toLocaleLowerCase('tr');
-  if (g.words.some((x, i) => !g.revealed[i] && x.toLocaleLowerCase('tr') === lw)) return { error: 'İpucu, tahtadaki kapalı bir kelime olamaz.' };
+  // Kurala göre ipucu, tahtadaki HERHANGİ bir kelime (açık ya da kapalı) olamaz.
+  if (g.words.some((x) => x.toLocaleLowerCase('tr') === lw)) return { error: 'İpucu, tahtadaki bir kelime olamaz.' };
   const n = Number(num);
   if (!Number.isInteger(n) || n < 0 || n > 9) return { error: 'Sayı 0 ile 9 arasında olmalı (0: sınırsız).' };
   return {
     ...g,
     clue: { word: w, num: n, by: idx },
-    guessesLeft: n === 0 ? 25 : n + 1,
+    // Kurala göre tahmin hakkı = sayı + 1. Sınırsız (0) için guessesLeft null: tahmin sınırı yok.
+    guessesLeft: n === 0 ? null : n + 1,
     guessed: 0,
     note: `${seats[idx].name} ipucu verdi: "${w}" ${n === 0 ? '∞' : n}`,
   };
@@ -99,8 +101,10 @@ export function pick(g, seats, idx, card) {
     if (n.remaining[c] === 0) return finish(n, c, `${TEAM[c]} takım tüm ajanlarını buldu ve kazandı!`);
   }
   if (c === team) {
-    n.guessesLeft = g.guessesLeft - 1;
-    if (n.guessesLeft <= 0) return passTurn({ ...n, note: `"${word}": doğru! Tahmin hakkı bitti, sıra ${TEAM[other(team)]} takımda.` });
+    if (g.guessesLeft !== null) {
+      n.guessesLeft = g.guessesLeft - 1;
+      if (n.guessesLeft <= 0) return passTurn({ ...n, note: `"${word}": doğru! Tahmin hakkı bitti, sıra ${TEAM[other(team)]} takımda.` });
+    }
     return { ...n, note: `"${word}": ${TEAM[team]} ajan, doğru!` };
   }
   return passTurn({ ...n, note: c === 'n' ? `"${word}": masum kelime. Sıra ${TEAM[other(team)]} takımda.` : `"${word}": ${TEAM[c]} takımın ajanı! Sıra ${TEAM[other(team)]} takımda.` });

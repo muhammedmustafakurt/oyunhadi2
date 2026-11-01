@@ -1,6 +1,7 @@
-// Ben Kimim?: herkesin alnında (ekranda) gizli bir kart vardır; kendi kartını göremez, başkalarınınkini görür.
-// Sırası gelen oyuncu masaya evet/hayır soruları sorar, bildiğini düşününce yüksek sesle tahmin eder;
-// diğerleri "Doğru" ya da "Yanlış" der. Kartını ilk bulan ilk sırayı alır. Kartlar yalnızca sahibi dışındakilere gider.
+// Ben Kimim?: her oyuncunun alnında (sahibine kapalı) bir kart vardır; kendi kartını görmez, diğerlerininkini görür.
+// Sırası gelen oyuncu diğerlerine evet/hayır soruları sorar (sözlü), bildiğini düşününce yüksek sesle tahmin eder;
+// diğerleri tahmini "Doğru" ya da "Yanlış" diye onaylar. Doğru tahmin kartı bulduğu anlamına gelir; sıra bir sonrakine geçer.
+// Kart havuzu türler arasında dengeli dağıtılır, böylece masadaki kartların çoğu aynı türden olmaz.
 export const TURN_MS = 45 * 1000;
 export const TURNS_EACH = 6; // oyuncu başına en fazla bu kadar sıra; sonra oyun biter
 
@@ -19,7 +20,9 @@ export const CARDS = [
   { c: 'Bilim ve sanat', n: 'Elon Musk' }, { c: 'Bilim ve sanat', n: 'Bill Gates' }, { c: 'Bilim ve sanat', n: 'Charlie Chaplin' },
   { c: 'Müzik', n: 'Michael Jackson' }, { c: 'Müzik', n: 'Elvis Presley' }, { c: 'Müzik', n: 'Shakira' },
   { c: 'Müzik', n: 'Beyoncé' }, { c: 'Müzik', n: 'Freddie Mercury' }, { c: 'Müzik', n: 'Bob Marley' },
+  { c: 'Müzik', n: 'Madonna' }, { c: 'Müzik', n: 'Adele' }, { c: 'Müzik', n: 'Ed Sheeran' }, { c: 'Müzik', n: 'Johnny Cash' },
   { c: 'Sporcu', n: 'Lionel Messi' }, { c: 'Sporcu', n: 'Cristiano Ronaldo' }, { c: 'Sporcu', n: 'Hakan Şükür' },
+  { c: 'Sporcu', n: 'Zlatan Ibrahimović' }, { c: 'Sporcu', n: 'Kobe Bryant' },
   { c: 'Sporcu', n: 'Arda Turan' }, { c: 'Sporcu', n: 'Rüştü Reçber' }, { c: 'Sporcu', n: 'Muhammed Ali' },
   { c: 'Sporcu', n: 'Usain Bolt' }, { c: 'Sporcu', n: 'Michael Jordan' }, { c: 'Sporcu', n: 'Naim Süleymanoğlu' },
   { c: 'Çizgi film', n: 'Mickey Mouse' }, { c: 'Çizgi film', n: 'Tom' }, { c: 'Çizgi film', n: 'Jerry' },
@@ -38,10 +41,12 @@ export const CARDS = [
   { c: 'Hayvan', n: 'Fil' }, { c: 'Hayvan', n: 'Papağan' }, { c: 'Hayvan', n: 'Zebra' },
   { c: 'Hayvan', n: 'Kanguru' }, { c: 'Hayvan', n: 'Yunus' }, { c: 'Hayvan', n: 'Baykuş' },
   { c: 'Hayvan', n: 'Kutup ayısı' }, { c: 'Hayvan', n: 'Maymun' }, { c: 'Hayvan', n: 'Timsah' },
+  { c: 'Hayvan', n: 'Aslan' }, { c: 'Hayvan', n: 'Kedi' }, { c: 'Hayvan', n: 'Kartal' },
   { c: 'Meslek', n: 'Berber' }, { c: 'Meslek', n: 'Pilot' }, { c: 'Meslek', n: 'Garson' },
   { c: 'Meslek', n: 'Terzi' }, { c: 'Meslek', n: 'Fırıncı' }, { c: 'Meslek', n: 'Gemi kaptanı' },
   { c: 'Meslek', n: 'Gazeteci' }, { c: 'Meslek', n: 'Mimar' }, { c: 'Meslek', n: 'Çoban' },
   { c: 'Meslek', n: 'Ressam' }, { c: 'Meslek', n: 'Postacı' }, { c: 'Meslek', n: 'Diş hekimi' },
+  { c: 'Meslek', n: 'Öğretmen' }, { c: 'Meslek', n: 'Polis' }, { c: 'Meslek', n: 'Hemşire' },
 ];
 
 const shuffle = (a) => {
@@ -62,9 +67,30 @@ function pickNext(g, seats, from) {
   return -1;
 }
 
+// n kartı tür bazında tur tur dağıtır: önce her türden bir kart, sonra yeniden; böylece tür tekrarı en aza iner.
+function dealCards(n) {
+  const byCat = {};
+  for (const i of shuffle([...Array(CARDS.length).keys()])) {
+    const c = CARDS[i].c;
+    if (!byCat[c]) byCat[c] = [];
+    byCat[c].push(i);
+  }
+  const cats = shuffle(Object.keys(byCat));
+  const out = [];
+  while (out.length < n) {
+    let took = false;
+    for (const c of cats) {
+      if (out.length >= n) break;
+      if (byCat[c].length) { out.push(byCat[c].pop()); took = true; }
+    }
+    if (!took) break;
+  }
+  return shuffle(out);
+}
+
 export function newGame(n, now = Date.now()) {
   return {
-    cards: shuffle([...Array(CARDS.length).keys()]).slice(0, n),
+    cards: dealCards(n),
     solved: [],
     turn: Math.floor(Math.random() * n),
     endsAt: now + TURN_MS,
@@ -139,8 +165,10 @@ export function viewFor(g, idx, now = Date.now()) {
   if (!g) return null;
   return {
     cards: g.cards.map((c, i) => {
-      const show = !!g.over || idx < 0 || i !== idx || g.solved.includes(i);
-      return { c: CARDS[c].c, n: show ? CARDS[c].n : null };
+      // İzleyiciler (idx < 0) hiçbir açık olmayan kartı görmez; oyuncu yalnızca kendi kartı dışındakileri görür.
+      const reveal = !!g.over || g.solved.includes(i);
+      const show = reveal || (idx >= 0 && i !== idx);
+      return { c: reveal || idx >= 0 ? CARDS[c].c : null, n: show ? CARDS[c].n : null };
     }),
     solved: g.solved,
     turn: g.turn,

@@ -59,6 +59,64 @@ const A = {
       <path d="M6 108 q14 -18 28 0 t28 0 t28 0 t28 0" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" opacity=".5" />
     </>
   ),
+  cluedo: (
+    <>
+      <rect x="12" y="12" width="44" height="34" opacity=".4" />
+      <rect x="64" y="12" width="44" height="34" opacity=".25" />
+      <rect x="12" y="54" width="44" height="34" opacity=".25" />
+      <circle cx="74" cy="74" r="20" fill="none" stroke="currentColor" strokeWidth="8" opacity=".55" />
+      <line x1="88" y1="88" x2="108" y2="110" stroke="currentColor" strokeWidth="8" strokeLinecap="round" opacity=".6" />
+    </>
+  ),
+  azul: (
+    <>
+      <rect x="12" y="12" width="40" height="40" rx="7" opacity=".4" />
+      <rect x="58" y="12" width="40" height="40" rx="7" opacity=".25" />
+      <rect x="12" y="58" width="40" height="40" rx="7" opacity=".25" />
+      <rect x="58" y="58" width="40" height="40" rx="7" opacity=".5" />
+    </>
+  ),
+  catan: (
+    <>
+      <polygon points="60,8 104,33 104,87 60,112 16,87 16,33" opacity=".4" />
+      <polygon points="60,30 84,44 84,72 60,86 36,72 36,44" fill="none" stroke="currentColor" strokeWidth="6" strokeLinejoin="round" opacity=".6" />
+    </>
+  ),
+  risk: (
+    <>
+      <circle cx="60" cy="60" r="46" fill="none" stroke="currentColor" strokeWidth="8" opacity=".55" />
+      <ellipse cx="60" cy="60" rx="20" ry="46" fill="none" stroke="currentColor" strokeWidth="4" opacity=".35" />
+      <path d="M26 46q16-18 34-2q8 14-6 26q-18 4-28-24Z" opacity=".4" />
+      <path d="M70 70q18-6 26 12q-4 18-22 16q-14-8-4-28Z" opacity=".4" />
+    </>
+  ),
+  scrabble: (
+    <>
+      <rect x="10" y="10" width="56" height="56" rx="9" opacity=".25" />
+      <rect x="54" y="54" width="56" height="56" rx="9" opacity=".45" />
+      <text x="82" y="98" textAnchor="middle" fontSize="44" fontWeight="800" fill="currentColor">S</text>
+    </>
+  ),
+  ticket: (
+    <>
+      <rect x="18" y="40" width="84" height="44" rx="8" opacity=".45" />
+      <rect x="70" y="22" width="32" height="22" rx="4" opacity=".6" />
+      <rect x="28" y="26" width="10" height="16" opacity=".5" />
+      <circle cx="36" cy="98" r="9" opacity=".75" />
+      <circle cx="84" cy="98" r="9" opacity=".75" />
+      <path d="M4 112h112" stroke="currentColor" strokeWidth="4" strokeLinecap="round" opacity=".5" />
+    </>
+  ),
+  carcassonne: (
+    <>
+      <rect x="34" y="40" width="52" height="70" opacity=".4" />
+      <rect x="30" y="26" width="14" height="16" opacity=".6" />
+      <rect x="53" y="26" width="14" height="16" opacity=".6" />
+      <rect x="76" y="26" width="14" height="16" opacity=".6" />
+      <path d="M52 110V96a8 8 0 0 1 16 0v14Z" opacity=".9" />
+      <path d="M22 110h76" stroke="currentColor" strokeWidth="5" strokeLinecap="round" opacity=".45" />
+    </>
+  ),
   bil: (
     <>
       <circle cx="58" cy="62" r="44" opacity=".26" />

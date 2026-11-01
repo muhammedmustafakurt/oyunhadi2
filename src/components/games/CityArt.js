@@ -147,12 +147,117 @@ const ART = {
       <path fill="#ffd25a" d="M54 8l1.6 3.4L59 12l-3.4 1.6L54 17l-1.6-3.4L49 12l3.4-.6z" />
     </>
   ),
+  // Kahramanmaraş: Ulu Cami minaresi ve kubbe
+  kahramanmaras: (
+    <>
+      <path fill="var(--c)" d="M20 44V24a12 12 0 0 1 24 0v20z" />
+      <path fill="currentColor" d="M44 44V12h4v32z" opacity=".8" />
+      <path fill="currentColor" d="M43 12l2-7 2 7z" />
+      <path fill="#fff" d="M28 30h4v6h-4zM36 30h4v6h-4z" opacity=".8" />
+      <Waves y={46} />
+    </>
+  ),
+  // Şanlıurfa: Balıklıgöl ve kutsal balıklar
+  sanliurfa: (
+    <>
+      <path fill="var(--c)" d="M12 30a20 18 0 0 1 40 0z" />
+      <path fill="currentColor" opacity=".6" d="M26 30V16h12v14z" />
+      <ellipse cx="32" cy="38" rx="22" ry="6" fill="#4fb3e8" opacity=".75" />
+      <path fill="#ffd25a" d="M26 37c2-2 5-2 7 0-2 2-5 2-7 0zM33 40c2-2 5-2 7 0-2 2-5 2-7 0z" />
+    </>
+  ),
+  // Balıkesir: zeytin ağacı
+  balikesir: (
+    <>
+      <path fill="currentColor" d="M30 46V28h4v18z" />
+      <circle cx="32" cy="20" r="12" fill="var(--c)" />
+      <circle cx="22" cy="27" r="6" fill="var(--c)" opacity=".8" />
+      <circle cx="42" cy="27" r="6" fill="var(--c)" opacity=".8" />
+      <Waves y={46} />
+    </>
+  ),
+  // Kayseri: Erciyes Dağı
+  kayseri: (
+    <>
+      <path fill="currentColor" opacity=".8" d="M2 42L22 12l10 14 8-8 22 24z" />
+      <path fill="#fff" d="M22 12l-5 8 3-1 2 3 3-3 2 2z" />
+      <path fill="var(--c)" d="M40 42V30h8v12z" />
+    </>
+  ),
+  // Rize: çay tepeleri
+  rize: (
+    <>
+      <path fill="#2f8a4a" d="M2 42q14-22 30-10t30 10z" />
+      <path fill="var(--c)" d="M10 42q4-7 9-7t9 7zM32 42q4-7 9-7t9 7z" />
+      <path fill="#7bbf4a" d="M20 34q3-4 6-4t6 4z" opacity=".8" />
+      <Waves y={46} />
+    </>
+  ),
+  // Fethiye: Ölüdeniz lagünü
+  fethiye: (
+    <>
+      <path fill="var(--c)" d="M4 40l10-18 8 10 6-6 12 14z" />
+      <path fill="#4fb3e8" d="M2 40h60v6H2z" opacity=".7" />
+      <Waves y={44} />
+    </>
+  ),
+  // Kaş: tekne ve koy
+  kas: (
+    <>
+      <path fill="currentColor" d="M10 34h44l-6 8H16z" />
+      <path fill="var(--c)" d="M30 34V10l16 24z" />
+      <path d="M30 10v24" stroke="currentColor" strokeWidth="1.2" />
+      <Waves y={46} />
+    </>
+  ),
+  // Çeşme: Çeşme Kalesi
+  cesme: (
+    <>
+      <path fill="var(--c)" d="M8 40V26h12v14zM44 40V26h12v14zM20 40V30h24v10z" />
+      <path fill="currentColor" d="M8 26l6-8 6 8zM44 26l6-8 6 8z" />
+      <Waves y={46} />
+    </>
+  ),
+  // Alaçatı: yel değirmeni
+  alacati: (
+    <>
+      <path fill="var(--c)" d="M26 44l-4-22h16l-4 22z" />
+      <path fill="currentColor" d="M24 22l8-10 8 10z" />
+      <path d="M32 12L18 4M32 12l14-8M32 12L18 22M32 12l14 10" stroke="currentColor" strokeWidth="2" />
+      <Waves y={46} />
+    </>
+  ),
+  // Belek: palmiye
+  belek: (
+    <>
+      <path d="M32 44V20" stroke="currentColor" strokeWidth="2.2" />
+      <path fill="#2f8a4a" d="M32 20q-14-6-22 4q10-2 22-4q-12 2-20-2zM32 20q14-6 22 4q-10-2-22-4q12 2 20-2zM32 20q-6-12-2-14q4 6 2 14z" />
+      <Waves y={46} />
+    </>
+  ),
+  // Göcek: yat
+  goecek: (
+    <>
+      <path fill="var(--c)" d="M8 32h48l-8 10H16z" />
+      <path fill="#fff" d="M28 32V12l14 20z" />
+      <path fill="currentColor" d="M26 32V18l-10 14z" opacity=".6" />
+      <Waves y={46} />
+    </>
+  ),
 };
 
-// Kare numarasından şehir resmine.
-export const CITY_OF = { 1: 'adana', 2: 'mersin', 3: 'konya', 5: 'antep', 7: 'bursa', 8: 'antalya', 10: 'izmir', 11: 'eskisehir', 13: 'trabzon', 14: 'samsun', 16: 'ankara', 17: 'bodrum', 20: 'bogaz', 21: 'kapadokya', 23: 'nisantasi' };
+// Tapu adından şehir resmine (yalnızca resmi olan şehirler).
+const CITY_BY_NAME = {
+  'Kahramanmaraş': 'kahramanmaras', 'Şanlıurfa': 'sanliurfa', 'Mersin': 'mersin', 'Antalya': 'antalya',
+  'Eskişehir': 'eskisehir', 'Bursa': 'bursa', 'Balıkesir': 'balikesir', 'İzmir': 'izmir', 'Ankara': 'ankara',
+  'Konya': 'konya', 'Kayseri': 'kayseri', 'Samsun': 'samsun', 'Trabzon': 'trabzon', 'Rize': 'rize',
+  'Bodrum': 'bodrum', 'Fethiye': 'fethiye', 'Kaş': 'kas', 'Alaçatı': 'alacati', 'Çeşme': 'cesme',
+  'Belek': 'belek', 'Göcek': 'goecek', 'Nişantaşı': 'nisantasi',
+};
+export const cityOf = (name) => CITY_BY_NAME[name];
 
 export default function CityArt({ id, color, className = 'city-art' }) {
+  if (!ART[id]) return null;
   return (
     <svg className={className} viewBox="0 0 64 48" style={{ '--c': color }} aria-hidden="true" focusable="false">
       {ART[id]}

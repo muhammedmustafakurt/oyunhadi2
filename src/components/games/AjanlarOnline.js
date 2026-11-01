@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Lobby from './Lobby';
 import useRoom from './useRoom';
 import { TEAM } from '@/lib/ajanlar';
@@ -14,6 +14,10 @@ export default function AjanlarOnline({ cafe, masa }) {
   const [word, setWord] = useState('');
   const [num, setNum] = useState('1');
   const [sure, setSure] = useState(false);
+
+  // İpucu gönderildikten sonra yazılan kelime, ipucu değiştiğinde temizlenir (hata olursa kullanıcı yazdığını kaybetmez).
+  const clueWord = room?.game?.clue?.word ?? null;
+  useEffect(() => { setWord(''); }, [clueWord]);
 
   if (!room) return <p className="mono-where">{err || 'Masa açılıyor…'}</p>;
 
@@ -34,6 +38,9 @@ export default function AjanlarOnline({ cafe, masa }) {
   const canClue = myTurn && me.spy && !g.clue;
   const canPick = myTurn && !me.spy && !!g.clue;
   const names = room.seats.map((s) => s.name);
+  // Seçili kart yalnızca hâlâ kapalıysa geçerlidir (tur değişince eski seçim kalmasın).
+  const selCard = sel !== null && !g.cards[sel]?.rev ? sel : null;
+  const unlimited = !!g.clue && g.clue.num === 0;
 
   const members = (team) => room.seats.map((s, i) => ({ s, i })).filter(({ i }) => g.teams[i] === team);
 
@@ -74,7 +81,7 @@ export default function AjanlarOnline({ cafe, masa }) {
             <>
               <span className="lbl">{TEAM[g.turn]} takımın ipucu</span>
               <b className="word">{g.clue.word} <em>{g.clue.num === 0 ? '∞' : g.clue.num}</em></b>
-              <span className="left">{g.guessesLeft > 20 ? 'Sınırsız tahmin' : `${g.guessesLeft} tahmin hakkı`}</span>
+              <span className="left">{unlimited ? 'Sınırsız tahmin' : `${g.guessesLeft} tahmin hakkı`}</span>
             </>
           ) : (
             <>
@@ -89,7 +96,7 @@ export default function AjanlarOnline({ cafe, masa }) {
       {canClue && (
         <form
           className="aj-form"
-          onSubmit={(e) => { e.preventDefault(); send('clue', { word: word.trim(), num: Number(num) }); setWord(''); }}
+          onSubmit={(e) => { e.preventDefault(); send('clue', { word: word.trim(), num: Number(num) }); }}
         >
           <input value={word} onChange={(e) => setWord(e.target.value)} placeholder="Tek kelimelik ipucu" maxLength={24} autoComplete="off" autoCapitalize="none" required />
           <select value={num} onChange={(e) => setNum(e.target.value)} aria-label="Kaç kelime">
@@ -100,15 +107,15 @@ export default function AjanlarOnline({ cafe, masa }) {
         </form>
       )}
 
-      <div className="aj-board" role="grid" aria-label="Kelime tahtası">
+      <div className="aj-board" role="group" aria-label="Kelime tahtası">
         {g.cards.map((c, i) => (
           <button
             key={i}
-            role="gridcell"
-            className={`aj-card${c.rev ? ` rev ${c.c}` : ''}${!c.rev && c.c ? ` key ${c.c}` : ''}${sel === i ? ' sel' : ''}${over && !c.rev ? ' dim' : ''}`}
+            className={`aj-card${c.rev ? ` rev ${c.c}` : ''}${!c.rev && c.c ? ` key ${c.c}` : ''}${selCard === i ? ' sel' : ''}${over && !c.rev ? ' dim' : ''}`}
             disabled={!canPick || c.rev}
-            onClick={() => setSel(sel === i ? null : i)}
+            onClick={() => setSel(selCard === i ? null : i)}
             aria-label={c.w}
+            aria-pressed={canPick && !c.rev ? selCard === i : undefined}
           >
             <span>{c.w}</span>
             {c.c === 'a' && (c.rev || me?.spy || over) && <i aria-hidden="true">💀</i>}
@@ -118,9 +125,9 @@ export default function AjanlarOnline({ cafe, masa }) {
 
       {canPick && (
         <div className="aj-actions">
-          {sel !== null ? (
-            <button className="btn primary" disabled={busy} onClick={() => { send('pick', { card: sel }); setSel(null); }}>
-              &quot;{g.cards[sel].w}&quot; kartını aç
+          {selCard !== null ? (
+            <button className="btn primary" disabled={busy} onClick={() => { send('pick', { card: selCard }); setSel(null); }}>
+              &quot;{g.cards[selCard].w}&quot; kartını aç
             </button>
           ) : (
             <p className="sf-help">Açmak istediğiniz karta dokunun, sonra onaylayın.</p>
@@ -129,7 +136,13 @@ export default function AjanlarOnline({ cafe, masa }) {
         </div>
       )}
       {myTurn && me?.spy && g.clue && <p className="sf-help">Takımın tahmin ediyor, kartları o açacak.</p>}
-      {seated && !myTurn && !over && <p className="sf-help">{me.team === g.turn ? '' : `Sıra ${TEAM[g.turn]} takımda, bekleyin…`}</p>}
+      {seated && !myTurn && !over && (
+        <p className="sf-help">
+          {me.team === g.turn
+            ? (me.spy ? '' : 'Ajan şefinin ipucu vermesini bekleyin…')
+            : `Sıra ${TEAM[g.turn]} takımda, bekleyin…`}
+        </p>
+      )}
 
       <section className="aj-teams">
         {['r', 'b'].map((t) => (

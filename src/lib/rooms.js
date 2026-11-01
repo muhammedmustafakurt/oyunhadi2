@@ -12,14 +12,27 @@ import * as T from './tabu';
 import * as K from './kimim';
 import * as P from './cizim';
 import * as B from './bil';
+import * as R from './risk';
+import * as Z from './azul';
+import * as CL from './cluedo';
+import * as SC from './scrabble';
+import * as CC from './carcassonne';
+import * as CA from './catan';
+import * as TK from './ticket';
 
 // Oyun başına koltuk sayısı; satrançta 1. koltuk Beyaz, 2. koltuk Siyah.
-const CONFIG = { monopoly: { max: 4, min: 2 }, satranc: { max: 2, min: 2 }, spyfall: { max: 8, min: 3 }, ajanlar: { max: 8, min: 4 }, vampir: { max: 10, min: 5 }, tabu: { max: 10, min: 4 }, kimim: { max: 10, min: 3 }, cizim: { max: 10, min: 3 }, bil: { max: 10, min: 2 } };
+const CONFIG = { monopoly: { max: 4, min: 2 }, satranc: { max: 2, min: 2 }, spyfall: { max: 8, min: 3 }, ajanlar: { max: 8, min: 4 }, vampir: { max: 10, min: 5 }, tabu: { max: 10, min: 4 }, kimim: { max: 10, min: 3 }, cizim: { max: 10, min: 3 }, bil: { max: 10, min: 2 }, azul: { max: 4, min: 2 }, cluedo: { max: 6, min: 3 }, scrabble: { max: 4, min: 2 }, risk: { max: 6, min: 2 }, carcassonne: { max: 5, min: 2 }, catan: { max: 4, min: 3 }, ticket: { max: 5, min: 2 } };
 export const ROOM_GAMES = new Set(Object.keys(CONFIG));
 export const MASA_RE = /^masa-\d{1,3}$/;
 export const PID_RE = /^[a-zA-Z0-9]{16,64}$/;
 export const IDLE_MS = 45 * 1000; // bu kadar süredir yoklamayan oyuncu masadan çıkarılabilir
 const STALE_MS = 6 * 60 * 60 * 1000; // 6 saat işlem görmeyen oda sıfırlanır
+const VAMP_MS = 90 * 1000; // vampirde her gece/gündüz evresinin süresi; aşılırsa zaman aşımı eylemi evreyi ilerletir
+const MONO_ACTS = new Set(['bid', 'pass', 'build', 'sell', 'mortgage', 'unmortgage', 'payJail', 'jailCard']);
+const MONO_OWN = new Set(['build', 'sell', 'mortgage', 'unmortgage', 'payJail', 'jailCard']); // yalnızca sıra sahibi yapabilir
+const CHESS_ACTS = new Set(['offer', 'accept', 'decline', 'claim', 'resign']);
+const CAT_ACTS = new Set(['csettle', 'ccity', 'croad', 'cdev', 'croll', 'cdrop', 'crobber', 'cplay', 'cend', 'cbank', 'coffer', 'cacc', 'cpick', 'cclose']);
+const RISK_ACTS = new Set(['rdeploy', 'rtrade', 'rattack', 'rmove', 'rendattack', 'rfortify', 'rendturn']);
 
 const fresh = () => ({ phase: 'lobby', seats: [], game: null });
 const clean = (n) => String(n ?? '').replace(/[<>]/g, '').trim().slice(0, 16);
@@ -72,8 +85,10 @@ export function view(room, pid, game) {
     phase: s.phase,
     seats: s.seats.map((x) => ({ name: x.name, left: !!x.left, idleMs: x.seen ? Math.max(0, Date.now() - x.seen) : 0 })),
     me,
+    // Vampirde kalan süre (ms); istemci geri sayım gösterebilsin diye.
+    leftMs: game === 'vampir' && s.game?.endsAt ? Math.max(0, s.game.endsAt - Date.now()) : null,
     // Casus oyununda mekân ve casus sunucuda kalır; her oyuncuya yalnızca kendi kartı gider.
-    game: game === 'spyfall' ? S.viewFor(s.game, me) : game === 'ajanlar' ? A.viewFor(s.game, me) : game === 'vampir' ? V.viewFor(s.game, me) : game === 'tabu' ? T.viewFor(s.game, me) : game === 'kimim' ? K.viewFor(s.game, me) : game === 'cizim' ? P.viewFor(s.game, me) : game === 'bil' ? B.viewFor(s.game, me) : s.game,
+    game: game === 'spyfall' ? S.viewFor(s.game, me) : game === 'ajanlar' ? A.viewFor(s.game, me) : game === 'vampir' ? V.viewFor(s.game, me) : game === 'tabu' ? T.viewFor(s.game, me) : game === 'kimim' ? K.viewFor(s.game, me) : game === 'cizim' ? P.viewFor(s.game, me) : game === 'bil' ? B.viewFor(s.game, me) : game === 'azul' ? Z.viewFor(s.game, me) : game === 'cluedo' ? CL.viewFor(s.game, me) : game === 'scrabble' ? SC.viewFor(s.game, me) : game === 'risk' ? R.viewFor(s.game, me) : game === 'carcassonne' ? CC.viewFor(s.game, me) : game === 'catan' ? CA.viewFor(s.game, me) : game === 'ticket' ? TK.viewFor(s.game, me) : s.game,
   };
 }
 
@@ -90,16 +105,130 @@ function leaveSeat(s, idx, game) {
   else if (game === 'kimim') s.game = K.onLeave(g, s.seats, idx);
   else if (game === 'cizim') s.game = P.onLeave(g, s.seats, idx);
   else if (game === 'bil') s.game = B.onLeave(g, s.seats, idx);
+  else if (game === 'ticket') s.game = TK.onLeave(g, s.seats, idx);
+  else if (game === 'risk') s.game = R.onLeave(g, s.seats, idx);
+  else if (game === 'azul') s.game = Z.onLeave(g, s.seats, idx);
+  else if (game === 'cluedo') s.game = CL.onLeave(g, s.seats, idx);
+  else if (game === 'scrabble') s.game = SC.onLeave(g, s.seats, idx);
+  else if (game === 'carcassonne') s.game = CC.onLeave(g, s.seats, idx);
+  else if (game === 'catan') s.game = CA.onLeave(g, s.seats, idx);
+  // Satrançta ayrılan oyuncu teslim olmuş sayılır; oyun rakip lehine biter.
+  else if (game === 'satranc') { if (!g.over) s.game = C.act(g, idx === 0 ? 'w' : 'b', 'resign', { w: s.seats[0].name, b: s.seats[1].name }); }
   else if (!g.over) {
     const other = s.seats[1 - idx];
     s.game = { ...g, over: `${other.name} kazandı (rakip masadan ayrıldı).`, draw: false };
   }
 }
 
+// Emlak: açık artırma ve mülk yönetimi. Kuralları (sıra, teklif sırası, paralar) emlak.js denetler. emlak.js bir
+// hamleyi reddettiğinde giriş durumunun kopyasını (yalnızca msg'si değişmiş) döndürür; bu hata sayılır, masa
+// durumuna yazılmaz ve nedeni yalnızca hamleyi gönderen oyuncuya gider.
+function monoAct(s, idx, a, g) {
+  if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+  if (MONO_OWN.has(a.type) && g.turn !== idx) return { error: 'Sıra sizde değil.' };
+  let r;
+  switch (a.type) {
+    case 'bid': r = E.bid(g, idx, Number(a.amount)); break;
+    case 'pass': r = E.passBid(g, idx); break;
+    case 'payJail': r = E.payJail(g); break;
+    case 'jailCard': r = E.useJailCard(g); break;
+    default: {
+      const prop = a.prop;
+      if (!Number.isInteger(prop) || prop < 0 || prop >= E.TILES.length) return { error: 'Geçersiz arsa.' };
+      r = a.type === 'build' ? E.build(g, prop) : a.type === 'sell' ? E.sellHouse(g, prop)
+        : a.type === 'mortgage' ? E.mortgage(g, prop) : E.unmortgage(g, prop);
+    }
+  }
+  // Ret: msg dışında giriş durumuyla aynı (reject() böyle döner). Kayıt yapılmaz, hata olarak dönülür.
+  const stripMsg = (x) => JSON.stringify({ ...x, msg: undefined });
+  if (stripMsg(r) === stripMsg(g)) return { error: r.msg };
+  s.game = r;
+  return { state: s };
+}
+
+// Carcassonne: karo yerleştirme ve meeple. Kurallar carcassonne.js'te denetlenir; eylem adları 'cc' önekli.
+function ccAct(s, idx, a, g) {
+  if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+  const r = CC.act(g, idx, { type: a.type === 'ccplace' ? 'place' : 'meeple', ...(a.cc || {}) });
+  if (r.error) return { error: r.error };
+  s.game = r;
+  return { state: s };
+}
+
+// Satranç: beraberlik teklifi/kabulü/reddi, talep edilen beraberlik ve teslim. Renk, koltuktan gelir (1. Beyaz, 2. Siyah).
+function chessAct(s, idx, a, g) {
+  if (s.phase !== 'play' || idx < 0 || idx > 1 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+  const r = C.act(g, idx === 0 ? 'w' : 'b', a.type, { w: s.seats[0].name, b: s.seats[1].name });
+  if (r.error) return { error: r.error };
+  s.game = r;
+  return { state: s };
+}
+
+// Risk: kurallar risk.js'te denetlenir (zarlar sunucuda atılır); yalnızca sırası gelen oyuncu hamle yapabilir.
+function riskAct(s, idx, a, g) {
+  if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+  const r = R.act(g, idx, a.type, a);
+  if (r.error) return { error: r.error };
+  s.game = r;
+  return { state: s };
+}
+
+// Vampir zaman aşımı (süre dolunca): gecede seçim yapmayanlar o gece etkisiz sayılır (V.nightTimeout),
+// gündüzde oy vermeyenler çekimser sayılır (castVote -1). Her iki durumda evre ilerler.
+function vampTimeout(s, g) {
+  if (g.over) return { error: 'Tur bitti.' };
+  if (Date.now() < Number(g.endsAt ?? 0)) return { error: 'Süre henüz dolmadı.' };
+  if (g.phase === 'night') {
+    const r = V.nightTimeout(g, s.seats);
+    if (r.error) return { error: r.error };
+    s.game = r;
+    return { state: s };
+  }
+  let cur = g;
+  for (let i = 0; i < cur.alive.length; i++) {
+    if (cur.phase !== 'day' || cur.over) break;
+    if (!cur.alive[i] || cur.votes[i] !== undefined) continue;
+    const r = V.castVote(cur, s.seats, i, -1);
+    if (r.error) return { error: r.error };
+    cur = r;
+  }
+  s.game = cur;
+  return { state: s };
+}
+
+// Vampirde her evre (gece/gündüz) başında süre yeniden başlar; aynı evrede yapılan seçimler süreyi uzatmaz.
+function vampStamp(next, prev) {
+  if (!next || next.over) return;
+  const key = (x) => `${x?.phase}:${x?.day}`;
+  if (!prev || key(prev) !== key(next) || next.endsAt == null) next.endsAt = Date.now() + VAMP_MS;
+}
+
+// Scrabble: hamle ve itiraz kuralları scrabble.js'te denetlenir. Eylem adları 'sc' önekli (diğer oyunlarla çakışmaz).
+const SC_ACTS = new Set(['scplay', 'scpass', 'scswap', 'scchallenge', 'scvote', 'sctimeout', 'sccommit']);
+function scrabbleAct(s, idx, a, g) {
+  if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+  const r = SC.act(g, s.seats, idx, a.type, a);
+  if (r.error) return { error: r.error };
+  s.game = r;
+  return { state: s };
+}
+
 function apply(s, pid, a, game) {
   const cfg = CONFIG[game];
   const idx = s.seats.findIndex((x) => x.pid === pid);
   const g = s.game;
+  if (game === 'monopoly' && MONO_ACTS.has(a.type)) return monoAct(s, idx, a, g);
+  if (game === 'satranc' && CHESS_ACTS.has(a.type)) return chessAct(s, idx, a, g);
+  if (game === 'risk' && RISK_ACTS.has(a.type)) return riskAct(s, idx, a, g);
+  if (game === 'scrabble' && SC_ACTS.has(a.type)) return scrabbleAct(s, idx, a, g);
+  if (game === 'carcassonne' && (a.type === 'ccplace' || a.type === 'ccmeeple')) return ccAct(s, idx, a, g);
+  if (game === 'catan' && CAT_ACTS.has(a.type)) {
+    if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+    const r = CA.act(g, idx, { ...a.cat, type: a.type });
+    if (r.error) return { error: r.error };
+    s.game = r;
+    return { state: s };
+  }
   switch (a.type) {
     case 'join': {
       if (idx >= 0) {
@@ -139,8 +268,20 @@ function apply(s, pid, a, game) {
         ng.players.forEach((p, i) => { p.name = s.seats[i].name; });
         ng.msg = `${ng.players[0].name} zar atsın.`;
         s.game = ng;
+      } else if (game === 'scrabble') {
+        s.game = SC.newGame(s.seats.map((x) => x.name));
+      } else if (game === 'carcassonne') {
+        s.game = CC.newGame(s.seats);
+      } else if (game === 'risk') {
+        s.game = R.newGame(s.seats.length);
+      } else if (game === 'ticket') {
+        s.game = TK.newGame(s.seats.length);
       } else if (game === 'bil') {
         s.game = B.newGame(s.seats.length);
+      } else if (game === 'cluedo') {
+        s.game = CL.newGame(s.seats.length);
+      } else if (game === 'azul') {
+        s.game = Z.newGame(s.seats.length);
       } else if (game === 'cizim') {
         s.game = P.newGame(s.seats);
       } else if (game === 'kimim') {
@@ -155,6 +296,9 @@ function apply(s, pid, a, game) {
       } else if (game === 'spyfall') {
         s.game = S.newGame(s.seats.length);
         s.game.note = `${s.seats[s.game.first].name} ilk soruyu soruyor.`;
+      } else if (game === 'catan') {
+        s.game = CA.newGame(s.seats.length);
+        s.game.names = s.seats.map((x) => x.name);
       } else {
         s.game = C.newGame();
       }
@@ -179,7 +323,7 @@ function apply(s, pid, a, game) {
       if (s.phase !== 'play' || idx < 0 || idx > 1) return { error: 'Oyunda değilsiniz.' };
       if (g.turn !== (idx === 0 ? 'w' : 'b')) return { error: 'Sıra sizde değil.' };
       if (!sq(a.from) || !sq(a.to)) return { error: 'Geçersiz hamle.' };
-      const r = C.play(g, a.from[0], a.from[1], a.to[0], a.to[1], { w: s.seats[0].name, b: s.seats[1].name });
+      const r = C.play(g, a.from[0], a.from[1], a.to[0], a.to[1], { w: s.seats[0].name, b: s.seats[1].name }, a.promo);
       if (r.error) return { error: r.error };
       s.game = r;
       return { state: s };
@@ -195,11 +339,30 @@ function apply(s, pid, a, game) {
       s.game = r;
       return { state: s };
     }
+    case 'tkdraw':
+    case 'tkclaim':
+    case 'tktickets':
+    case 'tkkeep': {
+      if (game !== 'ticket') return { error: 'Bilinmeyen işlem.' };
+      if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+      const r = TK.act(g, idx, a);
+      if (r.error) return { error: r.error };
+      s.game = r;
+      return { state: s };
+    }
     case 'bpick':
     case 'btimeout': {
       if (game !== 'bil') return { error: 'Bilinmeyen işlem.' };
       if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
       const r = a.type === 'bpick' ? B.pick(g, s.seats, idx, a.choice) : B.timeout(g, s.seats);
+      if (r.error) return { error: r.error };
+      s.game = r;
+      return { state: s };
+    }
+    case 'atake': {
+      if (game !== 'azul') return { error: 'Bilinmeyen işlem.' };
+      if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+      const r = Z.act(g, idx, { ...a, type: 'take' });
       if (r.error) return { error: r.error };
       s.game = r;
       return { state: s };
@@ -251,6 +414,10 @@ function apply(s, pid, a, game) {
         s.game = r;
         return { state: s };
       }
+      if (game === 'vampir' && a.type === 'timeout') {
+        if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+        return vampTimeout(s, g);
+      }
       if (game === 'vampir' && a.type === 'vote') {
         if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
         const r = V.castVote(g, s.seats, idx, a.target);
@@ -280,9 +447,30 @@ function apply(s, pid, a, game) {
       s.game = r;
       return { state: s };
     }
+    // Cluedo: zar, hareket, tahmin, çürütme, suçlama. Kurallar cluedo.js'te denetlenir; geçersiz hamle {error} döner.
+    case 'clroll':
+    case 'clstay':
+    case 'clpassage':
+    case 'clmove':
+    case 'clsuggest':
+    case 'clshow':
+    case 'claccuse':
+    case 'clend': {
+      if (game !== 'cluedo') return { error: 'Bilinmeyen işlem.' };
+      if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+      const r = CL.act(g, idx, a, s.seats);
+      if (r.error) return { error: r.error };
+      s.game = r.state;
+      return { state: s };
+    }
     // Masadakiler gidip oyun açık kalmışsa herkes (izleyici dahi) odayı baştan kurabilir.
-    case 'wipe':
+    // Yalnızca masada o an kimse yoksa (herkes ayrıldı ya da IDLE_MS'dir yoklamıyor): aksi halde dışarıdan
+    // bir istek devam eden oyunu herhangi bir anda silebilirdi.
+    case 'wipe': {
+      const present = s.seats.some((x) => !x.left && Date.now() - Number(x.seen ?? 0) < IDLE_MS);
+      if (present) return { error: 'Masada hâlâ oyuncular var.' };
       return { state: fresh() };
+    }
     case 'reset': {
       const over = game === 'monopoly' ? g?.phase === 'over'
         : game === 'spyfall' ? !!g?.over || Date.now() >= g.endsAt
@@ -309,6 +497,7 @@ export async function mutate(biz, tbl, game, pid, action) {
     const r = await readRoom(biz, tbl, game);
     const res = apply(structuredClone(r.state), pid, action, game);
     if (res.error) return { error: res.error, room: r };
+    if (game === 'vampir') vampStamp(res.state.game, r.state.game);
     const me = res.state.seats.findIndex((x) => x.pid === pid);
     if (me >= 0 && (action.near !== false || action.type === 'leave')) res.state.seats[me].seen = Date.now();
     const ok = await get(

@@ -71,6 +71,21 @@ const SCHEMA = [
     at BIGINT NOT NULL
   )`,
 
+  // Başarısız panel giriş denemeleri (e-posta ve IP başına hız sınırı için).
+  `CREATE TABLE IF NOT EXISTS login_attempts (
+    id SERIAL PRIMARY KEY,
+    key TEXT NOT NULL,
+    at BIGINT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS login_attempts_key ON login_attempts (key, at)`,
+  // Genel hız sınırı sayaçları (src/lib/ratelimit.js).
+  `CREATE TABLE IF NOT EXISTS rate_hits (
+    id SERIAL PRIMARY KEY,
+    key TEXT NOT NULL,
+    at BIGINT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS rate_hits_key ON rate_hits (key, at)`,
+
   // ---- Masalar arası sohbet (chat) ----
 
   // İşletme sohbet ayarları: satır yoksa varsayılanlar (açık, açık mod kapalı, 24 saat saklama) geçerlidir.
@@ -171,11 +186,12 @@ const SEED_VENUES = () => {
     {
       slug: 'demo', name: 'Hadi Kafe', city: 'Kadıköy, İstanbul', initials: 'HK', logo_url: null,
       color: '#ff4f2e', accent: '#ffc83d', ntables: 12, lat: null, lng: null,
-      games: 'monopoly,satranc,spyfall,ajanlar,vampir,tabu,kimim,cizim,bil',
+      games: 'monopoly,satranc,spyfall,ajanlar,vampir,tabu,kimim,cizim,bil,azul,catan,risk,cluedo,scrabble,ticket,carcassonne',
       welcome: 'Çaylar bizden değil ama oyunlar bizden!',
       ann_title: 'Cuma akşamı Tabu turnuvası', ann_body: "Saat 20:00'de. Kazanan masaya büyük boy pizza ikramımız.",
       reward_game: 'bil', reward_goal: "Bil Bakalım'da 6.000 puanı geç", reward_prize: '1 tatlı ikram',
-      email: 'elif@hadikafe.com', password: hashPassword('demo1234'),
+      // Üretimde bilinen şifreli demo hesap oluşturulmaz (şifre boş = girişe kapalı).
+      email: 'elif@hadikafe.com', password: process.env.NODE_ENV === 'production' ? '' : hashPassword('demo1234'),
     },
     {
       slug: 'lavanta-bistro', name: 'Lavanta Bistro', city: 'Alsancak, İzmir', initials: 'LB', logo_url: null,

@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { all, get, run } from '@/lib/db';
 import { getVenueBySlug } from '@/lib/venues';
-import { hasTable, MASA_RE, PID_RE } from '@/lib/rooms';
+import { hasTable, nearCafe, MASA_RE, PID_RE } from '@/lib/rooms';
 
 // Masalar arası sohbetin sunucu mantığı. İstemci yalnızca oturum belirtecini taşır; işletme, masa ve
 // yetki bilgisi her istekte oturum satırından okunur (istemciden gelen kimliklere güvenilmez).
@@ -17,6 +17,8 @@ const REQ_LIMIT = 10; // saatte en fazla istek
 const PENDING_MAX = 5; // aynı anda bekleyen giden istek
 const REJECT_COOLDOWN = 10 * 60 * 1000;
 const REPORT_HOURLY = 3;
+const TABLE_SESSION_MAX = 20; // bir masada aynı anda canlı en fazla oturum
+const VENUE_SESSION_MAX = 400; // bir mekânda aynı anda canlı en fazla oturum
 const TOKEN_RE = /^[a-f0-9]{64}$/;
 const SLUG_RE = /^[a-z0-9-]{1,50}$/;
 
@@ -104,7 +106,7 @@ async function ensureRoom(bizId, a, b) {
 }
 
 // Ziyaretçi oturumu açar (ya da aynı cihaz geri döndüyse tazeler) ve belirteci döndürür.
-export async function join({ cafe, masa, pid, nick, bio }) {
+export async function join({ cafe, masa, pid, nick, bio, geo }) {
   if (!SLUG_RE.test(String(cafe)) || !MASA_RE.test(String(masa)) || !PID_RE.test(String(pid))) {
     return { error: 'Geçersiz istek.', status: 400 };
   }
@@ -112,6 +114,12 @@ export async function join({ cafe, masa, pid, nick, bio }) {
   if (!venue || !hasTable(venue, String(masa))) return { error: 'Mekân bulunamadı.', status: 404 };
   const st = await settingsOf(venue.id);
   if (!st.enabled) return { error: 'Bu mekânda sohbet kapalı.', status: 403 };
+  // Konum kilidi açık mekânda sohbete yalnızca mekândaki telefonlar katılabilir (oyun masalarıyla aynı kural).
+  if (nearCafe(venue, geo) === false) {
+    return geo
+      ? { error: 'Sohbete yalnızca mekândayken katılabilirsiniz.', status: 403 }
+      : { error: 'Sohbete katılmak için konum izni vermeniz gerekir (mekânda olduğunuz doğrulanır).', status: 403, needGeo: true };
+  }
 
   const t = now();
   const existing = await get('SELECT * FROM chat_sessions WHERE biz_id = ? AND tbl = ? AND pid = ?', venue.id, String(masa), String(pid));
@@ -125,6 +133,13 @@ export async function join({ cafe, masa, pid, nick, bio }) {
       t, existing.id,
     );
   } else {
+    // Rastgele pid'lerle oturum şişirmeyi sınırla: masa başına ve mekân başına canlı oturum üst sınırı.
+    const alive = t - IDLE_MS;
+    const perTable = Number((await get('SELECT count(*)::int AS n FROM chat_sessions WHERE biz_id = ? AND tbl = ? AND seen_at >= ?', venue.id, String(masa), alive))?.n) || 0;
+    const perVenue = Number((await get('SELECT count(*)::int AS n FROM chat_sessions WHERE biz_id = ? AND seen_at >= ?', venue.id, alive))?.n) || 0;
+    if (perTable >= TABLE_SESSION_MAX || perVenue >= VENUE_SESSION_MAX) {
+      return { error: 'Şu an çok fazla bağlantı var. Biraz sonra tekrar deneyin.', status: 429 };
+    }
     row = await get(
       "INSERT INTO chat_sessions (biz_id, tbl, pid, token, nick, bio, status, seen_at, created_at) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?) RETURNING *",
       venue.id, String(masa), String(pid), makeToken(), clean(nick, NICK_MAX) || randomNick(), clean(bio, BIO_MAX), t, t,
@@ -148,7 +163,7 @@ export async function state(token, roomId, after) {
   hidden.delete(me.id);
 
   const live = await all(
-    "SELECT * FROM chat_sessions WHERE biz_id = ? AND id <> ? AND status = 'active' AND seen_at >= ? ORDER BY tbl, id",
+    "SELECT * FROM chat_sessions WHERE biz_id = ? AND id <> ? AND status = 'active' AND seen_at >= ? ORDER BY tbl, id LIMIT 400",
     me.biz_id, me.id, t - IDLE_MS,
   );
   const pendingOut = await all("SELECT * FROM chat_requests WHERE from_id = ? AND status = 'pending'", me.id);

@@ -119,4 +119,39 @@ export const GAME_INFO: Record<string, { intro: string; how: string[]; good: str
     how: ['2–10 oyuncu katılır, 10 soru gelir.', 'Her soruda 15 saniye; doğru cevap süre bitince açılır.', 'Hız ve seri bonuslarıyla puan toplanır.', 'Sonunda podyum: birinci kim?'],
     good: 'Sipariş beklerken 5 dakikalık yarış',
   },
+  azul: {
+    intro: 'Azul\'da fabrikalardan ve merkezden renkli fayanslar alıp desen çizgilerine yerleştirirsin. Dolan çizgi duvara geçer ve bitişik fayanslarla puan kazandırır.',
+    how: ['2–4 oyuncu, sırası gelen fabrikadan ya da merkezden tek renk alır.', 'Fayansları 1–5 desen çizgisine ya da tabana koyarsın; taban puandan düşer.', 'Duvarda yatay satır, dikey sütun ve renk tamamlanınca bitiş bonusu gelir.', 'Bir oyuncu yatay bir satırı tamamlayınca oyun biter.'],
+    good: 'Sakin, stratejik ve kafede rahat oynanan masalar',
+  },
+  carcassonne: {
+    intro: 'Carcassonne\'da ortak bir ortaçağ manzarası kurarsın: her turda bir karo çekip komşu kenarlarla eşleyerek yerleştirirsin. Şehirler, yollar ve manastırlar tamamlandıkça puan gelir.',
+    how: ['2–5 oyuncu katılır; başlangıç karosu ortaya konur, karolar desteden tek tek çekilir.', 'Karoyu kenarları tutacak şekilde yerleştirirsin; uymayan karo atılır ve yenisi çekilir.', 'Karo koyduktan sonra isteğe bağlı olarak bir meeple koyabilirsin; aynı yerde zaten meeple varsa koyamazsın.', 'Tamamlanan şehir ve yol puanı alır; desteler bitince oyun biter.'],
+    good: 'Sakin, stratejik ve masanın ortasında birlikte kurulan haritalar',
+  },
+  risk: {
+    intro: 'Risk\'te 42 bölgelik dünyayı fethetmeye çalışırsın. Takviye al, komşularına zarla saldır, kıtaları tamamlayıp kart takaslarıyla ordunu büyüt.',
+    how: ['2–6 oyuncu katılır; bölgeler rastgele dağıtılır ve sırayla ordu yerleştirilir.', 'Her turda takviye, saldırı ve manevra yaparsın; tur sonunda fetih yaptıysan bir kart çekersin.', 'Kıta bonusları ve kart takasları büyük ordu getirir.', 'Dünyanın tamamını alan kazanır; diğerleri elenince kartları sana geçer.'],
+    good: 'Uzun soluklu, stratejik ve kafede saatlerce süren masa',
+  },
+  cluedo: {
+    intro: 'Cluedo\'da bir cinayet işlendi. Kim, hangi silahla, hangi odada? Her turda bir oda seçip tahmin edersin; masadakiler kartlarıyla tahminini çürütmeye çalışır. Zarfı ilk doğru bilen kazanır.',
+    how: ['3–6 oyuncu katılır; her oyuncu bir şüpheli olur ve gizli kartlar dağıtılır.', 'Zar atıp bir yere gidersin; odaya girince bu odada tahmin yapabilirsin.', 'Tahminin sırayla soldan çürütülür; yalnızca sen çürütülen kartı görürsün.', 'Doğru suçlayan kazanır; yanlış suçlayan elenir.'],
+    good: 'Not defteriyle mantık yarışı',
+  },
+  scrabble: {
+    intro: 'Scrabble\'da harflerden kelimeler kurup puan topluyorsun. Tahtadaki çarpan kareleri ve uzun kelimeler puanı artırır; 7 taşını birden kullanmak bonus getirir.',
+    how: ['2–4 oyuncu, her biri 7 taşla başlar; 100 taşlık torbadan Türkçe harf çekilir.', 'İlk kelime merkez kareden geçer; sonraki kelimeler mevcut harflere bağlanır.', 'Oluşan tüm kelimeler puanlanır; kelimeye itiraz edilebilir ve oyuncular oyla karar verir.', 'Taşlar bitince ya da art arda altı pasla oyun biter; kalan taşların değeri düşülür.'],
+    good: 'Kelime bilgisi ve strateji isteyen uzun masalar',
+  },
+  ticket: {
+    intro: 'Ticket to Ride\'da Türkiye\'nin şehirleri arasında tren hatları kurup hedef biletlerinizi tamamlıyorsunuz. Vagonlarınızı akıllıca kullanan, uzun yolları planlayan kazanır.',
+    how: ['2–5 oyuncu, her biri 45 vagonla başlar; başta 4 bilet çekilir ve en az 2\'si tutulur.', 'Sıranızda kart çekersiniz, rota alırsınız ya da yeni bilet çekersiniz.', 'Bir rota, aynı renkli kartlarla (ya da lokomotiflerle) ve rotanın uzunluğu kadar kartla alınır.', 'Vagonu 2 ya da daha az kalan oyuncudan sonra herkes bir son tur oynar; tamamlanan biletler artı, tamamlanmayanlar eksi puandır, en uzun yol +10.'],
+    good: 'Stratejiyi, planlamayı ve rekabeti seven masalar',
+  },
+  catan: {
+    intro: 'Catan\'da altıgen bir adada odun, koyun, buğday, tuğla ve cevher toplayıp köy, şehir ve yol kurarsın. Kaynaklarını rakiplerinle ya da bankayla takas edersin; ilk 10 puana ulaşan kazanır.',
+    how: ['3–4 oyuncu, tahta üzerinde sırayla iki köy ve iki yol koyar.', 'Her turda zar atılır; zar sayısına denk gelen araziler kaynak üretir.', 'Yedi gelirse hırsız taşınır, 7\'den fazla kart tutan yarısını atar; kaynak kazanmak için yol, köy, şehir ve gelişim kartı alırsın.', 'En uzun yol ve en büyük ordu bonus puan verir; 10 puana ilk ulaşan kendi sırasında kazanır.'],
+    good: 'Ticaret, planlama ve pazarlık seven uzun masalar',
+  },
 };

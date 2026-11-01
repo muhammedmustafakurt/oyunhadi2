@@ -28,16 +28,27 @@ export default function useChat({ cafe, masa, room, active = true }) {
 
   const join = useCallback(async () => {
     try {
-      const r = await fetch('/api/chat', {
+      const send = (geo) => fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'join', cafe, masa, pid: getPid(),
           nick: store.get(NKEY) || undefined,
           bio: store.get(BKEY) || undefined,
+          ...(geo && { geo }),
         }),
       });
-      const d = await r.json();
+      let r = await send(null);
+      let d = await r.json();
+      // Konum kilidi olan mekânda sunucu konum ister: izin verilirse konumla bir kez daha denenir.
+      if (d.needGeo && navigator.geolocation) {
+        const geo = await new Promise((done) => navigator.geolocation.getCurrentPosition(
+          (p) => done({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }),
+          () => done(null),
+          { timeout: 8000, maximumAge: 60000 },
+        ));
+        if (geo) { r = await send(geo); d = await r.json(); }
+      }
       if (!r.ok || !d.token) {
         stop.current = true;
         setError(d.error || 'Sohbet başlatılamadı.');

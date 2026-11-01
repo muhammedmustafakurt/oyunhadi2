@@ -147,6 +147,7 @@ export function timeout(g, seats, now = Date.now()) {
 export function guess(g, seats, idx, text, now = Date.now()) {
   if (g.over || g.phase !== 'draw') return { error: 'Şu an tahmin edilemez.' };
   if (idx === g.drawer) return { error: 'Çizen tahmin edemez.' };
+  if (!seats[idx] || seats[idx].left) return { error: 'Bu oyuncu tahmin edemez.' };
   if (g.got.some((x) => x.seat === idx)) return { error: 'Kelimeyi zaten buldun.' };
   const t = String(text ?? '').replace(/[<>]/g, '').trim().slice(0, 40);
   if (!t) return { error: 'Bir tahmin yazın.' };
@@ -187,6 +188,8 @@ export function draw(g, idx, pieces) {
     if (!pc || !Number.isInteger(pc.id) || !Number.isInteger(pc.start) || pc.start < 0) return { error: 'Geçersiz çizim.' };
     if (!Number.isInteger(pc.c) || pc.c < 0 || pc.c >= COLORS || !Number.isInteger(pc.w) || pc.w < 0 || pc.w >= SIZES) return { error: 'Geçersiz çizim.' };
     if (!Array.isArray(pc.p) || pc.p.length === 0 || pc.p.length > MAX_PIECE || pc.p.length % 2) return { error: 'Geçersiz çizim.' };
+    // Koordinatlar sonlu sayı ve başlangıç (koordinat sayısı) çifttir; aksi halde nokta çiftleri kayar.
+    if (pc.start % 2 || !pc.p.every((v) => Number.isFinite(v))) return { error: 'Geçersiz çizim.' };
     let s = strokes.find((x) => x.id === pc.id);
     if (!s) {
       if (pc.start !== 0) continue; // başı kaybolmuş parça: istemci eşitlenince yeniden gönderir

@@ -47,6 +47,11 @@ export default function SpyfallOnline({ cafe, masa }) {
     }
   }, [left]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Yeni turda kişisel durumlar (elenen mekânlar, kart, tahmin seçimi) sıfırlanır.
+  useEffect(() => {
+    setStruck(new Set()); setShow(false); setPick(null); setSure(false);
+  }, [g?.startedAt]);
+
   if (!room) return <p className="mono-where">{err || 'Masa açılıyor…'}</p>;
 
   if (room.phase === 'lobby') {
@@ -66,8 +71,8 @@ export default function SpyfallOnline({ cafe, masa }) {
   const vote = g.vote;
   const canVote = seated && vote && me !== vote.target && vote.votes[me] === undefined;
   const voters = vote ? active.filter((i) => i !== vote.target) : [];
-  const canAccuse = seated && !over && !vote && !g.accused.includes(me);
-  const spyGuessing = seated && g.me?.spy && !over;
+  const canAccuse = seated && !over && !vote && left > 0 && !g.accused.includes(me);
+  const spyGuessing = seated && g.me?.spy && !over && !vote && left > 0;
   const frac = over ? 0 : Math.min(1, left / DURATION_MS);
   const urgency = left < 60000 ? 'low' : left < 180000 ? 'mid' : '';
 
@@ -148,13 +153,14 @@ export default function SpyfallOnline({ cafe, masa }) {
                 {!over && g.accused.includes(i) && <em>suçlama hakkını kullandı</em>}
                 {over && g.roles && <em>{i === over.spy ? 'casus' : g.roles[i]}</em>}
               </span>
+              {over?.points && <b className="sf-pts" style={{ marginLeft: 'auto' }} aria-label={`${over.points[i] ?? 0} puan`}>+{over.points[i] ?? 0}</b>}
               {canAccuse && i !== me && !s.left && (
                 <button className="btn sm sf-accuse" disabled={busy} onClick={() => send('accuse', { target: i })}>Suçla</button>
               )}
             </li>
           ))}
         </ul>
-        {canAccuse && <p className="sf-help">Herkes turda bir kez birini suçlayabilir. Suçlanan dışındaki herkes &quot;evet&quot; derse sonuç belli olur.</p>}
+        {canAccuse && <p className="sf-help">Herkes turda bir kez birini suçlayabilir. Suçlanan dışındaki herkes &quot;evet&quot; derse sonuç belli olur; tek bir &quot;hayır&quot; suçlamayı bitirir.</p>}
       </section>
 
       {vote && !over && (

@@ -2,12 +2,12 @@
 // updateVenue ile yapılır. Şema src/lib/db.js'te, tip src/lib/venue-types.ts'te tanımlı.
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createHmac, scryptSync } from 'node:crypto';
+import { createHmac, scryptSync, timingSafeEqual, randomBytes } from 'node:crypto';
 import { get, all, run } from './db';
 // Venue tipi veren dosya TS olduğu için JS dosyasında yalnızca JSDoc ile Referanslı tip kullanılır:
 
 const COLS = 'id, slug, name, city, initials, logo_url, color, accent, ntables, lat, lng, games, welcome, ann_title, ann_body, reward_game, reward_goal, reward_prize, email';
-const VENUE_GAMES = 'monopoly satranc spyfall ajanlar vampir tabu kimim cizim bil'.split(' ');
+const VENUE_GAMES = 'monopoly satranc spyfall ajanlar vampir tabu kimim cizim bil azul cluedo scrabble risk ticket carcassonne catan'.split(' ');
 const SCRYPT = { N: 16384, r: 8, p: 1 }; // db.js hashPassword ile aynı olmalı
 
 function deg(raw) {
@@ -55,8 +55,16 @@ export async function updateVenue(id, patch = {}) {
   const parts = [];
   const params = [];
 
+  const HEX = /^#[0-9a-fA-F]{6}$/;
+  const SAFE_URL = /^https:\/\/[^\s"'<>()\\]{1,190}$/;
   for (const [k, col] of Object.entries(SET)) {
-    if (k in patch) { parts.push([col, clean(patch[k], 200)]); }
+    if (!(k in patch)) continue;
+    const val = clean(patch[k], 200);
+    // Renkler oyuncu sayfalarında CSS değişkenine, logo adresi resme gider: biçimi doğrulanmayan değer yazılmaz
+    // (CSS/URL enjeksiyonu ve misafir tarayıcısını dış adrese yönlendirme).
+    if ((k === 'color' || k === 'accent') && !HEX.test(val)) continue;
+    if (k === 'logoUrl' && val && !SAFE_URL.test(val)) continue;
+    parts.push([col, val]);
   }
   if ('tables' in patch) {
     const n = Math.max(1, Math.min(500, Math.floor(Number(patch.tables) || 1)));
@@ -90,22 +98,40 @@ export async function updateVenue(id, patch = {}) {
 }
 
 // ---------- Panel oturumu ----------
-// Oturum çerezinde yalnızca mekân id'si + imzası taşınır (sunucusuz ortamda bellek yok). İmza, sır
-// olmadan DATABASE_URL'den türetilir (aynı veritabanına bağlanamayan biri imzayı taklit edemez).
+// Oturum çerezi: "<mekânId>.<bitişZamanı>.<HMAC>". İmza SESSION_SECRET ile atılır ve id + bitiş zamanını kapsar.
 const CO = 'oh-panel';
+const SESSION_MS = 60 * 60 * 24 * 30 * 1000;
+const IS_PROD = process.env.NODE_ENV === 'production';
 
-function sign() {
-  return createHmac('sha256', process.env.DATABASE_URL ?? 'local').digest('hex').slice(0, 24);
+// İmza anahtarı: üretimde SESSION_SECRET zorunlu (yoksa oturum açılmaz/doğrulanmaz); yerelde sabit geliştirme anahtarı.
+function secret() {
+  const s = process.env.SESSION_SECRET;
+  if (s && s.length >= 32) return s;
+  if (IS_PROD) throw new Error('SESSION_SECRET ayarlanmamış (en az 32 karakter).');
+  return 'dev-only-session-secret-not-for-production';
 }
-const stamp = (id) => `${id}.${sign()}`;
+const sign = (payload) => createHmac('sha256', secret()).update(payload).digest('hex');
+const stamp = (id) => {
+  const payload = `${id}.${Date.now() + SESSION_MS}`;
+  return `${payload}.${sign(payload)}`;
+};
+function verify(raw) {
+  const m = /^(\d{1,10})\.(\d{10,16})\.([a-f0-9]{64})$/.exec(String(raw));
+  if (!m) return null;
+  const a = Buffer.from(sign(`${m[1]}.${m[2]}`), 'hex');
+  const b = Buffer.from(m[3], 'hex');
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  if (Number(m[2]) < Date.now()) return null;
+  return Number(m[1]);
+}
 
 // Oturum çerezinden güncel mekânı döndürür; girişli değilse null. Oturum yoksa panelleri /panel/giris'e atar.
 export async function panelVenue() {
   try {
     const raw = (await cookies()).get(CO)?.value ?? '';
-    const [id] = raw.split('.');
-    if (!/^\d+$/.test(id) || stamp(id) !== raw) return null;
-    return await getVenue(Number(id));
+    const id = verify(raw);
+    if (!id) return null;
+    return await getVenue(id);
   } catch {
     return null;
   }
@@ -119,16 +145,32 @@ export async function requireVenue() {
 }
 
 export function cookieFor(id) {
-  return { name: CO, value: stamp(String(id)), httpOnly: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 30, path: '/' };
+  return { name: CO, value: stamp(String(id)), httpOnly: true, secure: IS_PROD, sameSite: 'lax', maxAge: SESSION_MS / 1000, path: '/' };
 }
 
 // Giriş: e-posta + şifre venues tablosundaki kayıtla karşılaştırılır (scrypt). Başarılıysa mekân id'si.
+// Kayıt ya da şifre yoksa da scrypt çalışır; yanıt süresinden e-postanın var olup olmadığı anlaşılmasın.
+const DUMMY_SALT = randomBytes(16).toString('hex');
 export async function loginVenue(email, password) {
-  const em = String(email ?? '').trim().toLowerCase();
+  const em = String(email ?? '').trim().toLowerCase().slice(0, 200);
   const r = await get('SELECT id, password FROM venues WHERE lower(email) = ? LIMIT 1', em);
-  const pw = String(r?.password ?? '');
-  if (!pw) return null;
-  const [salt, h] = pw.split(':');
-  const ok = !!h && scryptSync(String(password ?? ''), salt, 32, SCRYPT).toString('hex') === h;
-  return ok ? r.id : null;
+  const [salt, h] = String(r?.password ?? '').split(':');
+  const got = scryptSync(String(password ?? '').slice(0, 256), salt || DUMMY_SALT, 32, SCRYPT);
+  if (!r || !salt || !h || !/^[a-f0-9]{64}$/.test(h)) return null;
+  return timingSafeEqual(got, Buffer.from(h, 'hex')) ? r.id : null;
+}
+
+// Giriş denemesi sınırı (15 dakikada başarısız deneme): e-posta + IP çifti başına 8, yalnızca e-posta başına 40,
+// IP başına 30. Çift sınırı, hesap sahibini üçüncü kişinin kilitlemesini zorlaştırır (sahibin kendi IP'si ayrı
+// sayılır); e-posta toplamı ise sahte IP başlıklarıyla kaba kuvveti sınırlar. Sayaç veritabanında tutulur.
+const LOGIN_WINDOW = 15 * 60 * 1000;
+export async function loginBlocked(email, ip) {
+  const since = Date.now() - LOGIN_WINDOW;
+  const count = async (key) => Number((await get('SELECT count(*)::int AS n FROM login_attempts WHERE key = ? AND at > ?', key, since))?.n) || 0;
+  return (await count(`p:${email}|${ip}`)) >= 8 || (await count(`e:${email}`)) >= 40 || (await count(`i:${ip}`)) >= 30;
+}
+export async function recordLoginFailure(email, ip) {
+  const t = Date.now();
+  await run('INSERT INTO login_attempts (key, at) VALUES (?, ?), (?, ?), (?, ?)', `e:${email}`, t, `i:${ip}`, t, `p:${email}|${ip}`, t);
+  await run('DELETE FROM login_attempts WHERE at < ?', t - 24 * 60 * 60 * 1000);
 }

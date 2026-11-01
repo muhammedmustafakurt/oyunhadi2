@@ -7,6 +7,23 @@ const nextConfig: NextConfig = {
   experimental: { globalNotFound: true },
   // Ana klasörde başka bir package-lock.json olduğu için proje kökünü açıkça belirtiyoruz.
   turbopack: { root: path.resolve(__dirname) },
+  // Tüm yanıtlara temel güvenlik başlıkları (clickjacking, MIME sniffing, referrer sızıntısı, HTTP'ye düşme).
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          // Betik kaynağını kısıtlamayan (Next'in satır içi betiklerini bozmayan) CSP yönergeleri.
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'self'; base-uri 'self'; object-src 'none'" },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

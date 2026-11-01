@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientIp, floodOk, hit } from '@/lib/ratelimit';
 import {
   join, state, sendRequest, decideRequest, cancelRequest, sendMessage, closeRoom, blockUser, unblockUser, reportUser, leave, profile, setOpen,
 } from '@/lib/chat';
@@ -23,7 +24,11 @@ export async function POST(req) {
   try { body = await req.json(); } catch { return json({ error: 'Geçersiz istek.' }, 400); }
   try {
     const type = String(body?.type ?? '');
+    const ip = clientIp(req);
+    // Kaba taşkın koruması (örnek başına); oturum açmada ayrıca veritabanı sayacı.
+    if (!floodOk(`chat:${ip}`, 600, 60_000)) return json({ error: 'Çok fazla istek. Biraz yavaşlayın.' }, 429);
     if (type === 'join') {
+      if (!(await hit(`cj:i:${ip}`, 60, 10 * 60_000))) return json({ error: 'Çok fazla deneme. Biraz sonra tekrar deneyin.' }, 429);
       const res = await join(body);
       return json(res, res.status ?? 200);
     }

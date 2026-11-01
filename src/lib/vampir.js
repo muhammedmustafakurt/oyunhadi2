@@ -5,7 +5,7 @@
 export const ROLE = {
   vampir: { name: 'Vampir', icon: '🧛', info: 'Her gece diğer vampirlerle birlikte bir köylüyü öldürmeyi seçersin. Gündüz masum görün.' },
   koylu: { name: 'Köylü', icon: '🧑‍🌾', info: 'Gece uyursun. Gündüz tartışıp vampirleri bulmaya çalış.' },
-  doktor: { name: 'Doktor', icon: '🩺', info: 'Her gece birini korursun (kendini de). Vampirler o kişiyi seçerse ölmez.' },
+  doktor: { name: 'Doktor', icon: '🩺', info: 'Her gece birini korursun (kendini de). Vampirler o kişiyi seçerse ölmez. Aynı kişiyi üst üste iki gece koruyamazsın.' },
   kahin: { name: 'Kahin', icon: '🔮', info: 'Her gece birine bakıp vampir olup olmadığını öğrenirsin. Bunu kimseye kanıtlayamazsın, dikkatli ol.' },
 };
 
@@ -20,6 +20,7 @@ const shuffle = (a) => {
 const aliveIdx = (g) => g.alive.map((a, i) => (a ? i : -1)).filter((i) => i >= 0);
 const roleIdx = (g, role) => aliveIdx(g).filter((i) => g.roles[i] === role);
 const emptyNight = () => ({ kill: {}, protect: null, inspect: null });
+const ACTION_ROLE = { kill: 'vampir', protect: 'doktor', inspect: 'kahin' };
 
 export function newGame(n) {
   const v = Math.max(1, Math.floor(n / 3));
@@ -31,6 +32,7 @@ export function newGame(n) {
     day: 1,
     night: emptyNight(), // { kill: { [vampir]: hedef }, protect, inspect }
     votes: {}, // { [oylayan]: hedef | -1 (çekimser) }
+    lastProtect: null, // doktorun önceki gece koruduğu kişi (üst üste koruma yasak)
     seer: [], // kahinin gördükleri: { day, target, vamp }
     log: ['Gece başladı. Köy uykuya daldı.'],
     note: 'Gece 1: vampirler, doktor ve kahin seçimlerini yapıyor.',
@@ -63,16 +65,18 @@ function pickMax(counts) {
 function resolveNight(g, seats) {
   const alive = [...g.alive];
   const counts = {};
-  roleIdx(g, 'vampir').forEach((i) => { const t = g.night.kill[i]; counts[t] = (counts[t] || 0) + 1; });
-  const victim = pickMax(counts);
-  const saved = victim === g.night.protect;
+  // Seçim yapmayan vampir (zaman aşımı) o gece oy kullanmamış sayılır.
+  roleIdx(g, 'vampir').forEach((i) => { const t = g.night.kill[i]; if (t === undefined) return; counts[t] = (counts[t] || 0) + 1; });
+  const hasVictim = Object.keys(counts).length > 0;
+  const victim = hasVictim ? pickMax(counts) : null;
+  const saved = victim !== null && victim === g.night.protect;
   const seer = g.night.inspect !== null && roleIdx(g, 'kahin').length
     ? [...g.seer, { day: g.day, target: g.night.inspect, vamp: g.roles[g.night.inspect] === 'vampir' }]
     : g.seer;
   let text;
-  if (saved) text = 'Bu gece kimse ölmedi.';
+  if (!hasVictim || saved) text = 'Bu gece kimse ölmedi.';
   else { alive[victim] = false; text = `${seats[victim].name} gece vampirler tarafından öldürüldü. Rolü: ${ROLE[g.roles[victim]].name}.`; }
-  let n = { ...g, alive, seer, night: emptyNight(), votes: {}, phase: 'day', log: [...g.log, `Gündüz ${g.day}: ${text}`], note: `Gündüz ${g.day}: ${text} Şimdi tartışıp birini oylayın.` };
+  let n = { ...g, alive, seer, lastProtect: g.night.protect, night: emptyNight(), votes: {}, phase: 'day', log: [...g.log, `Gündüz ${g.day}: ${text}`], note: `Gündüz ${g.day}: ${text} Şimdi tartışıp birini oylayın.` };
   return checkWin(n) || n;
 }
 
@@ -110,15 +114,25 @@ const validTarget = (g, t, self = null) => Number.isInteger(t) && g.alive[t] && 
 
 export function nightAction(g, seats, idx, type, target) {
   const roleName = { kill: 'vampir', protect: 'doktor', inspect: 'kahin' }[type];
-  const e = need(g, idx, 'night', roleName);
+  if (!Object.prototype.hasOwnProperty.call(ACTION_ROLE, type)) return { error: 'Geçersiz işlem.' };
+  const e = need(g, idx, 'night', ACTION_ROLE[type]);
   if (e) return { error: e };
   if (!validTarget(g, target, type === 'inspect' ? idx : null)) return { error: 'Geçersiz seçim.' };
   if (type === 'kill' && g.roles[target] === 'vampir') return { error: 'Bir vampiri öldüremezsiniz.' };
+  if (type === 'protect' && target === g.lastProtect) return { error: 'Geçen gece koruduğunuz kişiyi üst üste koruyamazsınız.' };
   const night = { ...g.night };
   if (type === 'kill') night.kill = { ...night.kill, [idx]: target };
   else night[type] = target;
   const n = { ...g, night };
   return nightReady(n) ? resolveNight(n, seats) : n;
+}
+
+// Gece zaman aşımı: seçim yapmayan vampirler, doktor ve kahin o gece etkisiz sayılır (eksik seçim = seçim yok).
+// Gece normal çözümlenir; en az bir vampir hedef seçtiyse o hedef geçerli kalır, hiç seçim yoksa kimse ölmez.
+export function nightTimeout(g, seats) {
+  if (g.over) return { error: 'Tur bitti.' };
+  if (g.phase !== 'night') return { error: 'Şu an gece değil.' };
+  return resolveNight(g, seats);
 }
 
 export function castVote(g, seats, idx, target) {
@@ -136,8 +150,11 @@ export function onLeave(g, seats, idx) {
   alive[idx] = false;
   const votes = { ...g.votes };
   delete votes[idx];
-  const night = { ...g.night, kill: { ...g.night.kill } };
-  delete night.kill[idx];
+  // Ayrılanı hedef almış seçimler geçersizdir; ilgili kişi yeniden seçim yapar.
+  const night = { ...g.night, kill: {} };
+  Object.entries(g.night.kill).forEach(([v, t]) => { if (Number(v) !== idx && t !== idx) night.kill[v] = t; });
+  if (g.roles[idx] === 'doktor' || night.protect === idx) night.protect = null;
+  if (g.roles[idx] === 'kahin' || night.inspect === idx) night.inspect = null;
   let n = { ...g, alive, votes, night, log: [...g.log, `${seats[idx].name} köyü terk etti. Rolü: ${ROLE[g.roles[idx]].name}.`] };
   const w = checkWin(n);
   if (w) return w;
@@ -160,6 +177,7 @@ export function viewFor(g, idx) {
     me: idx < 0 ? null : {
       role,
       mates: role === 'vampir' ? g.roles.map((r, i) => (r === 'vampir' && i !== idx ? i : -1)).filter((i) => i >= 0) : [],
+      blocked: role === 'doktor' ? g.lastProtect : null, // doktorun bu gece seçemeyeceği kişi
     },
     choice: mine === undefined || mine === null ? null : mine, // bu gece benim seçimim
     vampChoices: role === 'vampir' ? g.night.kill : null, // vampirler birbirinin seçimini görür

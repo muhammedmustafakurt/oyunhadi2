@@ -60,6 +60,8 @@ export const LOCATIONS = [
 
 
 export const DURATION_MS = 8 * 60 * 1000;
+// Bir mekânın rol sayısı (5) yetmezse her oyuncuya farklı rol düşsün diye yedek roller (en fazla 10 oyuncu).
+const EXTRA_ROLES = ['Ziyaretçi', 'Çalışan', 'Tanık', 'Komşu', 'Gezgin'];
 const shuffle = (a) => {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -72,7 +74,7 @@ const activeOf = (seats) => seats.map((s, i) => (s.left ? -1 : i)).filter((i) =>
 
 export function newGame(n, now = Date.now()) {
   const loc = Math.floor(Math.random() * LOCATIONS.length);
-  const pool = shuffle([...LOCATIONS[loc].roles]);
+  const pool = [...shuffle([...LOCATIONS[loc].roles]), ...shuffle([...EXTRA_ROLES])];
   return {
     loc,
     spy: Math.floor(Math.random() * n),
@@ -87,10 +89,28 @@ export function newGame(n, now = Date.now()) {
   };
 }
 
-const finish = (g, winner, text) => ({ ...g, vote: null, over: { winner, text } });
+const ALL = (g) => Array.from({ length: g.roles.length }, (_, i) => i);
 
-export function accuse(g, seats, by, target) {
+// Tur puanları (kazanma nedenine göre):
+// caught: casus yakalandı -> suçlayan 2, diğer oyuncular 1 | wrong: yanlış suçlama -> casus 4
+// guess: casus doğru mekânı bildi -> casus 4 | guessWrong: yanlış tahmin -> oyuncular 1
+// timeout: süre doldu -> casus 2 | left: casus ayrıldı -> oyuncular 1
+function scoreRound(g, kind, by, act) {
+  const pts = Array(g.roles.length).fill(0);
+  const crew = act.filter((i) => i !== g.spy);
+  if (kind === 'caught') crew.forEach((i) => { pts[i] = i === by ? 2 : 1; });
+  else if (kind === 'wrong' || kind === 'guess') pts[g.spy] = 4;
+  else if (kind === 'guessWrong' || kind === 'left') crew.forEach((i) => { pts[i] = 1; });
+  else if (kind === 'timeout') pts[g.spy] = 2;
+  return pts;
+}
+
+const finish = (g, winner, text, kind = 'none', by = null, act = ALL(g)) =>
+  ({ ...g, vote: null, over: { winner, text, kind, points: scoreRound(g, kind, by, act) } });
+
+export function accuse(g, seats, by, target, now = Date.now()) {
   if (g.over) return { error: 'Tur bitti.' };
+  if (now >= g.endsAt) return { error: 'Süre doldu.' };
   if (g.vote) return { error: 'Zaten bir oylama sürüyor.' };
   const act = activeOf(seats);
   if (!act.includes(by) || !act.includes(target) || by === target) return { error: 'Geçersiz suçlama.' };
@@ -101,8 +121,9 @@ export function accuse(g, seats, by, target) {
 }
 
 // Suçlanan dışındaki herkes "evet" derse suçlama sonuçlanır; biri "hayır" derse oylama iptal olur.
-export function castVote(g, seats, idx, yes) {
+export function castVote(g, seats, idx, yes, now = Date.now()) {
   if (g.over || !g.vote) return { error: 'Açık bir oylama yok.' };
+  if (now >= g.endsAt) return timeout(g, now);
   const act = activeOf(seats);
   if (!act.includes(idx) || idx === g.vote.target) return { error: 'Bu oylamada oy kullanamazsınız.' };
   if (g.vote.votes[idx] !== undefined) return { error: 'Oyunuzu zaten kullandınız.' };
@@ -114,30 +135,34 @@ function resolve(g, seats) {
   const voters = activeOf(seats).filter((i) => i !== g.vote.target);
   if (!voters.every((i) => g.vote.votes[i])) return g;
   const t = g.vote.target;
+  const act = activeOf(seats);
   return t === g.spy
-    ? finish(g, 'players', `Casus yakalandı: ${seats[t].name}. Oyuncular kazandı!`)
-    : finish(g, 'spy', `${seats[t].name} casus değildi. Casus kazandı!`);
+    ? finish(g, 'players', `Casus yakalandı: ${seats[t].name}. Oyuncular kazandı!`, 'caught', g.vote.by, act)
+    : finish(g, 'spy', `${seats[t].name} casus değildi. Yanlış suçlama, casus kazandı!`, 'wrong', null, act);
 }
 
-export function guess(g, seats, idx, loc) {
+export function guess(g, seats, idx, loc, now = Date.now()) {
   if (g.over) return { error: 'Tur bitti.' };
   if (idx !== g.spy) return { error: 'Yalnızca casus mekânı tahmin edebilir.' };
+  if (g.vote) return { error: 'Oylama sürerken mekân tahmin edilemez.' };
+  if (now >= g.endsAt) return { error: 'Süre doldu.' };
   if (!Number.isInteger(loc) || loc < 0 || loc >= LOCATIONS.length) return { error: 'Geçersiz mekân.' };
+  const act = activeOf(seats);
   return loc === g.loc
-    ? finish(g, 'spy', `Casus mekânı bildi: ${LOCATIONS[g.loc].name}. Casus kazandı!`)
-    : finish(g, 'players', `Casus "${LOCATIONS[loc].name}" dedi ama mekân ${LOCATIONS[g.loc].name}. Oyuncular kazandı!`);
+    ? finish(g, 'spy', `Casus mekânı bildi: ${LOCATIONS[g.loc].name}. Casus kazandı!`, 'guess', null, act)
+    : finish(g, 'players', `Casus "${LOCATIONS[loc].name}" dedi ama mekân ${LOCATIONS[g.loc].name}. Oyuncular kazandı!`, 'guessWrong', null, act);
 }
 
 export function timeout(g, now = Date.now()) {
   if (g.over) return g;
   if (now < g.endsAt) return { error: 'Süre henüz dolmadı.' };
-  return finish(g, 'spy', 'Süre doldu, casus yakalanamadı. Casus kazandı!');
+  return finish(g, 'spy', 'Süre doldu, casus yakalanamadı. Casus kazandı!', 'timeout');
 }
 
 // Oyuncu masadan ayrıldı (seats'te left işaretlendikten sonra çağrılır).
 export function onLeave(g, seats, idx) {
   if (g.over) return g;
-  if (idx === g.spy) return finish(g, 'players', `Casus (${seats[idx].name}) masadan ayrıldı. Oyuncular kazandı!`);
+  if (idx === g.spy) return finish(g, 'players', `Casus (${seats[idx].name}) masadan ayrıldı. Oyuncular kazandı!`, 'left', null, activeOf(seats));
   if (activeOf(seats).length < 3) return finish(g, 'none', 'Oyuncu sayısı 3\'ün altına indi, tur iptal edildi.');
   let n = g;
   // ayrılan oyuncunun oylaması/suçlaması açıksa iptal et
@@ -149,7 +174,7 @@ export function onLeave(g, seats, idx) {
 export function viewFor(g, idx, now = Date.now()) {
   if (!g) return null;
   let over = g.over;
-  if (!over && now >= g.endsAt) over = { winner: 'spy', text: 'Süre doldu, casus yakalanamadı. Casus kazandı!' };
+  if (!over && now >= g.endsAt) over = { winner: 'spy', text: 'Süre doldu, casus yakalanamadı. Casus kazandı!', kind: 'timeout', points: scoreRound(g, 'timeout', null, ALL(g)) };
   return {
     leftMs: Math.max(0, g.endsAt - now),
     first: g.first,

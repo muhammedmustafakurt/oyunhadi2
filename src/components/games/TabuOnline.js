@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Lobby from './Lobby';
 import useRoom from './useRoom';
-import { TEAM, TURN_MS, TURN_OPTIONS } from '@/lib/tabu';
+import { PASSES, RULES, TEAM, TURN_MS, TURN_OPTIONS } from '@/lib/tabu';
 
 const RING = 2 * Math.PI * 54;
 const fmt = (ms) => `${Math.max(0, Math.ceil(ms / 1000))}`;
@@ -13,7 +13,7 @@ export default function TabuOnline({ cafe, masa }) {
   const ui = useRoom({ cafe, masa, game: 'tabu' });
   const { room, err, busy, send } = ui;
   const [sure, setSure] = useState(false);
-  const [secs, setSecs] = useState(60); // lobide seçilen tur süresi
+  const [secs, setSecs] = useState(TURN_MS / 1000); // lobide seçilen tur süresi
   const [deadline, setDeadline] = useState(0);
   const [now, setNow] = useState(0);
   const sent = useRef(false);
@@ -54,6 +54,12 @@ export default function TabuOnline({ cafe, masa }) {
                 <button key={s} type="button" className={`btn sm${secs === s ? ' primary' : ''}`} aria-pressed={secs === s} onClick={() => setSecs(s)}>{s} sn</button>
               ))}
             </div>
+            <details className="tb-rules">
+              <summary>Nasıl oynanır?</summary>
+              <ul>
+                {RULES.map((r) => <li key={r}>{r}</li>)}
+              </ul>
+            </details>
           </fieldset>
         )}
       />
@@ -103,7 +109,7 @@ export default function TabuOnline({ cafe, masa }) {
             <section className={`tb-ready ${t.team}`}>
               {info?.describer ? (
                 <>
-                  <p>Hazır olunca başla. {Math.round(turnMs / 1000)} saniyen var, {3} pas hakkın var.</p>
+                  <p>Hazır olunca başla. {Math.round(turnMs / 1000)} saniyen var, {PASSES} pas hakkın var.</p>
                   <button className="btn primary tb-go" disabled={busy} onClick={() => send('begin')}>Başla</button>
                 </>
               ) : (

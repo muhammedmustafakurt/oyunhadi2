@@ -53,9 +53,11 @@ function Board({ g, canDraw, color, size, eraser, sendRef, busyRef, apiRef, chil
   const cv = useRef(null);
   const L = useRef({ key: '', strokes: [], nextId: 1, keepWant: null, cur: null, raf: 0 });
   const src = useRef([]);
+  const srvLen = useRef(0); // sunucudaki çizgi sayısı (gönderme döngüsü bunu okur)
   const [any, setAny] = useState(false);
   const key = `${g.turnNo}:${g.drawer}`;
   src.current = canDraw ? L.current.strokes : g.strokes;
+  srvLen.current = g.strokes.length;
 
   const repaint = () => {
     const l = L.current;
@@ -108,7 +110,12 @@ function Board({ g, canDraw, color, size, eraser, sendRef, busyRef, apiRef, chil
     const id = setInterval(() => {
       const l = L.current;
       if (busyRef.current) return;
-      if (l.keepWant !== null) { sendRef.current('dset', { keep: l.keepWant }); return; }
+      if (l.keepWant !== null) {
+        // Sunucu zaten bu sayıya inmişse bekleme biter. Aksi halde (dset yanıtı state'i değiştirmez) efekt
+        // temizlemediği için çizim kilitlenirdi.
+        if (srvLen.current <= l.keepWant) l.keepWant = null;
+        else { sendRef.current('dset', { keep: l.keepWant }); return; }
+      }
       const pieces = [];
       for (const s of l.strokes) {
         if (s.sent < s.p.length && pieces.length < 30) {
@@ -147,7 +154,7 @@ function Board({ g, canDraw, color, size, eraser, sendRef, busyRef, apiRef, chil
     return [Math.round(clamp(((e.clientX - r.left) / r.width) * GRID, GRID)), Math.round(clamp(((e.clientY - r.top) / r.height) * GRID * 0.75, GRID * 0.75))];
   };
   const down = (e) => {
-    if (!canDraw) return;
+    if (!canDraw || e.button > 0) return; // yalnızca birincil dokunma/tıklama (sağ tık çizmez)
     e.currentTarget.setPointerCapture?.(e.pointerId);
     const l = L.current;
     const s = { id: l.nextId++, c: eraser ? ERASER : color, w: size, p: at(e), sent: 0 };
@@ -174,6 +181,7 @@ function Board({ g, canDraw, color, size, eraser, sendRef, busyRef, apiRef, chil
         ref={cv}
         className={canDraw ? 'draw' : ''}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+        onContextMenu={(e) => { if (canDraw) e.preventDefault(); }}
         aria-label="Çizim tahtası"
       />
       {!any && g.phase === 'draw' && <p className="pc-empty">{canDraw ? 'Parmağınla çizmeye başla' : 'Çizim bekleniyor…'}</p>}

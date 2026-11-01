@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Lobby from './Lobby';
 import useRoom from './useRoom';
 import { ROLE } from '@/lib/vampir';
@@ -15,6 +15,29 @@ export default function VampirOnline({ cafe, masa }) {
   const { room, err, busy, send } = ui;
   const [show, setShow] = useState(false); // rol kartı yanındakinin görmemesi için varsayılan kapalı
   const [sure, setSure] = useState(false);
+  const [deadline, setDeadline] = useState(0);
+  const [now, setNow] = useState(0);
+  const sent = useRef(false);
+  const g = room?.game;
+  const running = !!g && !g.over;
+  const seatedNow = !!room && room.me >= 0 && !room.seats[room.me]?.left;
+
+  // Sunucu kalan süreyi gönderir; yerel saat farkından etkilenmemek için bitiş anını burada hesaplarız.
+  useEffect(() => {
+    if (g && g.leftMs != null) { setDeadline(Date.now() + g.leftMs); setNow(Date.now()); sent.current = false; }
+    if (!running) return;
+    const id = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, [room?.version]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const left = running ? Math.max(0, deadline - now) : 0;
+  // Süre dolunca (gece ya da gündüz) zaman aşımı eylemi bir kez gönderilir; meşgulken gönderilemezse sonra denenir.
+  useEffect(() => {
+    if (running && seatedNow && deadline && left === 0 && !busy && !sent.current) {
+      sent.current = true;
+      send('timeout');
+    }
+  }, [left, busy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!room) return <p className="mono-where">{err || 'Masa açılıyor…'}</p>;
 
@@ -27,7 +50,6 @@ export default function VampirOnline({ cafe, masa }) {
     );
   }
 
-  const g = room.game;
   const names = room.seats.map((s) => s.name);
   const seated = room.me >= 0 && !room.seats[room.me]?.left;
   const me = seated ? g.me : null;
@@ -38,12 +60,13 @@ export default function VampirOnline({ cafe, masa }) {
   const day = g.phase === 'day';
   const aliveIdx = g.alive.map((a, i) => (a ? i : -1)).filter((i) => i >= 0);
   const mates = me?.mates ?? [];
+  const blocked = me?.blocked ?? null; // doktor: geçen gece korunan kişi bu gece seçilemez
 
   // Gece: kimler hedef olabilir?
   const nightTargets = !alive || !night ? [] : aliveIdx.filter((i) =>
     role === 'vampir' ? !(g.roles[i] === 'vampir' || mates.includes(i) || i === room.me)
       : role === 'kahin' ? i !== room.me
-      : role === 'doktor' ? true : false);
+      : role === 'doktor' ? i !== blocked : false);
   const nightType = role === 'vampir' ? 'kill' : role === 'doktor' ? 'protect' : role === 'kahin' ? 'inspect' : null;
   const prompt = { vampir: 'Bu gece kimi öldüreceksiniz?', doktor: 'Bu gece kimi koruyacaksın?', kahin: 'Bu gece kime bakacaksın?' }[role];
   const voted = new Set(g.voted);
@@ -56,6 +79,7 @@ export default function VampirOnline({ cafe, masa }) {
         <span className="ico" aria-hidden="true">{over ? '🏁' : night ? '🌙' : '☀️'}</span>
         <b>{over ? 'Tur bitti' : night ? `Gece ${g.day}` : `Gündüz ${g.day}`}</b>
         <small>{over ? '' : night ? 'Köy uyuyor, gizli işler dönüyor.' : 'Tartışın ve oy verin.'}</small>
+        {running && deadline > 0 && <small>Kalan süre: {Math.ceil(left / 1000)} sn</small>}
       </header>
 
       {over && (
@@ -103,6 +127,7 @@ export default function VampirOnline({ cafe, masa }) {
             <p className="sf-help">Seçenler: {Object.entries(g.vampChoices).map(([s, t]) => `${names[s]} → ${names[t]}`).join(', ')}</p>
           )}
           <p className="sf-help">{g.choice !== null ? 'Seçimin kaydedildi. Değiştirebilirsin; herkes seçince sabah olur.' : 'Seçimini yap, herkes seçince sabah olur.'}</p>
+          {role === 'doktor' && blocked !== null && <p className="sf-help">Geçen gece koruduğun kişi bu gece seçilemez.</p>}
           {role === 'kahin' && g.seer && g.seer.length > 0 && (
             <ul className="vp-seer">
               {g.seer.map((s, i) => <li key={i}>Gece {s.day}: <b>{names[s.target]}</b> {s.vamp ? '🧛 vampir!' : '🙂 vampir değil'}</li>)}

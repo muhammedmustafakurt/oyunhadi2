@@ -112,17 +112,23 @@ export default function KimimOnline({ cafe, masa }) {
             <div className="txt">
               <small>Tur {Math.min(g.turnNo + 1, g.maxTurns)} / {g.maxTurns}</small>
               <h2>{myTurn ? 'Sıra sende' : `${names[g.turn]} tahmin ediyor`}</h2>
-              <p>{myTurn ? 'Evet/hayır soruları sor, bildiğinde yüksek sesle söyle.' : <>Kartı sen görüyorsun: <b>{g.cards[g.turn].n}</b></>}</p>
+              <p>
+                {myTurn
+                  ? 'Diğerlerine evet/hayır diye sor. Bildiğini düşünürsen tahminini yüksek sesle söyle; onlar doğru ya da yanlış desin.'
+                  : seated
+                    ? <>Bu kartı sen görüyorsun: <b>{g.cards[g.turn].n}</b>. Sorulara evet/hayır diye yanıt ver, tahmin gelince onayla.</>
+                    : <>Kart: <b>{g.cards[g.turn].n}</b></>}
+              </p>
             </div>
           </div>
           <div className={`km-drain ${urgency}`} aria-hidden="true"><i style={{ width: `${frac * 100}%` }} /></div>
           {myTurn && (
-            <button className="btn km-skip" disabled={busy} onClick={() => send('kskip')}>Sırayı bitir</button>
+            <button className="btn km-skip" disabled={busy} onClick={() => send('kskip')}>Pas geç, sırayı ver</button>
           )}
           {!myTurn && seated && (
             <div className="km-btns">
-              <button className="btn no" disabled={busy} onClick={() => send('kno')}>Yanlış</button>
-              <button className="btn ok" disabled={busy} onClick={() => send('kok')}>Doğru</button>
+              <button className="btn no" disabled={busy} onClick={() => send('kno')} aria-label="Tahmin yanlış, sıra sonrakine geçsin">Tahmin yanlış</button>
+              <button className="btn ok" disabled={busy} onClick={() => send('kok')} aria-label="Tahmin doğru, kart bulundu">Tahmin doğru</button>
             </div>
           )}
           {g.note && <p className="km-note">{g.note}</p>}

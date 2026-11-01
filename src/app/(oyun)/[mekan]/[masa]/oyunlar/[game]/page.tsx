@@ -9,6 +9,13 @@ import TabuOnline from '@/components/games/TabuOnline';
 import KimimOnline from '@/components/games/KimimOnline';
 import CizimOnline from '@/components/games/CizimOnline';
 import BilOnline from '@/components/games/BilOnline';
+import RiskOnline from '@/components/games/RiskOnline';
+import AzulOnline from '@/components/games/AzulOnline';
+import CluedoOnline from '@/components/games/CluedoOnline';
+import ScrabbleOnline from '@/components/games/ScrabbleOnline';
+import CarcassonneOnline from '@/components/games/CarcassonneOnline';
+import CatanOnline from '@/components/games/CatanOnline';
+import TicketOnline from '@/components/games/TicketOnline';
 import ResetTable from '@/components/oyun/ResetTable';
 import Presence from '@/components/oyun/Presence';
 import GameBand from '@/components/oyun/GameBand';
@@ -21,7 +28,8 @@ export const dynamic = 'force-dynamic';
 
 const VIEWS: Record<string, React.ComponentType<{ cafe: string; masa: string }>> = {
   monopoly: MonopolyOnline, satranc: ChessOnline, spyfall: SpyfallOnline, ajanlar: AjanlarOnline, vampir: VampirOnline,
-  tabu: TabuOnline, kimim: KimimOnline, cizim: CizimOnline, bil: BilOnline,
+  tabu: TabuOnline, kimim: KimimOnline, cizim: CizimOnline, bil: BilOnline, azul: AzulOnline, risk: RiskOnline,
+  cluedo: CluedoOnline, scrabble: ScrabbleOnline, carcassonne: CarcassonneOnline, catan: CatanOnline, ticket: TicketOnline,
 };
 
 export async function generateMetadata({ params }: PageProps<'/[mekan]/[masa]/oyunlar/[game]'>) {

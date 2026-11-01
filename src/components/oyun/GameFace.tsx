@@ -113,6 +113,27 @@ const FACES: Record<string, React.ReactNode> = {
       <path d="M50 66q10 9 20 0" fill="none" {...s} strokeWidth={4} />
     </>
   ),
+  // Cluedo: büyüteçli dedektif
+  cluedo: (
+    <>
+      <rect x="22" y="66" width="72" height="42" rx="8" fill="#f5e6c8" {...s} />
+      <line x1="76" y1="66" x2="102" y2="94" {...s} strokeWidth={10} />
+      <circle cx="52" cy="40" r="26" fill="#cfe9ff" {...s} />
+      <circle cx="44" cy="36" r="4" fill={K} />
+      <circle cx="60" cy="36" r="4" fill={K} />
+      <path d="M44 50q8 7 16 0" fill="none" {...s} />
+    </>
+  ),
+  // Azul: gülen fayans
+  azul: (
+    <>
+      <rect x="16" y="16" width="88" height="88" rx="18" fill="#2a6fb0" {...s} />
+      <rect x="30" y="30" width="60" height="60" rx="10" fill="#f2c230" {...s} strokeWidth={4} />
+      <circle cx="50" cy="56" r="5" fill={K} />
+      <circle cx="70" cy="56" r="5" fill={K} />
+      <path d="M48 70q12 10 24 0" fill="none" {...s} />
+    </>
+  ),
   // Bil Bakalım: gülen ampul
   bil: (
     <>
@@ -123,6 +144,63 @@ const FACES: Record<string, React.ReactNode> = {
       <circle cx="50" cy="46" r="5" fill={K} />
       <circle cx="70" cy="46" r="5" fill={K} />
       <path d="M48 58q12 12 24 0" fill="none" {...s} />
+    </>
+  ),
+  // Catan: gülen altıgen arazi karosu
+  catan: (
+    <>
+      <polygon points="60,10 100,33 100,79 60,102 20,79 20,33" fill="#e8c76a" {...s} />
+      <circle cx="48" cy="54" r="5" fill={K} />
+      <circle cx="72" cy="54" r="5" fill={K} />
+      <path d="M48 68q12 10 24 0" fill="none" {...s} />
+    </>
+  ),
+  // Risk: gülen dünya küresi
+  risk: (
+    <>
+      <circle cx="60" cy="60" r="44" fill="#9fd8f5" {...s} />
+      <path d="M26 34q10-12 22-4q6 8-2 16q-10 4-18-2Z" fill="#8fc24a" {...s} strokeWidth={3} />
+      <path d="M74 26q14-8 20 6q0 10-10 12q-10-2-10-18Z" fill="#8fc24a" {...s} strokeWidth={3} />
+      <circle cx="48" cy="66" r="5" fill={K} />
+      <circle cx="72" cy="66" r="5" fill={K} />
+      <path d="M50 80q10 8 20 0" fill="none" {...s} />
+    </>
+  ),
+  // Scrabble: gülen harf karosu
+  scrabble: (
+    <>
+      <rect x="18" y="18" width="84" height="84" rx="16" fill="#fbe9c3" {...s} />
+      <text x="84" y="46" textAnchor="middle" fontSize="24" fontWeight="800" fill={K} fontFamily="system-ui, sans-serif">Ş</text>
+      <circle cx="46" cy="66" r="5" fill={K} />
+      <circle cx="74" cy="66" r="5" fill={K} />
+      <path d="M46 80q14 10 28 0" fill="none" {...s} />
+    </>
+  ),
+  // Ticket to Ride: gülen lokomotif
+  ticket: (
+    <>
+      <rect x="40" y="12" width="40" height="26" rx="4" fill="#c9c2e0" {...s} />
+      <rect x="18" y="36" width="84" height="54" rx="12" fill="#e2483d" {...s} />
+      <circle cx="46" cy="58" r="4" fill={K} />
+      <circle cx="74" cy="58" r="4" fill={K} />
+      <path d="M48 74q12 10 24 0" fill="none" {...s} />
+      <circle cx="38" cy="98" r="9" fill={K} />
+      <circle cx="82" cy="98" r="9" fill={K} />
+    </>
+  ),
+  // Carcassonne: bayraklı kale kulesi
+  carcassonne: (
+    <>
+      <rect x="36" y="36" width="48" height="74" fill="#e9e1cf" {...s} />
+      <rect x="34" y="22" width="14" height="16" fill="#e9e1cf" {...s} strokeWidth={4} />
+      <rect x="53" y="22" width="14" height="16" fill="#e9e1cf" {...s} strokeWidth={4} />
+      <rect x="72" y="22" width="14" height="16" fill="#e9e1cf" {...s} strokeWidth={4} />
+      <path d="M60 22V4" fill="none" {...s} strokeWidth={4} />
+      <polygon points="60,4 80,10 60,16" fill="#ff4f2e" {...s} strokeWidth={3} />
+      <circle cx="50" cy="58" r="5" fill={K} />
+      <circle cx="70" cy="58" r="5" fill={K} />
+      <path d="M50 72q10 8 20 0" fill="none" {...s} />
+      <path d="M50 110V96a10 10 0 0 1 20 0v14Z" fill={K} />
     </>
   ),
 };

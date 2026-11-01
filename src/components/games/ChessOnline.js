@@ -5,6 +5,7 @@ import Lobby from './Lobby';
 import useRoom from './useRoom';
 
 // Masada iki ayrı telefondan satranç: 1. koltuk Beyaz, 2. koltuk Siyah.
+// Hamle, terfi taşı (promo) ve beraberlik/teslim eylemleri sunucuya gönderilir; kurallar sunucuda da doğrulanır.
 export default function ChessOnline({ cafe, masa }) {
   const ui = useRoom({ cafe, masa, game: 'satranc' });
   const { room, err, busy, send } = ui;
@@ -37,7 +38,9 @@ export default function ChessOnline({ cafe, masa }) {
         names={names}
         flip={color === 'b'}
         canMove={myTurn}
-        onMove={(fy, fx, ty, tx) => send('move', { from: [fy, fx], to: [ty, tx] })}
+        myColor={color}
+        onMove={(fy, fx, ty, tx, promo) => send('move', { from: [fy, fx], to: [ty, tx], promo })}
+        onAct={seated ? (type) => send(type) : undefined}
         onNew={() => send('reset')}
         newLabel="Rövanş (lobiye dön)"
       />

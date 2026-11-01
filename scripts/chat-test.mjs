@@ -34,9 +34,14 @@ const join = (cafe, masa, p, nick) => post({ type: 'join', cafe, masa, pid: p, n
 const state = (token, room = '', after = 0) => get({ token, room, after });
 const act = (token, type, extra = {}) => post({ token, type, ...extra });
 
+// Panel çerezi: "<id>.<bitiş>.<HMAC(SESSION_SECRET)>" (src/lib/venues.js ile aynı biçim). SESSION_SECRET yoksa
+// geliştirme sunucusunun sabit anahtarı kullanılır; üretim sunucusuna karşı çalıştırırken SESSION_SECRET gerekir.
+const SECRET = (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32)
+  ? process.env.SESSION_SECRET
+  : 'dev-only-session-secret-not-for-production';
 function cookie(id) {
-  const sig = createHmac('sha256', URL).digest('hex').slice(0, 24);
-  return `oh-panel=${id}.${sig}`;
+  const payload = `${id}.${Date.now() + 60 * 60 * 1000}`;
+  return `oh-panel=${payload}.${createHmac('sha256', SECRET).update(payload).digest('hex')}`;
 }
 const panelPost = async (id, body) => {
   const r = await fetch(`${BASE}/api/panel/chat`, {
