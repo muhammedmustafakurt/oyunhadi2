@@ -7,7 +7,7 @@ import { N, TILES, JOKER, premium, pointsOf } from '@/lib/scrabble';
 
 // Masada Scrabble (Türkçe). Raftan taşı seç, tahtada boş bir kareye dokun; yerleşimi onayla. Hamle sunucuda
 // denetlenir. Hamle yapıldıktan sonra sıradaki oyuncu hamle yapana kadar diğer oyuncular kelimeye itiraz edebilir.
-const PREM = { T: ['tw', 'K3'], D: ['dw', 'K2'], '*': ['center', '★'], t: ['tl', 'H3'], d: ['dl', 'H2'] };
+const PREM = { T: ['tw', 'K×3'], D: ['dw', 'K×2'], '*': ['center', '★'], t: ['tl', 'H×3'], d: ['dl', 'H×2'] };
 const LETTER_LIST = TILES.map(([l]) => l);
 
 export default function ScrabbleOnline({ cafe, masa }) {
@@ -170,6 +170,13 @@ export default function ScrabbleOnline({ cafe, masa }) {
         }))}
       </div>
 
+      <ul className={css.legend} aria-label="Renk anahtarı">
+        <li><i className={css.tw} />K×3 kelime</li>
+        <li><i className={css.dw} />K×2 kelime</li>
+        <li><i className={css.tl} />H×3 harf</li>
+        <li><i className={css.dl} />H×2 harf</li>
+      </ul>
+
       {bar}
 
       {g.pending && g.pending.by !== me && running && !g.vote && seated && (
@@ -229,7 +236,7 @@ export default function ScrabbleOnline({ cafe, masa }) {
           <div className={css.actions}>
             <button className="btn sm" disabled={!staged.length || busy} onClick={undo}>Geri al</button>
             <button className="btn sm" disabled={!staged.length || busy} onClick={recall}>Hepsini geri al</button>
-            <button className="btn sm primary" disabled={!canPlay} onClick={play}>Kelimeyi oyna</button>
+            <button className={`btn primary ${css.playBtn}`} disabled={!canPlay} onClick={play}>Kelimeyi oyna</button>
           </div>
           <div className={css.actions}>
             <button className="btn sm" disabled={busy || staged.length > 0} onClick={() => send('scpass')}>Pas geç</button>

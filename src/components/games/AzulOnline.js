@@ -7,13 +7,15 @@ import { COLORS, COLOR_NAME, FLOOR, MARKER, patternColor, placeError } from '@/l
 
 // Fayans renkleri (mavi, sarı, kırmızı, siyah, turkuaz). Kodlar lib/azul.js ile aynıdır.
 const HEX = { B: '#2a6fb0', Y: '#f2c230', R: '#c93a2b', K: '#2d2a3a', T: '#1aa39a' };
+// Renk körü dostu: her renge ayrı bir simge.
+const GLYPH = { B: '●', Y: '▲', R: '◆', K: '■', T: '✚' };
 const LINE_LABEL = [1, 2, 3, 4, 5];
 
 // Renk sayımı: [renk, adet] çiftleri, yalnızca bulunanlar.
 const groups = (list) => COLORS.map((c) => [c, list.filter((x) => x === c).length]).filter(([, n]) => n > 0);
 
 function Tile({ c, ghost }) {
-  return <i className={`az-cell${ghost ? ' ghost' : ''}`} style={{ background: HEX[c] }} aria-label={COLOR_NAME[c]} />;
+  return <i className={`az-cell c-${c}${ghost ? ' ghost' : ''}`} style={{ background: HEX[c] }} data-s={GLYPH[c]} role="img" aria-label={COLOR_NAME[c]} />;
 }
 
 // Masada Azul: fabrikadan ya da merkezden tek renk seçilir, sonra desen çizgisine ya da tabana konur.
@@ -97,7 +99,7 @@ export default function AzulOnline({ cafe, masa }) {
                 const x = p.floor[k];
                 return (
                   <span key={k} className="az-slot">
-                    {x === MARKER ? <b className="az-star">★</b> : x ? <Tile c={x} /> : <i className="az-cell empty" />}
+                    {x === MARKER ? <b className="az-star" aria-label="Başlangıç işareti">★</b> : x ? <Tile c={x} /> : <i className="az-cell empty" />}
                     <small>{pen}</small>
                   </span>
                 );
@@ -110,7 +112,7 @@ export default function AzulOnline({ cafe, masa }) {
   );
 
   return (
-    <div className="az">
+    <div className={`az${myTurn ? ' mine' : ''}${sel ? ' has-sel' : ''}`}>
       {!seated && <p className="mono-where">Oyun başladı; izleyici olarak takip ediyorsunuz.</p>}
 
       {over && (
@@ -150,7 +152,7 @@ export default function AzulOnline({ cafe, masa }) {
                         disabled={!myTurn || busy} onClick={() => toggle('factory', i, c)}
                         aria-label={`Fabrika ${i + 1}: ${n} ${COLOR_NAME[c]}`}
                       >
-                        <span className="az-dot" style={{ background: HEX[c] }} />×{n}
+                        <Tile c={c} /><span className="az-n">×{n}</span>
                       </button>
                     ))}
                   </div>
@@ -169,7 +171,7 @@ export default function AzulOnline({ cafe, masa }) {
                   disabled={!myTurn || busy} onClick={() => toggle('center', undefined, c)}
                   aria-label={`Merkez: ${n} ${COLOR_NAME[c]}`}
                 >
-                  <span className="az-dot" style={{ background: HEX[c] }} />×{n}
+                  <Tile c={c} /><span className="az-n">×{n}</span>
                 </button>
               ))}
               {g.center.length === 0 && !g.marker && <span className="muted">boş</span>}
@@ -178,20 +180,20 @@ export default function AzulOnline({ cafe, masa }) {
 
           {myTurn && sel && (
             <section className="az-dest" aria-label="Fayansları nereye koyacaksın?">
-              <p><b>{COLOR_NAME[sel.color]}</b> × {selCount}: nereye koyacaksın?</p>
+              <p className="az-dest-q"><Tile c={sel.color} /><span><b>{COLOR_NAME[sel.color]}</b> × {selCount}: nereye koyacaksın?</span></p>
               <div className="az-dest-btns">
                 {LINE_LABEL.map((n, l) => {
                   const e = mine ? placeError(mine, sel.color, l) : 'Oyunda değilsiniz.';
                   return (
                     <button key={l} type="button" className="btn sm" disabled={!!e || busy} onClick={() => move(l)}>
-                      Desen {n}
+                      Desen {n}<small>{mine ? `${mine.lines[l].length}/${n}` : ''}</small>
                     </button>
                   );
                 })}
-                <button type="button" className="btn sm danger" disabled={busy} onClick={() => move(-1)}>Taban</button>
+                <button type="button" className="btn sm danger" disabled={busy} onClick={() => move(-1)}>Taban<small>ceza</small></button>
               </div>
               {reasons.length > 0 && <p className="az-hint">{reasons.join(' ')}</p>}
-              <button type="button" className="btn sm" onClick={() => setSel(null)}>Vazgeç</button>
+              <button type="button" className="btn sm az-cancel" onClick={() => setSel(null)}>Vazgeç</button>
             </section>
           )}
         </>

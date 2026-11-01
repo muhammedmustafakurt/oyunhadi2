@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Lobby from './Lobby';
 import useRoom from './useRoom';
 import { PALETTE } from '@/lib/emlak';
@@ -7,15 +7,15 @@ import { TERRITORIES, CONT, NEIGH, EDGE_LIST, SYM_TR, validSet } from '@/lib/ris
 
 // Harita konumları (1000x560). Komşuluk çizgileri lib/risk.js'teki gerçek komşuluktan çizilir; konumlar yalnızca yerleşimdir.
 const POS = {
-  'Alaska': [60, 110], 'Kuzeybatı Toprakları': [150, 90], 'Grönland': [290, 50], 'Alberta': [120, 175], 'Ontario': [215, 160],
-  'Quebec': [300, 170], 'Batı ABD': [120, 240], 'Doğu ABD': [215, 250], 'Orta Amerika': [170, 320],
-  'Venezuela': [245, 355], 'Brezilya': [300, 410], 'Peru': [235, 420], 'Arjantin': [260, 490],
-  'İzlanda': [400, 110], 'İngiltere': [430, 170], 'Kuzey Avrupa': [500, 160], 'İskandinavya': [500, 100], 'Batı Avrupa': [440, 230],
-  'Güney Avrupa': [510, 230], 'Ukrayna': [580, 160],
-  'Kuzey Afrika': [450, 330], 'Mısır': [530, 320], 'Doğu Afrika': [570, 390], 'Kongo': [500, 400], 'Güney Afrika': [530, 490], 'Madagaskar': [600, 470],
-  'Ural': [660, 130], 'Sibirya': [740, 100], 'Yakutsk': [820, 70], 'İrkutsk': [780, 160], 'Kamçatka': [890, 90], 'Moğolistan': [820, 190],
-  'Japonya': [900, 190], 'Çin': [760, 250], 'Afganistan': [650, 200], 'Orta Doğu': [600, 270], 'Hindistan': [700, 290], 'Siyam': [790, 320],
-  'Endonezya': [800, 400], 'Yeni Gine': [880, 410], 'Batı Avustralya': [820, 480], 'Doğu Avustralya': [900, 490],
+  'Alaska': [55, 105], 'Kuzeybatı Toprakları': [165, 70], 'Grönland': [290, 50], 'Alberta': [120, 175], 'Ontario': [215, 160],
+  'Quebec': [300, 170], 'Batı ABD': [125, 255], 'Doğu ABD': [220, 260], 'Orta Amerika': [175, 330],
+  'Venezuela': [245, 355], 'Brezilya': [320, 410], 'Peru': [235, 420], 'Arjantin': [260, 490],
+  'İzlanda': [400, 110], 'İngiltere': [430, 170], 'Kuzey Avrupa': [505, 165], 'İskandinavya': [500, 100], 'Batı Avrupa': [430, 252],
+  'Güney Avrupa': [540, 252], 'Ukrayna': [605, 160],
+  'Kuzey Afrika': [450, 340], 'Mısır': [545, 335], 'Doğu Afrika': [570, 390], 'Kongo': [500, 400], 'Güney Afrika': [530, 490], 'Madagaskar': [600, 470],
+  'Ural': [660, 130], 'Sibirya': [740, 100], 'Yakutsk': [820, 70], 'İrkutsk': [780, 160], 'Kamçatka': [890, 90], 'Moğolistan': [838, 200],
+  'Japonya': [925, 215], 'Çin': [760, 250], 'Afganistan': [650, 200], 'Orta Doğu': [630, 290], 'Hindistan': [725, 300], 'Siyam': [790, 320],
+  'Endonezya': [800, 400], 'Yeni Gine': [880, 410], 'Batı Avustralya': [805, 485], 'Doğu Avustralya': [915, 490],
 };
 const NEUTRAL = '#9a9a9a';
 
@@ -31,8 +31,19 @@ export default function RiskOnline({ cafe, masa }) {
   const [mv, setMv] = useState(0);
   const [cards, setCards] = useState([]);
   const [sure, setSure] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const scrollRef = useRef(null);
 
   // Her sunucu güncellemesinde hedef ve kart seçimi sıfırlanır; bölge seçimi kalır.
+  useEffect(() => { try { if (window.innerWidth < 700) setZoom(2); } catch {} }, []);
+  // Seçilen bölge görünür kalsın: harita kaydırılabilir kutuda seçime ortalanır.
+  useEffect(() => {
+    const el = scrollRef.current; const f = to ?? t;
+    if (!el || f === null || el.scrollWidth <= el.clientWidth + 2) return;
+    const [x, y] = POS[TERRITORIES[f]];
+    const k = el.scrollWidth / 1000;
+    el.scrollTo({ left: x * k - el.clientWidth / 2, top: y * k - el.clientHeight / 2, behavior: "smooth" });
+  }, [t, to, zoom]);
   useEffect(() => { setTo(null); setCards([]); setMv(0); }, [room?.version]);
 
   if (!room) return <p className="mono-where">{err || 'Masa açılıyor…'}</p>;
@@ -89,66 +100,124 @@ export default function RiskOnline({ cafe, masa }) {
   else if (g.phase === 'attack') turnText = 'Saldırı: kendi bölgenizi seçin, sonra komşu bir bölgeye saldırın.';
   else if (g.phase === 'fortify') turnText = 'Manevra: bir kez, kendi bölgeleriniz arasında ordu taşıyabilirsiniz.';
 
+  // Seçime göre vurgulanacak aday bölgeler (saldırıda komşu düşmanlar, manevrada kendi bölgeler).
+  const cand = new Set();
+  if (myTurn && t !== null) {
+    if (g.phase === 'attack') NEIGH[t].forEach((x) => { if (g.owner[x] !== me) cand.add(x); });
+    if (g.phase === 'fortify') g.owner.forEach((o, x) => { if (o === me && x !== t) cand.add(x); });
+  }
+  const armiesOf = (p) => g.owner.reduce((c, o, i) => c + (o === p ? g.armies[i] : 0), 0);
+  const STEPS = [['reinforce', 'Takviye'], ['attack', 'Saldırı'], ['fortify', 'Manevra']];
+  const stepIdx = STEPS.findIndex(([k2]) => k2 === g.phase);
+  const last = g.last;
+  const zoomIn = () => setZoom((z) => Math.min(3, +(z + 0.5).toFixed(1)));
+  const zoomOut = () => setZoom((z) => Math.max(1, +(z - 0.5).toFixed(1)));
+
   return (
     <div className="rk">
-      <p className="mono-where rk-turn">{turnText}</p>
+      <p className={`rk-turn${myTurn ? ' mine' : ''}`}>{turnText}</p>
+
+      {!g.over && (
+        g.phase === 'setup' ? (
+          <div className="rk-steps"><span className="on">Kurulum</span></div>
+        ) : (
+          <ol className="rk-steps" aria-label="Tur aşaması">
+            {STEPS.map(([key, lbl], i) => (
+              <li key={key} className={i === stepIdx ? 'on' : i < stepIdx ? 'done' : ''}><b>{i + 1}</b> {lbl}</li>
+            ))}
+          </ol>
+        )
+      )}
+
       <ul className="rk-players">
         {room.seats.map((s, p) => (
           <li key={p} className={`rk-pl${p === g.turn && !g.over ? ' on' : ''}${s.left || !g.alive[p] ? ' out' : ''}`}>
             <i className="av" style={{ background: colorOf(p) }}>{p + 1}</i>
-            <span>{s.name}{p === me ? ' (sen)' : ''}</span>
-            <small>{g.alive[p] ? `${owned(p)} bölge · ${g.counts?.[p] ?? 0} kart` : 'elendi'}</small>
+            <span className="rk-nm">{s.name}{p === me ? ' (sen)' : ''}</span>
+            <small>{g.alive[p] ? `${owned(p)} bölge · ${armiesOf(p)} ordu · ${g.counts?.[p] ?? 0} kart` : 'elendi'}</small>
           </li>
         ))}
       </ul>
 
-      <svg viewBox="0 0 1000 560" className="rk-map" role="img" aria-label="Dünya haritası">
-        {EDGE_LIST.map(([a, b]) => (
-          <line key={`${a}-${b}`} x1={POS[TERRITORIES[a]][0]} y1={POS[TERRITORIES[a]][1]} x2={POS[TERRITORIES[b]][0]} y2={POS[TERRITORIES[b]][1]} className="rk-edge" />
-        ))}
-        {TERRITORIES.map((name, i) => {
-          const [x, y] = POS[name];
-          const cls = ['rk-t', i === t && 'sel', i === to && 'tg'].filter(Boolean).join(' ');
-          return (
-            <g key={name} className={cls} onClick={() => onMap(i)} role="button" aria-label={`${name}, ${g.armies[i]} ordu`}>
-              <circle cx={x} cy={y} r={22} fill={colorOf(g.owner[i])} />
-              <text x={x} y={y} dy="0.35em">{g.armies[i]}</text>
-            </g>
-          );
-        })}
-      </svg>
+      <div className="rk-mapbox">
+        <div className="rk-zoom" role="group" aria-label="Yakınlaştır">
+          <button type="button" onClick={zoomOut} disabled={zoom <= 1} aria-label="Uzaklaştır">−</button>
+          <button type="button" onClick={zoomIn} disabled={zoom >= 3} aria-label="Yakınlaştır">+</button>
+        </div>
+        <div className="rk-scroll" ref={scrollRef}>
+          <svg viewBox="0 0 1000 560" className="rk-map" style={{ width: `${zoom * 100}%` }} role="group" aria-label="Dünya haritası">
+            {EDGE_LIST.map(([a, b]) => {
+              const hot = t !== null && ((a === t && cand.has(b)) || (b === t && cand.has(a)));
+              return <line key={`${a}-${b}`} x1={POS[TERRITORIES[a]][0]} y1={POS[TERRITORIES[a]][1]} x2={POS[TERRITORIES[b]][0]} y2={POS[TERRITORIES[b]][1]} className={`rk-edge${hot ? ' hot' : ''}`} />;
+            })}
+            {TERRITORIES.map((name, i) => {
+              const [x, y] = POS[name];
+              const cls = ['rk-t', i === t && 'sel', i === to && 'tg', cand.has(i) && 'cand'].filter(Boolean).join(' ');
+              return (
+                <g key={name} className={cls} onClick={() => onMap(i)} role="button" aria-label={`${name}, ${g.armies[i]} ordu, ${nameOf(g.owner[i])}`}>
+                  <circle className="rk-hit" cx={x} cy={y} r={34} />
+                  {(i === t || i === to || cand.has(i)) && <circle className="rk-ring" cx={x} cy={y} r={32} />}
+                  <circle className="rk-dot" cx={x} cy={y} r={26} fill={colorOf(g.owner[i])} />
+                  <text className="rk-n" x={x} y={y} dy="0.36em">{g.armies[i]}</text>
+                  <text className="rk-name" x={x} y={y + 41}>{name}</text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      </div>
 
       <div className="rk-info">
         {sel ? (
-          <p>
+          <p className="rk-sel">
+            <i className="rk-sw" style={{ background: colorOf(sel.owner) }} />
             <b>{sel.name}</b> · {nameOf(sel.owner)} · {sel.armies} ordu
-            {to !== null && <> → <b>{TERRITORIES[to]}</b></>}
+            {to !== null && <> <span className="rk-arrow">→</span> <b>{TERRITORIES[to]}</b> · {g.armies[to]} ordu</>}
           </p>
-        ) : <p className="muted">Haritadan bir bölge seçin.</p>}
-        <p className="muted">Kıtalar: {CONT.map((c) => `${c.name} +${c.bonus}`).join(' · ')}</p>
-        {g.last && <p className="muted">Son savaş: {TERRITORIES[g.last.from]} → {TERRITORIES[g.last.to]} · sen {g.last.aLost} kayıp, rakip {g.last.dLost} kayıp{g.last.won ? ' · fethedildi' : ''}</p>}
+        ) : <p className="muted">{myTurn ? 'Haritadan bir bölge seçin.' : 'Haritada bölgelere dokunarak bilgi alabilirsiniz.'}</p>}
         {g.note && <p className="muted rk-note">{g.note}</p>}
       </div>
+
+      {last && (
+        <div className="rk-battle" aria-live="polite">
+          <div className="rk-bh">
+            <b>Son savaş</b>
+            <span>{TERRITORIES[last.from]} → {TERRITORIES[last.to]}</span>
+          </div>
+          <div className="rk-dice">
+            <div className="rk-dg"><small>{nameOf(last.by)}</small>{last.a.map((v, i) => <span key={i} className="rk-die att">{v}</span>)}</div>
+            <div className="rk-dg"><small>Savunma</small>{last.d.map((v, i) => <span key={i} className="rk-die def">{v}</span>)}</div>
+          </div>
+          <p className="rk-res">
+            Saldıran −{last.aLost} · Savunan −{last.dLost}{last.won ? <b className="rk-won"> · Fethedildi!</b> : null}
+          </p>
+        </div>
+      )}
 
       {seated && myTurn && g.phase === 'reinforce' && (
         <div className="rk-box">
           {tradeNeeded && <p className="mono-err">5 ya da daha fazla kartınız var; takviyeden önce bir set takas edin.</p>}
-          <div className="rk-cards">
-            {hand.map((c, i) => (
-              <button key={i} type="button" className={`rk-card${cards.includes(i) ? ' on' : ''}`} onClick={() => toggleCard(i)} disabled={busy}>
-                <b>{SYM_TR[c.k]}</b>
-                <small>{c.t === null ? 'Joker' : TERRITORIES[c.t]}</small>
-              </button>
-            ))}
-          </div>
+          {hand.length > 0 && (
+            <>
+              <p className="rk-h">Kartlarınız ({hand.length}) · takas için 3 seçin</p>
+              <div className="rk-cards">
+                {hand.map((c, i) => (
+                  <button key={i} type="button" className={`rk-card${cards.includes(i) ? ' on' : ''}`} onClick={() => toggleCard(i)} disabled={busy}>
+                    <b>{SYM_TR[c.k]}</b>
+                    <small>{c.t === null ? 'Joker' : TERRITORIES[c.t]}</small>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           {hand.length >= 3 && (
-            <button className="btn sm" disabled={busy || !canTrade} onClick={() => { send('rtrade', { cards }); }}>
+            <button className="btn" disabled={busy || !canTrade} onClick={() => { send('rtrade', { cards }); }}>
               Seçilen 3 kartı takas et
             </button>
           )}
           <div className="rk-row">
-            <input type="number" min={1} max={g.pool} value={deployN} onChange={(e) => setN(Number(e.target.value))} aria-label="Ordu sayısı" />
-            <button className="btn primary" disabled={busy || t === null || tradeNeeded} onClick={() => send('rdeploy', { t, n: deployN })}>
+            <Stepper value={deployN} min={1} max={g.pool} onChange={setN} label="Ordu sayısı" />
+            <button className="btn primary rk-grow" disabled={busy || t === null || tradeNeeded} onClick={() => send('rdeploy', { t, n: deployN })}>
               {t === null ? 'Önce bir bölge seçin' : `${sel.name} bölgesine yerleştir`}
             </button>
           </div>
@@ -167,33 +236,32 @@ export default function RiskOnline({ cafe, masa }) {
         <div className="rk-box">
           {g.pending && (
             <div className="rk-row">
-              <span>Fethedilen bölgeye ek ordu taşı (0-{g.pending.max}):</span>
-              <input type="number" min={0} max={g.pending.max} value={mv} onChange={(e) => setMv(Number(e.target.value))} aria-label="Ek ordu" />
-              <button className="btn sm" disabled={busy} onClick={() => send('rmove', { n: Math.min(Math.max(0, mv), g.pending.max) })}>Taşı</button>
+              <span className="rk-grow">Fethedilen bölgeye ek ordu taşı (0-{g.pending.max}):</span>
+              <Stepper value={Math.min(mv, g.pending.max)} min={0} max={g.pending.max} onChange={setMv} label="Ek ordu" />
+              <button className="btn" disabled={busy} onClick={() => send('rmove', { n: Math.min(Math.max(0, mv), g.pending.max) })}>Taşı</button>
             </div>
           )}
           {t !== null && sel.armies >= 2 && (
             <div className="rk-row">
-              <span>Zar:</span>
-              {Array.from({ length: maxDice }, (_, i) => i + 1).map((d) => (
-                <button key={d} type="button" className={`btn sm${k === d ? ' primary' : ''}`} onClick={() => setDice(d)}>{d}</button>
-              ))}
+              <span>Zar sayısı:</span>
+              <div className="rk-dsel">
+                {Array.from({ length: maxDice }, (_, i) => i + 1).map((d) => (
+                  <button key={d} type="button" className={k === d ? 'on' : ''} onClick={() => setDice(d)} aria-pressed={k === d}>{d}</button>
+                ))}
+              </div>
             </div>
           )}
-          <div className="rk-row">
-            <button className="btn primary" disabled={busy || t === null || to === null || sel.armies < 2} onClick={() => send('rattack', { from: t, to, dice: k })}>
-              {to === null ? 'Komşu bir düşman bölgeye tıklayın' : `${TERRITORIES[to]} saldır`}
-            </button>
-            <button className="btn sm" disabled={busy} onClick={() => send('rendattack')}>Saldırıyı bitir</button>
-          </div>
+          <button className="btn primary" disabled={busy || t === null || to === null || sel.armies < 2} onClick={() => send('rattack', { from: t, to, dice: k })}>
+            {to === null ? 'Komşu bir düşman bölgeye dokunun' : `${TERRITORIES[to]} bölgesine saldır`}
+          </button>
         </div>
       )}
 
       {seated && myTurn && g.phase === 'fortify' && (
         <div className="rk-box">
           <div className="rk-row">
-            <input type="number" min={1} max={sel ? Math.max(1, sel.armies - 1) : 1} value={n ?? 1} onChange={(e) => setN(Number(e.target.value))} aria-label="Taşınacak ordu" />
-            <button className="btn primary" disabled={busy || t === null || to === null} onClick={() => send('rfortify', { from: t, to, n: Math.max(1, n ?? 1) })}>
+            <Stepper value={Math.min(Math.max(1, n ?? 1), sel ? Math.max(1, sel.armies - 1) : 1)} min={1} max={sel ? Math.max(1, sel.armies - 1) : 1} onChange={setN} label="Taşınacak ordu" />
+            <button className="btn primary rk-grow" disabled={busy || t === null || to === null} onClick={() => send('rfortify', { from: t, to, n: Math.max(1, n ?? 1) })}>
               {t !== null && to !== null ? `${TERRITORIES[t]} → ${TERRITORIES[to]} taşı` : 'Kaynak ve hedef seçin'}
             </button>
           </div>
@@ -201,17 +269,33 @@ export default function RiskOnline({ cafe, masa }) {
       )}
 
       {seated && myTurn && (g.phase === 'attack' || g.phase === 'fortify') && (
-        <button className="btn sm" disabled={busy} onClick={() => send('rendturn')}>Turu bitir</button>
+        <button className="btn rk-end" disabled={busy} onClick={() => send(g.phase === 'attack' ? 'rendattack' : 'rendturn')}>
+          {g.phase === 'attack' ? 'Saldırıyı bitir' : 'Turu bitir'}
+        </button>
+      )}
+      {seated && myTurn && g.phase === 'attack' && (
+        <button className="btn rk-end" disabled={busy} onClick={() => send('rendturn')}>Turu bitir</button>
       )}
 
       {err && <p className="mono-err" role="alert">{err}</p>}
 
       {seated && !g.over && (
         sure
-          ? <button className="btn sm danger" disabled={busy} onClick={() => { setSure(false); send('leave'); }}>Evet, oyunu bırak</button>
-          : <button className="btn sm" onClick={() => setSure(true)}>Masadan ayrıl</button>
+          ? <button className="btn danger" disabled={busy} onClick={() => { setSure(false); send('leave'); }}>Evet, oyunu bırak</button>
+          : <button className="btn" onClick={() => setSure(true)}>Masadan ayrıl</button>
       )}
-      {g.over && seated && <button className="btn sm" disabled={busy} onClick={() => send('reset')}>Rövanş (lobiye dön)</button>}
+      {g.over && seated && <button className="btn" disabled={busy} onClick={() => send('reset')}>Rövanş (lobiye dön)</button>}
+    </div>
+  );
+}
+
+// Artı/eksi düğmeli sayı seçici (telefonda büyük dokunma hedefi).
+function Stepper({ value, min, max, onChange, label }) {
+  return (
+    <div className="rk-step" role="group" aria-label={label}>
+      <button type="button" onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min} aria-label="Azalt">−</button>
+      <output>{value}</output>
+      <button type="button" onClick={() => onChange(Math.min(max, value + 1))} disabled={value >= max} aria-label="Artır">+</button>
     </div>
   );
 }

@@ -22,7 +22,7 @@ export default function MonopolyOnline({ cafe, masa }) {
   const myBid = seated && g.phase === 'auction' && g.auction?.ptr === room.me;
   // Mülk yönetimi ve hapis işlemleri yalnızca sıra sahibine gösterilir (sunucu da aynısını denetler).
   return (
-    <>
+    <div className="mono-pad">
       {!seated && <p className="mono-where">Oyun başladı; izleyici olarak takip ediyorsunuz.</p>}
       <Board
         g={g}
@@ -46,6 +46,6 @@ export default function MonopolyOnline({ cafe, masa }) {
           ? <button className="btn sm danger" disabled={busy} onClick={() => { setSure(false); send('leave'); }}>Evet, masadan ayrıl (oyundan çıkarım)</button>
           : <button className="btn sm" onClick={() => setSure(true)}>Masadan ayrıl</button>
       )}
-    </>
+    </div>
   );
 }

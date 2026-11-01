@@ -7,13 +7,21 @@ import {
   build, sellHouse, mortgage, unmortgage, canBuild, canSell, canMortgage, canUnmortgage,
 } from '@/lib/emlak';
 
-// Tahtanın kenarı boyunca 7x7 ızgarada saat yönünde yerleşim (0. kare sağ alt köşe).
+// Tahtanın kenarı boyunca 11x11 ızgarada saat yönünde yerleşim (0. kare sağ alt köşe, 10. sol alt, 20. sol üst, 30. sağ üst).
 function cell(i) {
-  if (i <= 6) return [6, 6 - i];
-  if (i <= 12) return [12 - i, 0];
-  if (i <= 18) return [0, i - 12];
-  return [i - 18, 6];
+  if (i <= 10) return [10, 10 - i];
+  if (i <= 20) return [20 - i, 0];
+  if (i <= 30) return [0, i - 20];
+  return [i - 30, 10];
 }
+
+// Küçük ekranda kareye sığsın diye kısa ad ve kısa fiyat.
+const SHORT = {
+  'Kahramanmaraş': 'K.Maraş', 'Elektrik İdaresi': 'Elektrik', 'Su İdaresi': 'Su', 'Gelir Vergisi': 'Vergi', 'Lüks Vergisi': 'Vergi',
+  'Kamu Fonu': 'Fon', 'Haydarpaşa Garı': 'Haydar Gar', 'Alsancak Garı': 'Alsan. Gar', 'Şanlıurfa': 'Urfa', 'Nişantaşı': 'Nişan.', 'Eskişehir': 'Eskişe.', 'Serbest Park': 'Park', 'Başlangıç': 'Başla', 'Hapishane': 'Hapis', 'Hapse Git': 'Git',
+};
+const shortName = (n) => SHORT[n] || n.replace(/ Garı$/, ' Gar');
+const kfmt = (v) => (v < 1000 ? String(v) : `${v / 1000}K`);
 
 const RR_COLOR = '#3d4a5c';
 const UTIL_COLOR = '#7a8594';
@@ -34,16 +42,17 @@ function Die({ n, i }) {
 }
 
 // Satın alma kararı sırasında gösterilen tapu kartı.
-function Deed({ g }) {
-  const t = TILES[g.players[g.turn].pos];
+function Deed({ g, idx }) {
+  const t = TILES[idx];
+  const o = g.owner[idx];
   const col = colorOf(t);
   const art = cityOf(t.n);
   return (
     <div className="deed">
-      <div className="deed-head" style={{ background: col }}>{t.t === 'p' ? 'Tapu' : t.t === 'rr' ? 'Gar' : 'İşletme'}</div>
+      <div className="deed-head" style={{ background: col || 'var(--blue)' }}>{t.t === 'p' ? 'Tapu' : t.t === 'rr' ? 'Gar' : t.t === 'util' ? 'İşletme' : 'Kare'}</div>
       {art && <div className="deed-art"><CityArt id={art} color={col} className="deed-svg" /></div>}
       <h3>{t.n}</h3>
-      <p>Fiyat <b>{fmt(t.price)}</b></p>
+      {t.price !== undefined && <p>Fiyat <b>{fmt(t.price)}</b>{o !== undefined && <> · <b style={{ color: COLORS[o] }}>{g.players[o].name}</b></>}</p>}
       {t.t === 'p' && <p>Kira <b>{fmt(t.rent)}</b> · Ev <b>{fmt(t.hc)}</b></p>}
       {t.t === 'rr' && <p>Kira <b>{fmt(RR_RENTS[0])}</b>–<b>{fmt(RR_RENTS[3])}</b> (gar sayısına göre)</p>}
       {t.t === 'util' && <p>Kira: zarın <b>4</b> (1 işletme) ya da <b>10</b> katı (2 işletme)</p>}
@@ -59,16 +68,16 @@ function Auction({ g, onBid, onPass, can }) {
   return (
     <div className="mono-auction">
       <p className="mono-wait">{TILES[a.tile].n} için açık artırma · en yüksek: {top} · sıra: <b>{bidder.name}</b></p>
-      <div className="gm-row mono-act-row">
+      <div className="mono-btns">
         {BID_STEPS.map((s) => {
           const amt = a.bid + s;
           return (
-            <button key={s} className="btn sm" disabled={!can || bidder.money < amt} onClick={() => onBid(amt)}>
+            <button key={s} className="btn mono-b" disabled={!can || bidder.money < amt} onClick={() => onBid(amt)}>
               {fmt(amt)} teklif
             </button>
           );
         })}
-        <button className="btn sm danger" disabled={!can} onClick={onPass}>Çekil</button>
+        <button className="btn mono-b danger" disabled={!can} onClick={onPass}>Çekil</button>
       </div>
     </div>
   );
@@ -80,27 +89,30 @@ function Estate({ g, onManage, busy }) {
   const list = ownedOf(g, me);
   if (!list.length) return null;
   const btn = (label, enabled, type, idx) => (
-    <button className="btn sm" disabled={busy || !enabled} onClick={() => onManage(type, idx)}>{label}</button>
+    <button className="btn mono-b" disabled={busy || !enabled} onClick={() => onManage(type, idx)}>{label}</button>
   );
   return (
-    <section className="mono-log" aria-label={`${p.name} mülkleri`} style={{ display: 'grid', gap: 8 }}>
-      <b style={{ color: 'var(--ink)' }}>{p.name} · mülk yönetimi</b>
+    <section className="mono-estate" aria-label={`${p.name} mülkleri`}>
+      <b className="mono-estate-h">{p.name} · mülk yönetimi</b>
       {list.map((i) => {
         const t = TILES[i];
         const h = g.houses[i] || 0;
         const mort = g.mort.includes(i);
         return (
-          <div key={i} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-            <span style={{ flex: '1 1 150px' }}>
+          <div key={i} className="mono-prop">
+            <span className="mono-prop-n">
+              <u className="sw" style={{ background: colorOf(t) }} />
               {t.n}
               {h > 0 ? ` · ${h === 5 ? 'otel' : `${h} ev`}` : ''}
               {mort ? ' · ipotekli' : ''}
             </span>
+            <div className="mono-btns">
             {t.t === 'p' && btn(`Ev +${fmt(t.hc)}`, canBuild(g, i, me), 'build', i)}
             {t.t === 'p' && btn(`Sat +${fmt(t.hc / 2)}`, canSell(g, i, me), 'sell', i)}
             {!mort
               ? btn(`İpotek +${fmt(t.price / 2)}`, canMortgage(g, i, me), 'mortgage', i)
               : btn(`İpotek kaldır −${fmt((t.price / 2) * 1.1)}`, canUnmortgage(g, i, me), 'unmortgage', i)}
+            </div>
           </div>
         );
       })}
@@ -121,6 +133,7 @@ export function Board({
   const [deltas, setDeltas] = useState({});
   const [log, setLog] = useState([]);
   const prevMoney = useRef(null);
+  const [sel, setSel] = useState(null); // dokunulan karenin bilgisi
 
   // Taşı hedefe kare kare yürüt; çok uzak sıçramalarda (hapse gitme, geri kart) doğrudan atla.
   useEffect(() => {
@@ -159,9 +172,10 @@ export function Board({
   const curTile = TILES[cur.pos];
   const over = g.phase === 'over';
   const busy = moving || !canAct;
+  const deedIdx = over ? null : g.phase === 'buy' && !moving ? cur.pos : sel;
 
   return (
-    <div className="gm-box">
+    <div className="gm-box mono-wrap">
       <div className="mono-board">
         {TILES.map((t, i) => {
           const [r, c] = cell(i);
@@ -172,20 +186,28 @@ export function Board({
           return (
             <div
               key={i}
-              className={`mono-tile ${t.t}${o !== undefined ? ' owned' : ''}${active ? ' active' : ''}`}
+              className={`mono-tile ${t.t}${o !== undefined ? ' owned' : ''}${active ? ' active' : ''}${sel === i ? ' sel' : ''}`}
               style={{ gridRow: r + 1, gridColumn: c + 1, '--own': o !== undefined ? COLORS[o] : undefined }}
-              title={t.t === 'p' || t.t === 'rr' || t.t === 'util' ? t.n : undefined}
+              onClick={() => setSel(sel === i ? null : i)}
+              role="button"
+              tabIndex={0}
+              aria-label={t.n}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(sel === i ? null : i); } }}
             >
-              {t.t === 'p' && <b className="band" style={{ background: band }} />}
+              {(t.t === 'p' || t.t === 'rr' || t.t === 'util') && <b className="band" style={{ background: band }} />}
               {cityOf(t.n) && <CityArt id={cityOf(t.n)} color={band} />}
               {ICON[t.t] && <em className="ico">{ICON[t.t]}</em>}
-              <span>{t.n}</span>
+              <span className="nm nm-full">{t.n.length >= 13 ? shortName(t.n) : t.n}</span>
+              <span className="nm nm-short">{shortName(t.n)}</span>
               {t.price !== undefined && (
-                <small>{o !== undefined ? <>kira {fmt(rentOf(g, i, o))}</> : fmt(t.price)}</small>
+                <small className="pr">
+                  <span className="pr-full">{o !== undefined ? <>kira {fmt(rentOf(g, i, o))}</> : fmt(t.price)}</span>
+                  <span className="pr-short">{o !== undefined ? kfmt(rentOf(g, i, o)) : kfmt(t.price)}</span>
+                </small>
               )}
-              {t.t === 'p' && o === undefined && <small className="rent">kira {fmt(t.rent)}</small>}
-              {h > 0 && <small className="rent">{h === 5 ? 'otel' : `${h} ev`}</small>}
-              {g.mort.includes(i) && <small className="rent">ipotekli</small>}
+              {t.t === 'p' && o === undefined && <small className="rent pr-full">kira {fmt(t.rent)}</small>}
+              {h > 0 && <small className="rent hs">{h === 5 ? 'otel' : `${h} ev`}</small>}
+              {g.mort.includes(i) && <small className="rent mort">ipotek</small>}
               <div className="mono-tokens">
                 {g.players.map((p, k) => !p.out && shown[k] === i && (
                   <i key={k} className={`tok${hop === k ? ' hop' : ''}`} style={{ background: COLORS[k] }}>{k + 1}</i>
@@ -195,44 +217,17 @@ export function Board({
           );
         })}
 
-        <div className="mono-center">
+        <div className={`mono-center${deedIdx !== null ? ' has-deed' : ''}`}>
           {over ? (
-            <>
-              <div className="mono-win" aria-hidden="true">🏆</div>
-              <p className="mono-msg" role="status">{g.msg}</p>
-              <button className="btn primary" onClick={onNew}>{newLabel}</button>
-            </>
+            <div className="mono-win" aria-hidden="true">🏆</div>
           ) : (
             <>
-              {g.phase === 'buy' && !moving ? <Deed g={g} /> : <div className="mono-logo" aria-hidden="true"><span>👑</span>Emlak Krallığı</div>}
-              <p className="mono-msg" role="status">
-                {moving ? `${g.players[mover].name} ilerliyor…` : g.msg}
-              </p>
-              {!moving && !canAct && meIdx !== null && g.phase !== 'auction' && <p className="mono-wait">{cur.name} oynuyor, bekleyin…</p>}
+              {deedIdx !== null ? <Deed g={g} idx={deedIdx} /> : <div className="mono-logo" aria-hidden="true"><span>👑</span>Emlak Krallığı</div>}
+              {deedIdx === null && <span className="mono-turn" style={{ '--pc': COLORS[g.turn] }}><i />{cur.name}</span>}
               {g.dice && (
                 <div className="mono-dice" key={`${g.dice}${g.turn}${g.phase}${g.msg}`} aria-label={`Zar: ${g.dice[0]} ve ${g.dice[1]}`}>
                   <Die n={g.dice[0]} i={0} /><Die n={g.dice[1]} i={1} />
                 </div>
-              )}
-              {g.phase === 'roll' && cur.jail > 0 && !moving && (onPayJail || onJailCard) && (
-                <div className="gm-row mono-act-row">
-                  {onPayJail && <button className="btn sm" disabled={busy} onClick={onPayJail}>Kefareti öde ({fmt(JAIL_KEFARET)})</button>}
-                  {onJailCard && cur.cards.length > 0 && <button className="btn sm" disabled={busy} onClick={onJailCard}>Çıkış kartı kullan</button>}
-                </div>
-              )}
-              {g.phase === 'roll' && (
-                <button className="btn primary mono-act" disabled={busy} onClick={onRoll}>
-                  {cur.jail > 0 ? 'Çift için zar at' : 'Zar at'}
-                </button>
-              )}
-              {g.phase === 'buy' && (
-                <div className="gm-row mono-act-row">
-                  <button className="btn primary mono-act" disabled={busy || cur.money < curTile.price} onClick={onBuy}>Satın al</button>
-                  <button className="btn mono-act" disabled={busy} onClick={onSkip}>Geç (açık artırma)</button>
-                </div>
-              )}
-              {g.phase === 'auction' && !moving && onBid && onPass && (
-                <Auction g={g} onBid={onBid} onPass={onPass} can={canBid && !moving} />
               )}
             </>
           )}
@@ -246,6 +241,37 @@ export function Board({
           </div>
         )}
       </div>
+
+      <section className="mono-panel" style={{ '--pc': COLORS[g.turn] }}>
+        <p className="mono-msg" role="status">{over ? g.msg : moving ? `${g.players[mover].name} ilerliyor…` : g.msg}</p>
+        {over ? (
+          <button className="btn primary mono-b big" onClick={onNew}>{newLabel}</button>
+        ) : (
+          <>
+            {!moving && !canAct && meIdx !== null && g.phase !== 'auction' && <p className="mono-wait">{cur.name} oynuyor, bekleyin…</p>}
+            {g.phase === 'roll' && cur.jail > 0 && !moving && (onPayJail || onJailCard) && (
+              <div className="mono-btns">
+                {onPayJail && <button className="btn mono-b" disabled={busy} onClick={onPayJail}>Kefareti öde ({fmt(JAIL_KEFARET)})</button>}
+                {onJailCard && cur.cards.length > 0 && <button className="btn mono-b" disabled={busy} onClick={onJailCard}>Çıkış kartı kullan</button>}
+              </div>
+            )}
+            {g.phase === 'roll' && (
+              <button className="btn primary mono-b big" disabled={busy} onClick={onRoll}>
+                {cur.jail > 0 ? 'Çift için zar at' : 'Zar at'}
+              </button>
+            )}
+            {g.phase === 'buy' && (
+              <div className="mono-btns">
+                <button className="btn primary mono-b big" disabled={busy || cur.money < curTile.price} onClick={onBuy}>Satın al</button>
+                <button className="btn mono-b big" disabled={busy} onClick={onSkip}>Geç (açık artırma)</button>
+              </div>
+            )}
+            {g.phase === 'auction' && !moving && onBid && onPass && (
+              <Auction g={g} onBid={onBid} onPass={onPass} can={canBid && !moving} />
+            )}
+          </>
+        )}
+      </section>
 
       <ul className="mono-players">
         {g.players.map((p, k) => {
@@ -286,7 +312,7 @@ export function Board({
       )}
 
       {!over && onQuit && (
-        <button className="btn sm" style={{ justifySelf: 'start' }} onClick={onQuit}>Oyunu bitir</button>
+        <button className="btn mono-b quit" onClick={onQuit}>Oyunu bitir</button>
       )}
     </div>
   );
@@ -316,6 +342,7 @@ export default function Monopoly() {
   }
 
   return (
+    <div className="mono-pad">
     <Board
       g={g}
       onRoll={() => setG(roll(g, die(), die()))}
@@ -329,5 +356,6 @@ export default function Monopoly() {
       onQuit={() => { if (window.confirm('Oyun bitirilsin mi? Bu oyun kaydedilmez.')) setG(null); }}
       onNew={() => setG(null)}
     />
+    </div>
   );
 }

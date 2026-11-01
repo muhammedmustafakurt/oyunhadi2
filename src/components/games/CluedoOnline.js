@@ -6,7 +6,7 @@ import { PALETTE } from '@/lib/emlak';
 import { SUSPECTS, WEAPONS, ROOMS, RING, ROOM0, PASSAGE, MIN_PLAYERS, MAX_PLAYERS, cardName, nodeName } from '@/lib/cluedo';
 
 // Masa Cluedo'su: kendi zarfı ve eli yalnızca sunucudan gelen görünümde vardır. Not defteri yalnızca bu telefonda tutulur.
-const CX = 180, CY = 180, RR = 92, RO = 140; // tahta: kavşak halkası (RR) ve odalar (RO)
+const CX = 180, CY = 180, RR = 84, RO = 135, RW = 82, RH = 40, TR = 8; // tahta: kavşak halkası (RR) ve odalar (RO)
 const ang = (j) => -Math.PI / 2 + (j * 2 * Math.PI) / RING;
 const jPt = (j) => [CX + RR * Math.cos(ang(j)), CY + RR * Math.sin(ang(j))];
 const rPt = (r) => [CX + RO * Math.cos(ang(r)), CY + RO * Math.sin(ang(r))];
@@ -26,14 +26,18 @@ function Board({ g, reach, onPick, cur }) {
   const ringPath = ringPts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ') + 'Z';
   const at = {};
   g.pos.sus.forEach((p, k) => { (at[p] ??= []).push(k); });
-  const tokenAt = (k, x, y, extra = '') => (
-    <g key={`t${k}`} className={`cl-tok${cur === k ? ' cur' : ''}${extra}`}>
-      <circle cx={x} cy={y} r={8} fill={PALETTE[k % PALETTE.length]} />
-      <text x={x} y={y + 3.5} textAnchor="middle">{k + 1}</text>
+  const wAt = {};
+  g.pos.wpn.forEach((p) => { wAt[p] = (wAt[p] ?? 0) + 1; });
+  const tokenAt = (k, x, y) => (
+    <g key={`t${k}`} className={`cl-tok${cur === k ? ' cur' : ''}`}>
+      <circle cx={x} cy={y} r={TR} fill={PALETTE[k % PALETTE.length]} />
+      <text x={x} y={y + 4} textAnchor="middle">{k + 1}</text>
     </g>
   );
+  const press = (fn) => (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } };
   return (
-    <svg viewBox="0 0 360 360" className="cl-map" role="img" aria-label="Tahta: odalar ve oyuncu taşları">
+    <svg viewBox="0 0 360 360" className="cl-map" role="group" aria-label="Tahta: odalar ve oyuncu taşları">
+      <circle cx={CX} cy={CY} r={RR - 18} className="cl-hub" />
       <path d={ringPath} className="cl-ring" />
       {ringPts.map(([x, y], j) => {
         const [rx, ry] = rPt(j);
@@ -42,18 +46,26 @@ function Board({ g, reach, onPick, cur }) {
       {ringPts.map(([x, y], j) => {
         const hi = reach.includes(j);
         return (
-          <g key={`j${j}`} onClick={hi ? () => onPick(j) : undefined} className={hi ? 'cl-hit' : ''}>
-            <circle cx={x} cy={y} r={hi ? 11 : 4} className={hi ? 'cl-junc hi' : 'cl-junc'} />
+          <g key={`j${j}`} className={hi ? 'cl-hit' : ''} {...(hi ? { role: 'button', tabIndex: 0, 'aria-label': nodeName(j), onClick: () => onPick(j), onKeyDown: press(() => onPick(j)) } : {})}>
+            {hi && <circle cx={x} cy={y} r={22} className="cl-pad" />}
+            <circle cx={x} cy={y} r={hi ? 14 : 5} className={hi ? 'cl-junc hi' : 'cl-junc'} />
           </g>
         );
       })}
       {ROOMS.map((name, r) => {
         const [x, y] = rPt(r);
         const hi = reach.includes(ROOM0 + r);
+        const w = wAt[ROOM0 + r] ?? 0;
         return (
-          <g key={name} onClick={hi ? () => onPick(ROOM0 + r) : undefined} className={hi ? 'cl-hit' : ''}>
-            <rect x={x - 38} y={y - 18} width={76} height={36} rx={6} className={`cl-room${hi ? ' hi' : ''}`} />
-            <text x={x} y={y - 3} textAnchor="middle" className="cl-rname">{name}</text>
+          <g key={name} className={hi ? 'cl-hit' : ''} {...(hi ? { role: 'button', tabIndex: 0, 'aria-label': name, onClick: () => onPick(ROOM0 + r), onKeyDown: press(() => onPick(ROOM0 + r)) } : {})}>
+            <rect x={x - RW / 2} y={y - RH / 2} width={RW} height={RH} rx={9} className={`cl-room${hi ? ' hi' : ''}`} />
+            <text x={x} y={y - 4} textAnchor="middle" className="cl-rname" {...(name.length * 6.3 > RW - 8 ? { textLength: RW - 8, lengthAdjust: 'spacingAndGlyphs' } : {})}>{name}</text>
+            {w > 0 && (
+              <g className="cl-wb">
+                <rect x={x + RW / 2 - 40} y={y - RH / 2 - 13} width={44} height={15} rx={7.5} />
+                <text x={x + RW / 2 - 18} y={y - RH / 2 - 2} textAnchor="middle">{w} silah</text>
+              </g>
+            )}
           </g>
         );
       })}
@@ -61,10 +73,12 @@ function Board({ g, reach, onPick, cur }) {
         const n = Number(node);
         if (n < ROOM0) {
           const [x, y] = jPt(n);
-          return ks.map((k, i) => tokenAt(k, x + (i - (ks.length - 1) / 2) * 16, y - 16));
+          const step = Math.min(2 * TR + 1, 30 / Math.max(1, ks.length - 1) + 14);
+          return ks.map((k, i) => tokenAt(k, x + (i - (ks.length - 1) / 2) * step, y));
         }
         const [x, y] = rPt(n - ROOM0);
-        return ks.map((k, i) => tokenAt(k, x + (i - (ks.length - 1) / 2) * 17, y + 28));
+        const step = Math.min(2 * TR + 1, (RW - 2 * TR - 6) / Math.max(1, ks.length - 1));
+        return ks.map((k, i) => tokenAt(k, x + (i - (ks.length - 1) / 2) * step, y + 11));
       })}
     </svg>
   );
@@ -73,14 +87,30 @@ function Board({ g, reach, onPick, cur }) {
 // Tek bir kartı tıklanabilir kutu olarak gösteren not defteri satırı.
 function NoteRow({ card, state, onCycle, own }) {
   return (
-    <li className={`cl-note${state === 'x' ? ' x' : ''}`}>
-      <button type="button" onClick={onCycle} aria-label={`${card.name}: ${NOTE_LABEL[state] || 'işaretsiz'}`}>
+    <li className={`cl-note${state === 'x' ? ' x' : ''}${state === '?' ? ' q' : ''}${own ? ' own' : ''}`}>
+      <button type="button" onClick={onCycle} aria-label={`${card.name}: ${own ? 'elinde' : NOTE_LABEL[state] || 'işaretsiz'}`}>
         <span className="cl-note-name">{card.name}</span>
-        <small>{own ? 'elinde' : NOTE_LABEL[state]}</small>
+        <i className="cl-note-mark" aria-hidden="true">{own ? 'El' : state === 'x' ? '✕' : state === '?' ? '?' : ''}</i>
       </button>
     </li>
   );
 }
+
+// Açılır liste yerine büyük dokunma hedefli seçim düğmeleri.
+function Picker({ label, opts, value, onChange }) {
+  return (
+    <div className="cl-pick" role="radiogroup" aria-label={label}>
+      <b>{label}</b>
+      <div className="cl-chips">
+        {opts.map((o) => (
+          <button key={o.v} type="button" role="radio" aria-checked={value === o.v} className={`cl-chip${value === o.v ? ' on' : ''}`} onClick={() => onChange(o.v)}>{o.t}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const KIND_OF = (id) => (id[0] === 'S' ? 'Şüpheli' : id[0] === 'W' ? 'Silah' : 'Oda');
 
 export default function CluedoOnline({ cafe, masa }) {
   const ui = useRoom({ cafe, masa, game: 'cluedo', pollMs: 1000 });
@@ -90,6 +120,7 @@ export default function CluedoOnline({ cafe, masa }) {
   const [ac, setAc] = useState({ sus: 0, wpn: 0, rm: 0 });
   const [showNotes, setShowNotes] = useState(false);
   const [showAccuse, setShowAccuse] = useState(false);
+  const [hideHand, setHideHand] = useState(false);
 
   if (!room) return <p className="mono-where">{err || 'Masa açılıyor…'}</p>;
 
@@ -149,31 +180,38 @@ export default function CluedoOnline({ cafe, masa }) {
     <div className="cl">
       {!seated && <p className="mono-where">Oyun başladı; izleyici olarak takip ediyorsunuz.</p>}
 
-      <section className="cl-status" role="status">
-        <p>{status}</p>
-        {g.dice && !over && <p className="cl-dice">Son zar: <b>{g.dice[0]}</b> + <b>{g.dice[1]}</b></p>}
+      <section className={`cl-status${isTurn ? ' mine' : ''}`} role="status">
+        <i className="av" style={{ background: PALETTE[(over ? (over.winner ?? 0) : cur) % PALETTE.length] }}>{(over ? (over.winner ?? 0) : cur) + 1}</i>
+        <div className="cl-status-t">
+          <p>{status}</p>
+                  </div>
+        {g.dice && !over && (
+          <div className="cl-dice" aria-label={`Son zar: ${g.dice[0]} ve ${g.dice[1]}`}>
+            <b>{g.dice[0]}</b><b>{g.dice[1]}</b>
+          </div>
+        )}
       </section>
 
       <ul className="cl-players" aria-label="Oyuncular">
         {room.seats.map((s, i) => (
           <li key={i} className={`${i === cur && !over ? 'turn' : ''}${s.left || g.out?.[i] ? ' off' : ''}`}>
             <i className="av" style={{ background: PALETTE[i % PALETTE.length] }}>{i + 1}</i>
-            <span>{s.name}{i === me ? ' (sen)' : ''}</span>
-            <small>{SUSPECTS[i]}</small>
-            {s.left ? <em>ayrıldı</em> : g.out?.[i] ? <em>elendi</em> : null}
+            <span className="cl-pn"><b>{s.name}{i === me ? ' (sen)' : ''}</b><small>{SUSPECTS[i]}</small></span>
+            {s.left ? <em>ayrıldı</em> : g.out?.[i] ? <em>elendi</em> : i === cur && !over ? <em className="t">sıra</em> : null}
           </li>
         ))}
       </ul>
 
       {g.reveal && (
         <section className="cl-card reveal" role="status">
-          <b>Çürütme:</b> {nameOf(g.reveal.by)} size bu kartı gösterdi: <strong>{cardName(g.reveal.card)}</strong>
-          <small>Bu bilgiyi yalnızca siz görürsünüz.</small>
+          <span className="cl-kicker">Çürütme · {nameOf(g.reveal.by)} size gösterdi</span>
+          <strong className="cl-big">{cardName(g.reveal.card)}</strong>
+          <small>Bu bilgiyi yalnızca siz görürsünüz. Not defterine işlemeyi unutmayın.</small>
         </section>
       )}
 
       {g.sugg && (
-        <p className="cl-last">Son tahmin ({nameOf(g.sugg.by)}): {SUSPECTS[g.sugg.sus]}, {WEAPONS[g.sugg.wpn]}, {ROOMS[g.sugg.rm]}</p>
+        <p className="cl-last"><b>Son tahmin · {nameOf(g.sugg.by)}</b>{SUSPECTS[g.sugg.sus]} · {WEAPONS[g.sugg.wpn]} · {ROOMS[g.sugg.rm]}</p>
       )}
 
       <Board g={g} reach={over ? [] : isTurn && g.phase === 'move' ? reach : []} onPick={(to) => send('clmove', { to })} cur={cur} />
@@ -194,22 +232,23 @@ export default function CluedoOnline({ cafe, masa }) {
       )}
 
       {isTurn && g.phase === 'move' && (
-        <p className="cl-hint">Tahtada parlayan bir kavşak ya da odaya dokunun veya listeden seçin.</p>
+        <p className="cl-hint">Tahtada yanıp sönen yere dokunun ya da aşağıdan seçin.</p>
       )}
       {isTurn && g.phase === 'move' && (
         <div className="cl-actions wrap">
           {reach.map((n) => (
-            <button key={n} className="btn sm" disabled={busy} onClick={() => send('clmove', { to: n })}>{nodeName(n)}</button>
+            <button key={n} className="btn cl-go" disabled={busy} onClick={() => send('clmove', { to: n })}>{nodeName(n)}</button>
           ))}
         </div>
       )}
 
       {g.myRefute && (
         <section className="cl-card refute">
-          <p>Şu kartlardan birini gösterin. Yalnızca tahmin eden görecek:</p>
+          <span className="cl-kicker">Çürütme sırası sizde</span>
+          <p>{nameOf(g.sugg.by)} tahmin etti: {SUSPECTS[g.sugg.sus]} · {WEAPONS[g.sugg.wpn]} · {ROOMS[g.sugg.rm]}. Eşleşen kartlardan birini seçin; yalnızca tahmin eden görür.</p>
           <div className="cl-actions wrap">
             {matching.map((c) => (
-              <button key={c} className="btn primary" disabled={busy} onClick={() => send('clshow', { card: c })}>{cardName(c)}</button>
+              <button key={c} className="btn primary cl-show" disabled={busy} onClick={() => send('clshow', { card: c })}><small>{KIND_OF(c)}</small>{cardName(c)}</button>
             ))}
           </div>
         </section>
@@ -218,17 +257,10 @@ export default function CluedoOnline({ cafe, masa }) {
       {canSuggest && (
         <section className="cl-card">
           <h3>Oda tahmini: {ROOMS[myRoom]}</h3>
-          <p className="cl-hint">Seçtiğiniz şüpheli ve silah bu odaya taşınır. Sol taraftan başlayarak çürütülür.</p>
-          <label>Şüpheli
-            <select value={sg.sus} onChange={(e) => setSg({ ...sg, sus: Number(e.target.value) })}>
-              {SUS_OPTS.map((o) => <option key={o.v} value={o.v}>{o.t}</option>)}
-            </select>
-          </label>
-          <label>Silah
-            <select value={sg.wpn} onChange={(e) => setSg({ ...sg, wpn: Number(e.target.value) })}>
-              {WPN_OPTS.map((o) => <option key={o.v} value={o.v}>{o.t}</option>)}
-            </select>
-          </label>
+          <p className="cl-hint">Seçtiğiniz şüpheli ve silah bu odaya taşınır; sıradaki oyuncular çürütmeye çalışır.</p>
+          <Picker label="Şüpheli" opts={SUS_OPTS} value={sg.sus} onChange={(v) => setSg({ ...sg, sus: v })} />
+          <Picker label="Silah" opts={WPN_OPTS} value={sg.wpn} onChange={(v) => setSg({ ...sg, wpn: v })} />
+          <p className="cl-sum">{SUSPECTS[sg.sus]} · {WEAPONS[sg.wpn]} · {ROOMS[myRoom]}</p>
           <button className="btn primary" disabled={busy} onClick={() => send('clsuggest', sg)}>Tahmin et</button>
         </section>
       )}
@@ -241,26 +273,18 @@ export default function CluedoOnline({ cafe, masa }) {
       )}
 
       {canAccuse && (
-        <section className="cl-card">
+        <section className="cl-card accuse">
           {!showAccuse ? (
-            <button className="btn" onClick={() => setShowAccuse(true)}>Suçlama yap</button>
+            <button className="btn danger" onClick={() => setShowAccuse(true)}>Suçlama yap (kesin)</button>
           ) : (
             <>
               <h3>Suçlama (kesin)</h3>
-              <label>Şüpheli
-                <select value={ac.sus} onChange={(e) => setAc({ ...ac, sus: Number(e.target.value) })}>
-                  {SUS_OPTS.map((o) => <option key={o.v} value={o.v}>{o.t}</option>)}
-                </select>
-              </label>
-              <label>Silah
-                <select value={ac.wpn} onChange={(e) => setAc({ ...ac, wpn: Number(e.target.value) })}>
-                  {WPN_OPTS.map((o) => <option key={o.v} value={o.v}>{o.t}</option>)}
-                </select>
-              </label>
-              <p className="cl-hint">Oda: {ROOMS[myRoom]} (bulunduğunuz oda)</p>
+              <Picker label="Şüpheli" opts={SUS_OPTS} value={ac.sus} onChange={(v) => setAc({ ...ac, sus: v })} />
+              <Picker label="Silah" opts={WPN_OPTS} value={ac.wpn} onChange={(v) => setAc({ ...ac, wpn: v })} />
+              <p className="cl-sum">{SUSPECTS[ac.sus]} · {WEAPONS[ac.wpn]} · {ROOMS[myRoom]}</p>
               <div className="cl-actions">
                 <button className="btn danger" disabled={busy} onClick={doAccuse}>Suçla</button>
-                <button className="btn sm" onClick={() => setShowAccuse(false)}>Vazgeç</button>
+                <button className="btn" onClick={() => setShowAccuse(false)}>Vazgeç</button>
               </div>
             </>
           )}
@@ -274,11 +298,20 @@ export default function CluedoOnline({ cafe, masa }) {
       )}
 
       <section className="cl-card">
-        <h3>Elin ({hand.length} kart)</h3>
-        <ul className="cl-hand">
-          {hand.map((c) => <li key={c}>{cardName(c)}</li>)}
-          {!seated && <li>İzleyiciler kart görmez.</li>}
-        </ul>
+        <div className="cl-hh">
+          <h3>Elin ({hand.length} kart)</h3>
+          {seated && <button type="button" className="btn sm" aria-pressed={hideHand} onClick={() => setHideHand((v) => !v)}>{hideHand ? 'Göster' : 'Gizle'}</button>}
+        </div>
+        {hideHand ? (
+          <p className="cl-hint cl-hidden">Kartların gizli. Başkası bakmasın diye saklandı.</p>
+        ) : (
+          <ul className="cl-hand">
+            {hand.map((c) => (
+              <li key={c} className={`k${c[0]}`}><small>{KIND_OF(c)}</small>{cardName(c)}</li>
+            ))}
+            {!seated && <li>İzleyiciler kart görmez.</li>}
+          </ul>
+        )}
       </section>
 
       <section className="cl-card">
@@ -297,10 +330,10 @@ export default function CluedoOnline({ cafe, masa }) {
       </section>
 
       <section className="cl-card">
-        <button className="btn sm" onClick={() => setShowNotes((v) => !v)}>{showNotes ? 'Not defterini gizle' : 'Not defterini aç'}</button>
+        <button className="btn cl-toggle" aria-expanded={showNotes} onClick={() => setShowNotes((v) => !v)}>{showNotes ? 'Not defterini gizle' : 'Not defterini aç'}</button>
         {showNotes && (
           <>
-            <p className="cl-hint">Kartlara dokunarak işaretleyin: Elendi → Belki → temiz. Bu notlar yalnızca bu telefonda tutulur.</p>
+            <p className="cl-hint">Dokunarak işaretleyin: elendi (✕) → belki (?) → boş. Notlar yalnızca bu telefonda tutulur.</p>
             {['Şüpheli', 'Silah', 'Oda'].map((kind) => (
               <div key={kind}>
                 <h4>{kind === 'Şüpheli' ? 'Şüpheliler' : kind === 'Silah' ? 'Silahlar' : 'Odalar'}</h4>
