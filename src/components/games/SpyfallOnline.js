@@ -4,6 +4,17 @@ import Lobby from './Lobby';
 import useRoom from './useRoom';
 import { LOCATIONS, DURATION_MS } from '@/lib/spyfall';
 import { PALETTE } from '@/lib/emlak';
+import { ART, CATS, UI } from '@/lib/spyfall-art';
+
+const CAT = Object.fromEntries(CATS.map((c) => [c.id, c]));
+const catOf = (name) => CAT[ART[name]?.cat];
+
+// Çizgi ikon: mekânlar ART'tan, arayüz ikonları UI'dan gelir (hepsi projedeki sabit dosyadan).
+function Glyph({ name, ui, className }) {
+  const body = ui ? UI[name] : ART[name]?.ic;
+  return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML={{ __html: body || '' }} />;
+}
+
 
 const fmt = (ms) => {
   const s = Math.max(0, Math.ceil(ms / 1000));
@@ -23,6 +34,7 @@ export default function SpyfallOnline({ cafe, masa }) {
   const [show, setShow] = useState(false); // kart yanındakinin görmemesi için varsayılan kapalı
   const [struck, setStruck] = useState(() => new Set()); // listeden elediğim mekânlar
   const [pick, setPick] = useState(null); // casusun tahmin için seçtiği mekân
+  const [cat, setCat] = useState('all'); // mekân listesi kategori süzgeci
   const [sure, setSure] = useState(false);
   const [deadline, setDeadline] = useState(0);
   const [now, setNow] = useState(0);
@@ -100,21 +112,27 @@ export default function SpyfallOnline({ cafe, masa }) {
             aria-label={show ? 'Kartı gizle' : 'Kartı göster'}
           >
             <span className="face front">
-              <b>GİZLİ DOSYA</b>
-              <i aria-hidden="true">🕵️</i>
-              <small>Kartını görmek için dokun</small>
+              <b className="sf-tab">GİZLİ DOSYA</b>
+              <Glyph ui name="spy" className="sf-spy" />
+              <small>Dosyayı açmak için dokun</small>
             </span>
             <span className="face back">
               {g.me.spy ? (
                 <>
-                  <i aria-hidden="true">🕵️</i>
-                  <b>CASUSSUN</b>
+                  <span className="sf-stamp">CASUSSUN</span>
+                  <small className="k">MEKÂN</small>
+                  <span className="sf-redact" aria-label="bilinmiyor" />
                   <small>Mekânı bilmiyorsun. Sorulardan anla ve aşağıdan tahmin et.</small>
                 </>
               ) : (
                 <>
-                  <i aria-hidden="true">{LOCATIONS[g.me.loc].icon}</i>
-                  <b>{LOCATIONS[g.me.loc].name}</b>
+                  <span className="sf-stamp">GİZLİ</span>
+                  <small className="k">MEKÂN</small>
+                  <span className="sf-where">
+                    <i className="sf-badge" style={{ '--c': catOf(LOCATIONS[g.me.loc].name)?.color }}><Glyph name={LOCATIONS[g.me.loc].name} /></i>
+                    <b>{LOCATIONS[g.me.loc].name}</b>
+                  </span>
+                  <small className="k">GÖREVİN</small>
                   <span className="role">{g.me.role}</span>
                 </>
               )}
@@ -131,11 +149,11 @@ export default function SpyfallOnline({ cafe, masa }) {
               <span key={i} style={{ left: `${(i * 37) % 100}%`, animationDelay: `${(i % 6) * 0.3}s`, animationDuration: `${2.4 + (i % 4) * 0.4}s` }}>{CONFETTI[i % CONFETTI.length]}</span>
             ))}
           </div>}
-          <div className="sf-trophy" aria-hidden="true">{outcome === 'lose' ? '😔' : outcome === 'win' ? '🏆' : over.winner === 'players' ? '🏆' : over.winner === 'spy' ? '🕵️' : '🤝'}</div>
+          <div className="sf-trophy" aria-hidden="true"><Glyph ui name={outcome === 'lose' ? 'sad' : outcome === 'win' ? 'trophy' : over.winner === 'players' ? 'trophy' : over.winner === 'spy' ? 'spy' : 'handshake'} /></div>
           <p className="sf-verdict">{over.text}</p>
           <div className="sf-reveal">
             <div><Avatar i={over.spy} name={names[over.spy]} size="lg" /><span>Casus</span><b>{names[over.spy]}</b></div>
-            <div><i className="sf-pin" aria-hidden="true">{LOCATIONS[over.loc].icon}</i><span>Mekân</span><b>{LOCATIONS[over.loc].name}</b></div>
+            <div><i className="sf-pin sf-badge" style={{ '--c': catOf(LOCATIONS[over.loc].name)?.color }}><Glyph name={LOCATIONS[over.loc].name} /></i><span>Mekân</span><b>{LOCATIONS[over.loc].name}</b></div>
           </div>
           <button className="btn primary" disabled={busy} onClick={() => { setShow(false); setPick(null); send('reset'); }}>Yeni tur (lobiye dön)</button>
         </section>
@@ -183,17 +201,24 @@ export default function SpyfallOnline({ cafe, masa }) {
       <section className="sf-locs">
         <h2>{spyGuessing ? 'Mekânı tahmin et' : 'Mekânlar'}</h2>
         {seated && !g.me?.spy && !over && <p className="sf-help">Elediğin mekânlara dokunarak üstünü çizebilirsin. Bu sadece sende görünür.</p>}
+        <div className="sf-cats" role="tablist" aria-label="Mekân kategorileri">
+          <button role="tab" aria-selected={cat === 'all'} className={cat === 'all' ? 'on' : undefined} onClick={() => setCat('all')}>Tümü</button>
+          {CATS.map((c) => (
+            <button key={c.id} role="tab" aria-selected={cat === c.id} className={cat === c.id ? 'on' : undefined} style={{ '--c': c.color }} onClick={() => setCat(c.id)}>{c.name}</button>
+          ))}
+        </div>
         <ul>
-          {LOCATIONS.map((l, i) => (
+          {LOCATIONS.map((l, i) => (cat === 'all' || ART[l.name]?.cat === cat) && (
             <li key={l.name}>
               <button
                 className={`sf-loc${struck.has(i) && !spyGuessing ? ' off' : ''}${pick === i ? ' pick' : ''}${over && over.loc === i ? ' answer' : ''}`}
+                style={{ '--c': catOf(l.name)?.color }}
                 onClick={() => {
                   if (spyGuessing) setPick(i);
                   else setStruck((p) => { const n = new Set(p); if (n.has(i)) n.delete(i); else n.add(i); return n; });
                 }}
               >
-                <i aria-hidden="true">{l.icon}</i>
+                <i><Glyph name={l.name} /></i>
                 <span>{l.name}</span>
               </button>
             </li>
@@ -201,7 +226,7 @@ export default function SpyfallOnline({ cafe, masa }) {
         </ul>
         {spyGuessing && pick !== null && (
           <div className="sf-guess">
-            <p>Mekân <b>{LOCATIONS[pick].icon} {LOCATIONS[pick].name}</b> mı? Yanlışsan tur biter ve kaybedersin.</p>
+            <p>Mekân <b>{LOCATIONS[pick].name}</b> mı? Yanlışsan tur biter ve kaybedersin.</p>
             <div className="gm-row">
               <button className="btn primary" disabled={busy} onClick={() => { send('guess', { loc: pick }); setPick(null); }}>Evet, tahmin et</button>
               <button className="btn" onClick={() => setPick(null)}>Vazgeç</button>

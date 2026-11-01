@@ -106,7 +106,7 @@ export default function useRoom({ cafe, masa, game, pollMs = POLL_MS }) {
     }
   }, [pid, busy, cafe, masa, game]);
 
-  const join = async () => {
+  const join = async (extra) => {
     const n = name.trim();
     try { localStorage.setItem('oh-name', n); } catch {}
     // Konum kontrolü açıksa ilk konum alınana kadar kısa süre beklenir.
@@ -117,7 +117,7 @@ export default function useRoom({ cafe, masa, game, pollMs = POLL_MS }) {
         { timeout: 8000, maximumAge: 60000 },
       ));
     }
-    send('join', { name: n });
+    send('join', { name: n, tok: typeof extra?.tok === 'number' ? extra.tok : undefined });
   };
 
   return { room, err, busy, name, setName, send, join };

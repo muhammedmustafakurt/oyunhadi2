@@ -1,26 +1,28 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import CityArt, { cityOf } from './CityArt';
 import {
-  TILES, GROUPS, COLORS, BID_STEPS, JAIL_KEFARET, RR_RENTS, fmt, newGame,
+  TILES, GROUPS, COLORS, TOKENS, BID_STEPS, JAIL_KEFARET, RR_RENTS, fmt, newGame,
   roll, buy, skipBuy, bid as placeBid, passBid, payJail, useJailCard, rentOf,
   build, sellHouse, mortgage, unmortgage, canBuild, canSell, canMortgage, canUnmortgage,
 } from '@/lib/emlak';
+import { IMG } from '@/lib/emlak-img';
 
-// Tahtanın kenarı boyunca 11x11 ızgarada saat yönünde yerleşim (0. kare sağ alt köşe, 10. sol alt, 20. sol üst, 30. sağ üst).
+// Tahtanın kenarı boyunca 7x7 ızgarada saat yönünde yerleşim (0. kare sağ alt köşe, 6. sol alt, 12. sol üst, 18. sağ üst).
+const SIDE = TILES.length / 4;
 function cell(i) {
-  if (i <= 10) return [10, 10 - i];
-  if (i <= 20) return [20 - i, 0];
-  if (i <= 30) return [0, i - 20];
-  return [i - 30, 10];
+  if (i <= SIDE) return [SIDE, SIDE - i];
+  if (i <= SIDE * 2) return [SIDE * 2 - i, 0];
+  if (i <= SIDE * 3) return [0, i - SIDE * 2];
+  return [i - SIDE * 3, SIDE];
 }
+// Karenin hangi kenarda olduğu: renk bandı her zaman tahtanın ortasına bakan yönde çizilir.
+const sideOf = (i) => { const [r, c] = cell(i); return r === SIDE ? 'b' : c === 0 ? 'l' : r === 0 ? 't' : 'r'; };
+const isCorner = (i) => i % SIDE === 0;
 
-// Küçük ekranda kareye sığsın diye kısa ad ve kısa fiyat.
-const SHORT = {
-  'Kahramanmaraş': 'K.Maraş', 'Elektrik İdaresi': 'Elektrik', 'Su İdaresi': 'Su', 'Gelir Vergisi': 'Vergi', 'Lüks Vergisi': 'Vergi',
-  'Kamu Fonu': 'Fon', 'Haydarpaşa Garı': 'Haydar Gar', 'Alsancak Garı': 'Alsan. Gar', 'Şanlıurfa': 'Urfa', 'Nişantaşı': 'Nişan.', 'Eskişehir': 'Eskişe.', 'Serbest Park': 'Park', 'Başlangıç': 'Başla', 'Hapishane': 'Hapis', 'Hapse Git': 'Git',
-};
-const shortName = (n) => SHORT[n] || n.replace(/ Garı$/, ' Gar');
+// Köşe karelerinde görünen kısa ad.
+const CORNER = { 'Başlangıç': 'Başla', 'Hapishane': 'Hapis', 'Serbest Park': 'Park', 'Hapse Git': 'Hapse git' };
+// Karede sığması için kısa şehir adı.
+const SHORT = { 'Kahramanmaraş': 'K.Maraş', 'Haydarpaşa Garı': 'Haydar Gar', 'Ankara Garı': 'Ankara Gar', 'Şanlıurfa': 'Şanlıurfa', 'Nişantaşı': 'Nişantaşı' };
 const kfmt = (v) => (v < 1000 ? String(v) : `${v / 1000}K`);
 
 const RR_COLOR = '#3d4a5c';
@@ -41,21 +43,66 @@ function Die({ n, i }) {
   );
 }
 
-// Satın alma kararı sırasında gösterilen tapu kartı.
-function Deed({ g, idx }) {
+// Şans / Kamu Fonu kartı: ekranın ortasına gelir, arka yüzünden çevrilip metni gösterir. Dokununca kapanır.
+function DrawnCard({ card, onClose }) {
+  const chance = card.deck === 'chance';
+  return (
+    <div className="mono-draw" onClick={onClose} role="dialog" aria-label={chance ? 'Şans kartı' : 'Kamu Fonu kartı'}>
+      <div className={`card3d ${chance ? 'chance' : 'chest'}`}>
+        <div className="face back" aria-hidden="true"><em>{chance ? '❓' : '🎁'}</em><span>{chance ? 'ŞANS' : 'KAMU FONU'}</span></div>
+        <div className="face front">
+          <small>{chance ? 'ŞANS' : 'KAMU FONU'}</small>
+          <em className="big" aria-hidden="true">{chance ? '❓' : '🎁'}</em>
+          <p>{card.txt}</p>
+          <button className="btn primary" onClick={onClose}>Tamam</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Alttan açılan tapu sayfası: dokunulan karenin bilgisi; satın alma kararında Satın al / Geç düğmeleri de burada.
+function Sheet({ g, idx, buying, mine, busy, onBuy, onSkip, onClose }) {
   const t = TILES[idx];
   const o = g.owner[idx];
   const col = colorOf(t);
-  const art = cityOf(t.n);
+  const h = g.houses[idx] || 0;
+  const kind = t.t === 'p' ? 'Tapu' : t.t === 'rr' ? 'Gar' : t.t === 'util' ? 'İşletme' : 'Özel kare';
+  const who = o !== undefined ? `${TOKENS[g.players[o].tok ?? o]} ${g.players[o].name}${g.mort.includes(idx) ? ' · ipotekli' : ''}` : t.price !== undefined ? 'sahibi yok' : '';
+  const cur = g.players[g.turn];
   return (
-    <div className="deed">
-      <div className="deed-head" style={{ background: col || 'var(--blue)' }}>{t.t === 'p' ? 'Tapu' : t.t === 'rr' ? 'Gar' : t.t === 'util' ? 'İşletme' : 'Kare'}</div>
-      {art && <div className="deed-art"><CityArt id={art} color={col} className="deed-svg" /></div>}
-      <h3>{t.n}</h3>
-      {t.price !== undefined && <p>Fiyat <b>{fmt(t.price)}</b>{o !== undefined && <> · <b style={{ color: COLORS[o] }}>{g.players[o].name}</b></>}</p>}
-      {t.t === 'p' && <p>Kira <b>{fmt(t.rent)}</b> · Ev <b>{fmt(t.hc)}</b></p>}
-      {t.t === 'rr' && <p>Kira <b>{fmt(RR_RENTS[0])}</b>–<b>{fmt(RR_RENTS[3])}</b> (gar sayısına göre)</p>}
-      {t.t === 'util' && <p>Kira: zarın <b>4</b> (1 işletme) ya da <b>10</b> katı (2 işletme)</p>}
+    <div className="mono-sheet" role="dialog" aria-label={t.n}>
+      <div className="grab" aria-hidden="true" />
+      <div className="top">
+        <span className="chip" style={{ background: col || 'var(--tint)' }}>{!col && <em>{ICON[t.t]}</em>}</span>
+        <h3>{t.n}<small>{kind}{who ? ` · ${who}` : ''}</small></h3>
+        {!buying && <button className="x" onClick={onClose} aria-label="Kapat">✕</button>}
+      </div>
+      {t.price !== undefined && (
+        <div className="kv">
+          <span>Fiyat<b>{fmt(t.price)}</b></span>
+          {t.t === 'p' && <span>Kira<b>{fmt(t.rent)}</b></span>}
+          {t.t === 'p' && <span>Ev<b>{fmt(t.hc)}</b></span>}
+          {t.t === 'rr' && <span>1 gar<b>{fmt(RR_RENTS[0])}</b></span>}
+          {t.t === 'rr' && <span>2 gar<b>{fmt(RR_RENTS[1])}</b></span>}
+        </div>
+      )}
+      {t.t === 'p' && (
+        <div className="kv small">
+          {t.rents.map((r, k) => <span key={k} className={h === k + 1 ? 'on' : undefined}>{k === 4 ? 'Otel' : `${k + 1} ev`}<b>{fmt(r)}</b></span>)}
+        </div>
+      )}
+      {t.t === 'p' && <p className="hint">Aynı renkteki iki mülk de sizdeyse boş arsa kirası 2 katı olur.</p>}
+      {t.t === 'rr' && <p className="hint">Kira, sahip olunan gar sayısına göre artar ({fmt(RR_RENTS[0])} – {fmt(RR_RENTS[3])}).</p>}
+      {buying && (
+        mine ? (
+          <div className="acts">
+            <button className="btn primary mono-b big" disabled={busy || cur.money < t.price} onClick={onBuy}>Satın al · {fmt(t.price)}</button>
+            <button className="btn mono-b big" disabled={busy} onClick={onSkip}>Geç</button>
+          </div>
+        ) : <p className="hint">{cur.name} satın alıp almayacağına karar veriyor…</p>
+      )}
+      {buying && mine && cur.money < t.price && <p className="hint">Paranız yetmiyor; “Geç” derseniz açık artırma başlar.</p>}
     </div>
   );
 }
@@ -134,6 +181,8 @@ export function Board({
   const [log, setLog] = useState([]);
   const prevMoney = useRef(null);
   const [sel, setSel] = useState(null); // dokunulan karenin bilgisi
+  const [drawn, setDrawn] = useState(null); // ekranda gösterilen Şans / Kamu Fonu kartı
+  const seenCard = useRef(g?.cardN || 0); // bu sayfa açıldığında var olan kartlar tekrar gösterilmez
 
   // Taşı hedefe kare kare yürüt; çok uzak sıçramalarda (hapse gitme, geri kart) doğrudan atla.
   useEffect(() => {
@@ -166,13 +215,25 @@ export function Board({
     setLog((l) => (l[0] === g.msg ? l : [g.msg, ...l].slice(0, 6)));
   }, [g]);
 
+  // Çekilen kart, taş karesine varınca gösterilir; 6 sn sonra ya da dokununca kapanır.
+  const walking = shown.length === g.players.length && g.players.some((p, i) => shown[i] !== p.pos);
+  useEffect(() => {
+    if (!g?.cardN || g.cardN <= seenCard.current || walking) return undefined;
+    seenCard.current = g.cardN;
+    setDrawn(g.card);
+    const t = setTimeout(() => setDrawn(null), 6000);
+    return () => clearTimeout(t);
+  }, [g, walking]);
+
   const mover = shown.length === g.players.length ? g.players.findIndex((p, i) => shown[i] !== p.pos) : -1;
   const moving = mover >= 0;
   const cur = g.players[g.turn];
   const curTile = TILES[cur.pos];
   const over = g.phase === 'over';
   const busy = moving || !canAct;
-  const deedIdx = over ? null : g.phase === 'buy' && !moving ? cur.pos : sel;
+  const buyingNow = g.phase === 'buy' && !moving && !over;
+  const sheetIdx = over ? null : sel ?? (buyingNow ? cur.pos : null);
+  const buying = buyingNow && sheetIdx === cur.pos;
 
   return (
     <div className="gm-box mono-wrap">
@@ -183,47 +244,46 @@ export function Board({
           const h = g.houses[i] || 0;
           const active = !over && shown[moving ? mover : g.turn] === i;
           const band = colorOf(t);
+          const corner = isCorner(i);
           return (
             <div
               key={i}
-              className={`mono-tile ${t.t}${o !== undefined ? ' owned' : ''}${active ? ' active' : ''}${sel === i ? ' sel' : ''}`}
+              className={`mono-tile ${t.t} s-${sideOf(i)}${corner ? ' corner' : ''}${o !== undefined ? ' owned' : ''}${active ? ' active' : ''}${sel === i ? ' sel' : ''}${g.mort.includes(i) ? ' mortg' : ''}`}
               style={{ gridRow: r + 1, gridColumn: c + 1, '--own': o !== undefined ? COLORS[o] : undefined }}
               onClick={() => setSel(sel === i ? null : i)}
               role="button"
               tabIndex={0}
-              aria-label={t.n}
+              aria-label={`${t.n}${t.price !== undefined ? `, ${fmt(t.price)}` : ''}`}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSel(sel === i ? null : i); } }}
             >
-              {(t.t === 'p' || t.t === 'rr' || t.t === 'util') && <b className="band" style={{ background: band }} />}
-              {cityOf(t.n) && <CityArt id={cityOf(t.n)} color={band} />}
-              {ICON[t.t] && <em className="ico">{ICON[t.t]}</em>}
-              <span className="nm nm-full">{t.n.length >= 13 ? shortName(t.n) : t.n}</span>
-              <span className="nm nm-short">{shortName(t.n)}</span>
-              {t.price !== undefined && (
-                <small className="pr">
-                  <span className="pr-full">{o !== undefined ? <>kira {fmt(rentOf(g, i, o))}</> : fmt(t.price)}</span>
-                  <span className="pr-short">{o !== undefined ? kfmt(rentOf(g, i, o)) : kfmt(t.price)}</span>
-                </small>
+              {band && (
+                <b className="band" style={{ background: band }}>
+                  <small className="pr">{kfmt(o !== undefined ? rentOf(g, i, o) : t.price)}</small>
+                </b>
               )}
-              {t.t === 'p' && o === undefined && <small className="rent pr-full">kira {fmt(t.rent)}</small>}
-              {h > 0 && <small className="rent hs">{h === 5 ? 'otel' : `${h} ev`}</small>}
-              {g.mort.includes(i) && <small className="rent mort">ipotek</small>}
+              <span className={`mtb${IMG[t.n] ? ' photo' : ''}`} style={IMG[t.n] ? { backgroundImage: `url(${IMG[t.n].src})` } : undefined}>
+                {ICON[t.t] && <em className="ico">{ICON[t.t]}</em>}
+                {corner && <span className="cn">{CORNER[t.n] || t.n}</span>}
+                {band && <span className="nm">{SHORT[t.n] || t.n}</span>}
+                {h > 0 && <i className={`hs${h === 5 ? ' hotel' : ''}`}>{h === 5 ? null : Array.from({ length: h }, (_, k) => <s key={k} />)}</i>}
+              </span>
+              {o !== undefined && <span className="own-badge" style={{ background: COLORS[o] }} title={g.players[o].name}>{TOKENS[g.players[o].tok ?? o]}</span>}
               <div className="mono-tokens">
                 {g.players.map((p, k) => !p.out && shown[k] === i && (
-                  <i key={k} className={`tok${hop === k ? ' hop' : ''}`} style={{ background: COLORS[k] }}>{k + 1}</i>
+                  <i key={k} className={`tok${hop === k ? ' hop' : ''}`} style={{ background: COLORS[k] }}>{TOKENS[p.tok ?? k]}</i>
                 ))}
               </div>
             </div>
           );
         })}
 
-        <div className={`mono-center${deedIdx !== null ? ' has-deed' : ''}`}>
+        <div className="mono-center">
           {over ? (
             <div className="mono-win" aria-hidden="true">🏆</div>
           ) : (
             <>
-              {deedIdx !== null ? <Deed g={g} idx={deedIdx} /> : <div className="mono-logo" aria-hidden="true"><span>👑</span>Emlak Krallığı</div>}
-              {deedIdx === null && <span className="mono-turn" style={{ '--pc': COLORS[g.turn] }}><i />{cur.name}</span>}
+              <div className="mono-logo" aria-hidden="true"><span>👑</span>Emlak Krallığı</div>
+              <span className="mono-turn" style={{ '--pc': COLORS[g.turn] }}><i />{cur.name}</span>
               {g.dice && (
                 <div className="mono-dice" key={`${g.dice}${g.turn}${g.phase}${g.msg}`} aria-label={`Zar: ${g.dice[0]} ve ${g.dice[1]}`}>
                   <Die n={g.dice[0]} i={0} /><Die n={g.dice[1]} i={1} />
@@ -260,12 +320,6 @@ export function Board({
                 {cur.jail > 0 ? 'Çift için zar at' : 'Zar at'}
               </button>
             )}
-            {g.phase === 'buy' && (
-              <div className="mono-btns">
-                <button className="btn primary mono-b big" disabled={busy || cur.money < curTile.price} onClick={onBuy}>Satın al</button>
-                <button className="btn mono-b big" disabled={busy} onClick={onSkip}>Geç (açık artırma)</button>
-              </div>
-            )}
             {g.phase === 'auction' && !moving && onBid && onPass && (
               <Auction g={g} onBid={onBid} onPass={onPass} can={canBid && !moving} />
             )}
@@ -282,7 +336,7 @@ export function Board({
                 : p.jail > 0 ? 'Hapiste' : `${owned.length} mülk`;
           return (
             <li key={k} className={k === g.turn && !over ? 'on' : undefined} style={{ '--pc': COLORS[k], opacity: p.out ? 0.45 : 1 }}>
-              <i className="av">{k + 1}</i>
+              <i className="av">{TOKENS[p.tok ?? k]}</i>
               <div className="pn">
                 <b>{p.name}{k === meIdx ? ' (sen)' : ''}</b>
                 <span>{status}</span>
@@ -314,6 +368,21 @@ export function Board({
       {!over && onQuit && (
         <button className="btn mono-b quit" onClick={onQuit}>Oyunu bitir</button>
       )}
+
+      <details className="mono-credits">
+        <summary>Fotoğraf kaynakları</summary>
+        <ul>
+          {Object.entries(IMG).map(([n, im]) => (
+            <li key={n}>{n}: {im.by} · <a href={im.url} target="_blank" rel="noreferrer">{im.lic}</a></li>
+          ))}
+        </ul>
+      </details>
+
+      {drawn && <DrawnCard card={drawn} onClose={() => setDrawn(null)} />}
+
+      {sheetIdx !== null && !drawn && (
+        <Sheet g={g} idx={sheetIdx} buying={buying} mine={canAct} busy={busy} onBuy={onBuy} onSkip={onSkip} onClose={() => setSel(null)} />
+      )}
     </div>
   );
 }
@@ -323,19 +392,45 @@ const MANAGE = { build, sell: sellHouse, mortgage, unmortgage };
 // Tek telefonda sırayla oynanan kip.
 export default function Monopoly() {
   const [g, setG] = useState(null);
+  const [n, setN] = useState(0); // kaç kişi (0: henüz seçilmedi)
+  const [picks, setPicks] = useState([]); // oyuncu sırasına göre seçilen simge numaraları
   if (!g) {
+    if (!n) {
+      return (
+        <div className="mono-start">
+          <div className="mono-crown" aria-hidden="true">👑</div>
+          <p>Mülkleri al, kira topla, rakiplerini iflas ettir. Aynı telefonda sırayla oynanır.</p>
+          <p className="mono-ask">Kaç kişisiniz?</p>
+          <div className="gm-row">
+            {[2, 3, 4].map((k) => (
+              <button key={k} className="btn primary mono-n" onClick={() => { setN(k); setPicks(Array.from({ length: k }, (_, i) => i)); }}>
+                <span className="mono-dots">{Array.from({ length: k }, (_, i) => <i key={i} style={{ background: COLORS[i] }} />)}</span>
+                {k} kişi
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="mono-start">
-        <div className="mono-crown" aria-hidden="true">👑</div>
-        <p>Mülkleri al, kira topla, rakiplerini iflas ettir. Aynı telefonda sırayla oynanır.</p>
-        <p className="mono-ask">Kaç kişisiniz?</p>
-        <div className="gm-row">
-          {[2, 3, 4].map((n) => (
-            <button key={n} className="btn primary mono-n" onClick={() => setG(newGame(n))}>
-              <span className="mono-dots">{Array.from({ length: n }, (_, k) => <i key={k} style={{ background: COLORS[k] }} />)}</span>
-              {n} kişi
-            </button>
+        <p className="mono-ask">Herkes simgesini seçsin</p>
+        <div className="tok-rows">
+          {picks.map((cur, k) => (
+            <div key={k} className="tok-pick" role="radiogroup" aria-label={`${k + 1}. oyuncunun simgesi`}>
+              <b><i className="av" style={{ background: COLORS[k] }}>{TOKENS[cur]}</i> {k + 1}. oyuncu</b>
+              <div>
+                {TOKENS.map((e, i) => (
+                  <button key={i} type="button" role="radio" aria-checked={cur === i} className={cur === i ? 'on' : undefined}
+                    disabled={picks.some((x, j) => j !== k && x === i)} onClick={() => setPicks(picks.map((x, j) => (j === k ? i : x)))}>{e}</button>
+                ))}
+              </div>
+            </div>
           ))}
+        </div>
+        <div className="gm-row">
+          <button className="btn" onClick={() => setN(0)}>Geri</button>
+          <button className="btn primary" onClick={() => setG(newGame(n, picks))}>Oyunu başlat</button>
         </div>
       </div>
     );
@@ -353,8 +448,8 @@ export default function Monopoly() {
       onPayJail={() => setG(payJail(g))}
       onJailCard={() => setG(useJailCard(g))}
       onManage={(type, idx) => setG(MANAGE[type](g, idx))}
-      onQuit={() => { if (window.confirm('Oyun bitirilsin mi? Bu oyun kaydedilmez.')) setG(null); }}
-      onNew={() => setG(null)}
+      onQuit={() => { if (window.confirm('Oyun bitirilsin mi? Bu oyun kaydedilmez.')) { setG(null); setN(0); } }}
+      onNew={() => { setG(null); setN(0); }}
     />
     </div>
   );

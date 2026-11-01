@@ -13,7 +13,7 @@ export default function MonopolyOnline({ cafe, masa }) {
   if (!room) return <p className="mono-where">{err || 'Masa açılıyor…'}</p>;
 
   if (room.phase === 'lobby') {
-    return <Lobby masaNo={masaNo} room={room} ui={ui} max={4} min={2} seatNote={(k) => (k === 0 ? 'masayı açan' : '')} />;
+    return <Lobby tokens masaNo={masaNo} room={room} ui={ui} max={4} min={2} seatNote={(k) => (k === 0 ? 'masayı açan' : '')} />;
   }
 
   const seated = room.me >= 0;

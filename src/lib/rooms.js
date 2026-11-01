@@ -34,6 +34,13 @@ const CHESS_ACTS = new Set(['offer', 'accept', 'decline', 'claim', 'resign']);
 const CAT_ACTS = new Set(['csettle', 'ccity', 'croad', 'cdev', 'croll', 'cdrop', 'crobber', 'cplay', 'cend', 'cbank', 'coffer', 'cacc', 'cpick', 'cclose']);
 const RISK_ACTS = new Set(['rdeploy', 'rtrade', 'rattack', 'rmove', 'rendattack', 'rfortify', 'rendturn']);
 
+// Seçilen piyon simgesi boşsa onu, doluysa ilk boş simgeyi ver.
+const freeTok = (s, want) => {
+  const used = new Set(s.seats.filter((x) => !x.left).map((x) => x.tok));
+  const w = Number(want);
+  if (Number.isInteger(w) && w >= 0 && w < E.TOKENS.length && !used.has(w)) return w;
+  return E.TOKENS.findIndex((_, i) => !used.has(i));
+};
 const fresh = () => ({ phase: 'lobby', seats: [], game: null });
 const clean = (n) => String(n ?? '').replace(/[<>]/g, '').trim().slice(0, 16);
 const die = () => 1 + Math.floor(Math.random() * 6);
@@ -83,7 +90,7 @@ export function view(room, pid, game) {
   return {
     version: room.version,
     phase: s.phase,
-    seats: s.seats.map((x) => ({ name: x.name, left: !!x.left, idleMs: x.seen ? Math.max(0, Date.now() - x.seen) : 0 })),
+    seats: s.seats.map((x) => ({ name: x.name, tok: x.tok, left: !!x.left, idleMs: x.seen ? Math.max(0, Date.now() - x.seen) : 0 })),
     me,
     // Vampirde kalan süre (ms); istemci geri sayım gösterebilsin diye.
     leftMs: game === 'vampir' && s.game?.endsAt ? Math.max(0, s.game.endsAt - Date.now()) : null,
@@ -238,7 +245,16 @@ function apply(s, pid, a, game) {
       if (a.near === false) return { error: a.noGeo ? 'Masaya katılmak için konum izni vermeniz gerekir (kafede olduğunuz doğrulanır).' : 'Masaya yalnızca kafedeyken katılabilirsiniz.' };
       if (s.phase !== 'lobby') return { error: 'Oyun başladı, bu oyuna sonradan katılınamaz. İzleyebilirsiniz.' };
       if (s.seats.length >= cfg.max) return { error: `Masa dolu (en fazla ${cfg.max} kişi).` };
-      s.seats.push({ pid, name: clean(a.name) || `Oyuncu ${s.seats.length + 1}`, seen: Date.now() });
+      s.seats.push({ pid, name: clean(a.name) || `Oyuncu ${s.seats.length + 1}`, tok: freeTok(s, a.tok), seen: Date.now() });
+      return { state: s };
+    }
+    // Lobide piyon simgesini değiştir (başkasında olan simge alınamaz).
+    case 'token': {
+      if (idx < 0 || s.phase !== 'lobby') return { error: 'Önce masaya katılmalısınız.' };
+      const t = Number(a.tok);
+      if (!Number.isInteger(t) || t < 0 || t >= E.TOKENS.length) return { error: 'Geçersiz simge.' };
+      if (s.seats.some((x, k) => k !== idx && !x.left && x.tok === t)) return { error: 'Bu simgeyi başka bir oyuncu seçti.' };
+      s.seats[idx].tok = t;
       return { state: s };
     }
     case 'leave': {
@@ -264,7 +280,7 @@ function apply(s, pid, a, game) {
       if (idx < 0 || s.phase !== 'lobby') return { error: 'Oyunu yalnızca masaya katılmış oyuncular başlatabilir.' };
       if (s.seats.length < cfg.min) return { error: `Başlamak için en az ${cfg.min} kişi gerekir.` };
       if (game === 'monopoly') {
-        const ng = E.newGame(s.seats.length);
+        const ng = E.newGame(s.seats.length, s.seats.map((x) => x.tok));
         ng.players.forEach((p, i) => { p.name = s.seats[i].name; });
         ng.msg = `${ng.players[0].name} zar atsın.`;
         s.game = ng;

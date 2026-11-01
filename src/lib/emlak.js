@@ -1,5 +1,5 @@
 // Emlak Krallığı: resmi tahta oyunu kurallarının uygulaması (Hasbro klasik kural kitabı).
-// 40 kareli tahta; renk grupları, tek renk bonusu (2 kat kira), ev/otel (eşit inşa, 5. ev = otel),
+// 24 kareli tahta (telefon için); renk grupları, tek renk bonusu (2 kat kira), ev/otel (eşit inşa, 5. ev = otel),
 // ipotek (yarı değer; kaldırırken %10 faiz), garlar (25/50/100/200), işletmeler (zarın 4x / 10x'i),
 // Şans / Kamu Fonu desteleri (hapisten çıkma kartı desteye geri döner), hapis (3 deneme, çift zar
 // çıkışı, 3 çift = hapis), satın almayınca açık artırma, iflas (borç alacaklıya, yoksa bankaya).
@@ -11,7 +11,7 @@
 export const PARA_CARPANI = 100;
 export const fmt = (n) => `₺${Math.round(n).toLocaleString('tr-TR')}`;
 const X = (n) => n * PARA_CARPANI;
-export const GO_PRIMI = X(200);
+export const GO_PRIMI = X(150);
 export const JAIL_KEFARET = X(50);
 // Açık artırmada hazır teklif artışları (gerçek parayla değil, oyun parası).
 export const BID_STEPS = [X(10), X(50), X(100)];
@@ -21,6 +21,8 @@ export const GROUPS = {
   kahve: '#8b5a2b', acikmavi: '#4fb3e8', pembe: '#e0559b', turuncu: '#f08a24',
   kirmizi: '#d64545', sari: '#e8c230', yesil: '#2e9e5b', lacivert: '#1d2a8f',
 };
+// Oyuncunun seçtiği piyon simgeleri (oyuna girerken seçilir).
+export const TOKENS = ['🚗', '🎩', '🐕', '🚢', '🐈', '🛵', '👢', '🦆'];
 export const COLORS = ['#2438e8', '#c0261e', '#1f9d6b', '#d98a00'];
 // Masalarda 10 kişiye kadar oyuncu rengi (ilk dördü taş renkleriyle aynı).
 export const PALETTE = [...COLORS, '#8a3fd1', '#0e8fa8', '#d6407f', '#5a6b1f', '#7a4b2a', '#3a4a7a'];
@@ -31,65 +33,50 @@ const U = (n) => ({ t: 'util', n, price: X(150) });
 const CH = (n) => ({ t: 'chance', n });
 const CC = (n) => ({ t: 'chest', n });
 
-// Resmi tahtanın kare sırası ve tapu değerleriyle birebir; isimler Türkiye şehirleridir.
+// Telefon için kısaltılmış 24 kareli tahta: 4 köşe, 14 mülk (7 renk grubu, her grupta 2), 2 gar, 2 Şans, 2 Kamu Fonu.
+// Tapu ve kira değerleri resmi tablodan alınmıştır; isimler Türkiye şehirleridir.
 export const TILES = [
   { t: 'go', n: 'Başlangıç' },
   P('Kahramanmaraş', 'kahve', 60, 2, [10, 30, 90, 160, 250], 50),
   CC('Kamu Fonu'),
   P('Şanlıurfa', 'kahve', 60, 4, [20, 60, 180, 320, 450], 50),
-  { t: 'tax', n: 'Gelir Vergisi', amount: X(200) },
   RR('Haydarpaşa Garı'),
   P('Mersin', 'acikmavi', 100, 6, [30, 90, 270, 400, 550], 50),
-  CH('Şans'),
-  P('Antalya', 'acikmavi', 100, 6, [30, 90, 270, 400, 550], 50),
-  P('Eskişehir', 'acikmavi', 120, 8, [40, 100, 300, 450, 600], 50),
   { t: 'jail', n: 'Hapishane' },
+  P('Antalya', 'acikmavi', 120, 8, [40, 100, 300, 450, 600], 50),
+  CH('Şans'),
   P('Bursa', 'pembe', 140, 10, [50, 150, 450, 625, 750], 100),
-  U('Elektrik İdaresi'),
-  P('Balıkesir', 'pembe', 140, 10, [50, 150, 450, 625, 750], 100),
   P('İzmir', 'pembe', 160, 12, [60, 180, 500, 700, 900], 100),
   RR('Ankara Garı'),
+  { t: 'park', n: 'Serbest Park' },
   P('Ankara', 'turuncu', 180, 14, [70, 200, 550, 750, 950], 100),
   CC('Kamu Fonu'),
-  P('Konya', 'turuncu', 180, 14, [70, 200, 550, 750, 950], 100),
-  P('Kayseri', 'turuncu', 200, 16, [80, 220, 600, 800, 1000], 100),
-  { t: 'park', n: 'Serbest Park' },
+  P('Konya', 'turuncu', 200, 16, [80, 220, 600, 800, 1000], 100),
   P('Samsun', 'kirmizi', 220, 18, [90, 250, 700, 875, 1050], 150),
   CH('Şans'),
-  P('Trabzon', 'kirmizi', 220, 18, [90, 250, 700, 875, 1050], 150),
-  P('Rize', 'kirmizi', 240, 20, [100, 300, 750, 925, 1100], 150),
-  RR('Alsancak Garı'),
-  P('Bodrum', 'sari', 260, 22, [110, 330, 800, 975, 1150], 150),
-  P('Fethiye', 'sari', 260, 22, [110, 330, 800, 975, 1150], 150),
-  U('Su İdaresi'),
-  P('Kaş', 'sari', 280, 24, [120, 360, 850, 1025, 1200], 150),
   { t: 'gojail', n: 'Hapse Git' },
-  P('Alaçatı', 'yesil', 300, 26, [130, 390, 900, 1100, 1275], 200),
-  P('Çeşme', 'yesil', 300, 26, [130, 390, 900, 1100, 1275], 200),
-  CC('Kamu Fonu'),
-  P('Belek', 'yesil', 320, 28, [150, 450, 1000, 1200, 1400], 200),
-  RR('Sirkeci Garı'),
-  CH('Şans'),
+  P('Trabzon', 'kirmizi', 240, 20, [100, 300, 750, 925, 1100], 150),
+  P('Bodrum', 'sari', 260, 22, [110, 330, 800, 975, 1150], 150),
+  P('Kaş', 'sari', 280, 24, [120, 360, 850, 1025, 1200], 150),
   P('Göcek', 'lacivert', 350, 35, [175, 500, 1100, 1300, 1500], 200),
-  { t: 'tax', n: 'Lüks Vergisi', amount: X(100) },
   P('Nişantaşı', 'lacivert', 400, 50, [200, 600, 1400, 1700, 2000], 200),
 ];
 
-const JAIL_POS = 10;
-const RRS = [5, 15, 25, 35];
-const UTILS = [12, 28];
+const idxOf = (pred) => TILES.flatMap((t, i) => (pred(t) ? [i] : []));
+const JAIL_POS = TILES.findIndex((t) => t.t === 'jail');
+const RRS = idxOf((t) => t.t === 'rr');
+const UTILS = idxOf((t) => t.t === 'util');
 const RR_RENT = [25, 50, 100, 200];
 // Gar kirası tablosu (oyun parası biçiminde), arayüzde gösterim için.
 export const RR_RENTS = RR_RENT.map(X);
 
 // Şans destesi: metinler, tutarlarla birebir (X(n) = n*100 oyun parası; ekranda ₺ ile gösterilir).
 const CHANCE_DECK = [
-  { txt: 'Başlangıç karesine ilerle, 20.000₺ al.', goto: 0 },
+  { txt: 'Başlangıç karesine ilerle, 15.000₺ al.', goto: 0 },
   { txt: 'Hapse gidin!', gotoJail: true },
   { txt: 'Hapisten çıkma kartı. Saklayın ya da kullanın.', jailCard: true },
-  { txt: 'Rize’ye ilerleyin.', goto: 24 },
-  { txt: 'Bursa’ya ilerleyin.', goto: 11 },
-  { txt: 'En yakın İşletmeye ilerleyin ve sahibine zarın 10 katı kira ödeyin.', nearestUtil: true },
+  { txt: 'Trabzon’a ilerleyin.', goto: TILES.findIndex((t) => t.n === 'Trabzon') },
+  { txt: 'Bursa’ya ilerleyin.', goto: TILES.findIndex((t) => t.n === 'Bursa') },
   { txt: 'En yakın Gara ilerleyin ve sahibine çift kira ödeyin. Sahibiyse satın alabilirsiniz.', nearestRR: true },
   { txt: 'Banka temettü ödüyor: 5.000₺ alın.', money: X(50) },
   { txt: 'Genel onarım: her ev için 2.500₺, her otel için 10.000₺ ödeyin.', perHouse: X(25), perHotel: X(100) },
@@ -97,8 +84,8 @@ const CHANCE_DECK = [
   { txt: 'Yoksulluk vergisi: 1.500₺ ödeyin.', money: -X(15) },
   { txt: 'Başkan seçildiniz: her oyuncuya 5.000₺ ödeyin.', each: X(50) },
   { txt: 'Yapı kredisi ödendi: 15.000₺ alın.', money: X(150) },
-  { txt: 'Haydarpaşa Garı’na gidin.', goto: 5 },
-  { txt: 'Nişantaşı’na yürüyün.', goto: 39 },
+  { txt: 'Haydarpaşa Garı’na gidin.', goto: TILES.findIndex((t) => t.n === 'Haydarpaşa Garı') },
+  { txt: 'Nişantaşı’na yürüyün.', goto: TILES.length - 1 },
   { txt: 'Hız cezası: 1.500₺ ödeyin.', money: -X(15) },
 ];
 const CHEST_DECK = [
@@ -114,7 +101,7 @@ const CHEST_DECK = [
   { txt: 'Okul ücreti: 5.000₺ ödeyin.', money: -X(50) },
   { txt: 'Danışmanlık geliri: 2.500₺ alın.', money: X(25) },
   { txt: 'Cadde tadilatı: her ev için 4.000₺, her otel için 11.500₺ ödeyin.', perHouse: X(40), perHotel: X(115) },
-  { txt: 'Başlangıç karesine ilerle, 20.000₺ al.', goto: 0 },
+  { txt: 'Başlangıç karesine ilerle, 15.000₺ al.', goto: 0 },
   { txt: 'Miras kaldı: 10.000₺ alın.', money: X(100) },
   { txt: 'Güzellik yarışmasında ikinci oldunuz: 1.000₺ alın.', money: X(10) },
   { txt: 'Hisse satış geliri: 5.000₺ alın.', money: X(50) },
@@ -128,10 +115,10 @@ const shuffle = (arr) => {
 };
 const rnd2 = () => [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
 
-export function newGame(count) {
+export function newGame(count, toks = []) {
   return {
     // cards: elde tutulan hapisten çıkma kartlarının destesi adları ('chance' | 'chest').
-    players: Array.from({ length: count }, (_, i) => ({ name: `Oyuncu ${i + 1}`, money: X(1500), pos: 0, jail: 0, cards: [], out: false })),
+    players: Array.from({ length: count }, (_, i) => ({ name: `Oyuncu ${i + 1}`, tok: Number.isInteger(toks[i]) ? toks[i] : i, money: X(1000), pos: 0, jail: 0, cards: [], out: false })),
     owner: {}, houses: {}, mort: [],
     chance: shuffle(CHANCE_DECK.map((_, i) => i)), chest: shuffle(CHEST_DECK.map((_, i) => i)),
     // phase: 'roll' (zar / hapiste deneme), 'buy' (satın alma kararı), 'auction', 'over'.
@@ -309,6 +296,8 @@ function drawCard(g, type, msg) {
   if (!deck.length) { g.msg = `${msg} Deste boş.`; return g; }
   const ci = deck.shift();
   const card = (type === 'chance' ? CHANCE_DECK : CHEST_DECK)[ci];
+  g.card = { deck: type, txt: card.txt };
+  g.cardN = (g.cardN || 0) + 1;
   msg += ` ${type === 'chance' ? 'Şans' : 'Kamu Fonu'}: ${card.txt}`;
   if (card.jailCard) {
     p.cards.push(type);
