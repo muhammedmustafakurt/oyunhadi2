@@ -1,7 +1,7 @@
 import GameFace from '@/components/oyun/GameFace';
 import { SPINE } from '@/lib/spines';
 
-// Bir masanın oyun akışı, mesajlaşma görünümünde (tanıtım görseli; avatarlar oyun karakterleri).
+// Masalar arası sohbetin tanıtım görseli: yan masadan gelen istek, kabul ve yazışma (avatarlar oyun karakterleri).
 function Av({ id }: { id: string }) {
   return (
     <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full" style={{ background: SPINE[id][0] }}>
@@ -24,27 +24,30 @@ function Msg({ av, who, text, me = false, delay }: { av: string; who: string; te
 
 export default function TableChat() {
   return (
-    <div className="rounded-[28px] border border-[#e3dbf7] bg-white p-5 shadow-[0_30px_60px_-30px_rgba(76,29,149,.45)]" aria-label="Örnek masa sohbeti">
+    <div className="rounded-[28px] border border-[#e3dbf7] bg-white p-5 shadow-[0_30px_60px_-30px_rgba(76,29,149,.45)]" aria-label="Örnek masalar arası sohbet">
       <div className="mb-4 flex items-center gap-2.5 border-b border-[#eee8fb] pb-3.5">
-        <Av id="tabu" />
+        <Av id="cizim" />
         <div>
-          <p className="font-display text-lg leading-tight font-extrabold">Masa 5 · Tabu</p>
-          <p className="text-[13px] text-[#8a80a3]">Hadi Kafe · 4 kişi</p>
+          <p className="font-display text-lg leading-tight font-extrabold">Masa 3 ile sohbet</p>
+          <p className="text-[13px] text-[#8a80a3]">Hadi Kafe · takma adlı, özel sohbet</p>
         </div>
         <span className="ml-auto h-2.5 w-2.5 animate-pulse rounded-full bg-leaf" />
       </div>
       <div className="grid gap-3">
-        <Msg av="bil" who="Ayşe" text="Tabu'yu açtım, karekodu okutup katılın!" delay={100} />
-        <Msg av="spyfall" who="Mert" text="Geliyorum, kırmızı takım benim." me delay={500} />
-        <p className="chat-in text-center text-[13px] text-[#8a80a3]" style={{ animationDelay: '900ms' }}><b className="text-ink">Zeynep</b> ve <b className="text-ink">Can</b> masaya katıldı · Oyun başladı</p>
-        <Msg av="kimim" who="Zeynep" text="12 – 9 öndeyiz, pas hakkımız bitti!" delay={1300} />
-        <div className="chat-in flex items-center gap-3 rounded-2xl border-[2.5px] border-ink bg-sun p-3" style={{ animationDelay: '1700ms' }}>
-          <GameFace id="bil" className="h-10 w-10 shrink-0" />
+        <p className="chat-in text-center text-[13px] text-[#8a80a3]" style={{ animationDelay: '100ms' }}>
+          <b className="text-ink">Mavi Baykuş 27</b> (Masa 3) sohbet etmek istiyor · Kabul ettiniz
+        </p>
+        <Msg av="cizim" who="Mavi Baykuş 27 · Masa 3" text="Yan masadasınız, çok eğleniyorsunuz! Biz de katılabilir miyiz?" delay={500} />
+        <Msg av="vampir" who="Turuncu Tilki 64 · Masa 7" text="Tabii, gelin! Vampir Köylü oynuyoruz, masada yer var." me delay={1000} />
+        <Msg av="cizim" who="Mavi Baykuş 27 · Masa 3" text="Harika, sandalyeleri çekiyoruz, geliyoruz." delay={1400} />
+        <Msg av="vampir" who="Turuncu Tilki 64 · Masa 7" text="Karekodu okutup masamızın odasına katılın, biz başlatıyoruz." me delay={1800} />
+        <div className="chat-in flex items-center gap-3 rounded-2xl border-[2.5px] border-ink bg-sun p-3" style={{ animationDelay: '2200ms' }}>
+          <GameFace id="kimim" className="h-10 w-10 shrink-0" />
           <div>
-            <p className="font-display leading-tight font-extrabold">Ödül kazandınız</p>
-            <p className="text-[13px]">1 tatlı ikram · garsona gösterin</p>
+            <p className="font-display leading-tight font-extrabold">Adınız, numaranız görünmez</p>
+            <p className="text-[13px]">Takma adla yazışın · istediğiniz an bitirin ya da engelleyin</p>
           </div>
-          <code className="ml-auto rounded-lg bg-ink px-2.5 py-1.5 text-sm font-extrabold tracking-wider text-sun">HK-7Q4M</code>
+          <span className="ml-auto rounded-lg bg-ink px-2.5 py-1.5 text-sm font-extrabold tracking-wider text-sun">Özel</span>
         </div>
       </div>
     </div>

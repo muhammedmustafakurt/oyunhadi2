@@ -100,10 +100,10 @@ export default function Home() {
       <section className="bg-[#f1ecff] py-20 md:py-28">
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1fr_470px]">
           <div>
-            <h2 className="text-4xl leading-[0.98] font-black md:text-6xl">Masada herkes <span className="hl">aynı oyunda.</span></h2>
-            <p className="mt-6 max-w-lg text-lg text-muted">Biri oyunu açar, masadakiler kendi telefonlarından katılır. Ekranlar aynı anda ilerler, masa kendi içinde yazışır, kazanan masaya ikram kodu çıkar.</p>
+            <h2 className="text-4xl leading-[0.98] font-black md:text-6xl">Yan masayla <span className="hl">tanışın,</span> oyuna katılsınlar.</h2>
+            <p className="mt-6 max-w-lg text-lg text-muted">Masalar birbirine mesaj atabilir. Takma adla bir sohbet isteği gönderilir, karşı masa kabul ederse özel bir sohbet açılır. Adınız ve numaranız paylaşılmaz; sohbeti istediğiniz an bitirebilir, kişiyi engelleyebilir ya da işletmeye bildirebilirsiniz.</p>
             <ul className="mt-8 grid gap-3 sm:grid-cols-3">
-              {[['4 kişi', 'aynı anda, ayrı telefonlarda'], ['10 sn', 'okutmadan oyuna'], ['1 kod', 'garson panelden doğrular']].map(([n, t]) => (
+              {[['Takma ad', 'adınız ve numaranız görünmez'], ['İstek + kabul', 'karşı masa kabul edince açılır'], ['Kafe kontrolünde', 'panelden açar, kapatır, modu seçer']].map(([n, t]) => (
                 <li key={n} className="rounded-2xl bg-white p-4">
                   <p className="font-display text-2xl font-black text-grape">{n}</p>
                   <p className="text-sm text-muted">{t}</p>
