@@ -397,7 +397,7 @@ function apply(s, pid, a, game) {
     case 'fbnext': {
       if (game !== 'futbolcu') return { error: 'Bilinmeyen işlem.' };
       if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
-      const r = FB.act(g, s.seats, idx, a.type, { yes: a.yes });
+      const r = FB.act(g, s.seats, idx, a.type, { yes: a.yes, name: a.name, word: a.word });
       if (r.error) return { error: r.error };
       s.game = r;
       return { state: s };

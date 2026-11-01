@@ -1854,3 +1854,9 @@ button.kd-slot { cursor: pointer; touch-action: manipulation; }
 .fb-board .nm small { color: var(--muted); font-size: .7rem; font-weight: 800; }
 .fb-board em { font-style: normal; color: var(--muted); font-size: .75rem; white-space: nowrap; }
 .fb-board strong { min-width: 28px; text-align: right; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+
+/* Futbolcuyu Bul: ad girişi ve tahmin formu */
+.fb-form { display: grid; gap: 8px; width: 100%; }
+.fb-form input { width: 100%; font-size: 1.05rem; padding: 12px 14px; border-radius: 14px; border: 2.5px solid var(--ink); background: var(--white); color: var(--ink); }
+.fb-secret { margin: 0; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: rgba(255, 255, 255, .14); color: #fff; font-size: .9rem; }
+.fb-secret svg { width: 18px; height: 18px; flex: none; }

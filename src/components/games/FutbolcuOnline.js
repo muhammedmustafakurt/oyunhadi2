@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Lobby from './Lobby';
 import useRoom from './useRoom';
 import Icon from './Icon';
@@ -10,13 +10,17 @@ function Avatar({ i, name }) {
   return <i className="fb-av" style={{ background: PALETTE[i % PALETTE.length] }}>{(name || '?').trim().charAt(0).toUpperCase()}</i>;
 }
 
-// Futbolcuyu Bul: tutan oyuncu futbolcuyu aklında tutar (hiçbir yere yazılmaz), diğerleri masada sözlü soru sorar.
-// Ekran yalnızca sırayı ve EVET/HAYIR cevaplarını yönetir; sesli iletişim yoktur (masada yüz yüze konuşulur).
+// Futbolcuyu Bul: tutan oyuncu futbolcunun adını yazar (yalnızca tutana gösterilir), diğerleri masada sözlü soru sorar.
+// Tahmin yazılır, oyun karşılaştırır (büyük/küçük harf, boşluk ve Türkçe karakter farkı sayılmaz). Sesli iletişim yoktur.
 export default function FutbolcuOnline({ cafe, masa }) {
   const ui = useRoom({ cafe, masa, game: 'futbolcu' });
   const { room, err, busy, send } = ui;
   const [sure, setSure] = useState(false);
+  const [secret, setSecret] = useState('');
+  const [guess, setGuess] = useState('');
   const g = room?.game;
+  const round = g?.round;
+  useEffect(() => { setSecret(''); setGuess(''); }, [round]);
 
   if (!room) return <p className="mono-where">{err || 'Masa açılıyor…'}</p>;
 
@@ -42,6 +46,7 @@ export default function FutbolcuOnline({ cafe, masa }) {
   const ranking = room.seats.map((s, i) => ({ i, s, pts: g.scores[i] ?? 0 })).sort((a, b) => b.pts - a.pts || a.i - b.i);
   const top = ranking[0]?.pts ?? 0;
   const lastWrong = g.guessLog.filter((x) => !x.ok);
+  const guessing = ph === 'ask' && myTurn;
   const nameOf = (i) => (i === room.me ? 'Sen' : names[i]);
 
   return (
@@ -62,6 +67,7 @@ export default function FutbolcuOnline({ cafe, masa }) {
           <div className="n"><b>{g.no}</b><small>Hayır</small></div>
         </div>
 
+        {isHolder && g.secret && ph !== 'over' && <p className="fb-secret"><Icon name="brain" />Tuttuğun futbolcu: <b>{g.secret}</b></p>}
         {g.note && <p className="fb-note">{g.note}</p>}
 
         {/* ---- Aşama kartı ---- */}
@@ -71,9 +77,12 @@ export default function FutbolcuOnline({ cafe, masa }) {
               <>
                 <Icon name="brain" className="fb-ic" />
                 <h2>Aklından bir futbolcu tut</h2>
-                <p>Aktif ya da emekli, dünyanın herhangi bir ligi veya milli takımından olabilir. Adını kimseye söyleme, hiçbir yere yazma.</p>
-                <p className="fb-warn">Aklındaki futbolcuyu değiştirme. Sorulara dürüstçe cevap ver.</p>
-                <button className="btn primary fb-big" disabled={busy} onClick={() => send('fbready')}>Tuttum</button>
+                <p>Aktif ya da emekli, dünyanın herhangi bir ligi veya milli takımından olabilir. Adını aşağıya yaz; yalnızca sen görürsün, tahminleri oyun kontrol eder.</p>
+                <form className="fb-form" onSubmit={(e) => { e.preventDefault(); send('fbready', { name: secret }); }}>
+                  <input value={secret} onChange={(e) => setSecret(e.target.value)} placeholder="Futbolcunun adı (ör. Arda Turan)" maxLength={60} autoComplete="off" required />
+                  <button className="btn primary fb-big" disabled={busy || secret.trim().length < 2}>Tuttum</button>
+                </form>
+                <p className="fb-warn">Futbolcuyu sonradan değiştiremezsin. Sorulara dürüstçe cevap ver.</p>
               </>
             ) : (
               <>
@@ -91,9 +100,12 @@ export default function FutbolcuOnline({ cafe, masa }) {
             <h2><Avatar i={g.turn} name={turnName} />{myTurn ? 'Sıra sende' : turnName}</h2>
             {myTurn ? (
               <>
-                <p>Masada sesli bir soru sor, sonra düğmeye bas. Bildiğini düşünüyorsan tahmin et.</p>
+                <p>Masada sesli bir soru sor, sonra düğmeye bas. Bildiğini düşünüyorsan adı yazıp tahmin et; büyük/küçük harf ve boşluk fark etmez.</p>
                 <button className="btn primary fb-big" disabled={busy} onClick={() => send('fbask')}>Soruyu sordum</button>
-                <button className="btn fb-big alt" disabled={busy} onClick={() => send('fbguess')}>Tahmin ediyorum</button>
+                <form className="fb-form" onSubmit={(e) => { e.preventDefault(); send('fbguess', { word: guess }); }}>
+                  <input value={guess} onChange={(e) => setGuess(e.target.value)} placeholder="Tahminin: futbolcunun adı" maxLength={60} autoComplete="off" aria-label="Tahmin" />
+                  <button className="btn fb-big alt" disabled={busy || guess.trim().length < 2}>Tahmin et</button>
+                </form>
               </>
             ) : isHolder ? (
               <p>{turnName} soru soracak. Sorusunu duyunca bekle, o &quot;sordum&quot; deyince EVET ya da HAYIR de.</p>
@@ -121,31 +133,13 @@ export default function FutbolcuOnline({ cafe, masa }) {
           </div>
         )}
 
-        {ph === 'verdict' && (
-          <div className="fb-card">
-            <small className="fb-k">TAHMİN</small>
-            <h2><Avatar i={g.turn} name={turnName} />{myTurn ? 'Tahmin ettin' : `${turnName} tahmin etti`}</h2>
-            {isHolder ? (
-              <>
-                <p>Söylenen futbolcu aklındaki mi?</p>
-                <div className="fb-yn">
-                  <button className="fb-yes" disabled={busy} onClick={() => send('fbverdict', { yes: true })}><Icon name="check" />DOĞRU</button>
-                  <button className="fb-no" disabled={busy} onClick={() => send('fbverdict', { yes: false })}><Icon name="x" />YANLIŞ</button>
-                </div>
-              </>
-            ) : (
-              <p>{holderName} değerlendiriyor…</p>
-            )}
-          </div>
-        )}
-
         {ph === 'over' && (
           <div className="fb-card fb-over" role="status">
             <Icon name={ended ? 'flag' : 'trophy'} className="fb-ic" />
             <h2>{over.text}</h2>
             {!ended && (
               <p>
-                <b>{g.questions}</b> soru sorundu, <b>{g.guesses}</b> tahmin yapıldı.
+                Futbolcu: <b>{over.answer}</b>. <b>{g.questions}</b> soru sorundu, <b>{g.guesses}</b> tahmin yapıldı.
                 {' '}<b>{names[over.winner]}</b> +{WIN_POINTS} puan aldı.
               </p>
             )}
@@ -172,7 +166,7 @@ export default function FutbolcuOnline({ cafe, masa }) {
           </ol>
         )}
         {lastWrong.length > 0 && (
-          <p className="fb-wrong"><Icon name="x" />Yanlış tahminler: {lastWrong.map((x) => nameOf(x.by)).join(', ')}</p>
+          <p className="fb-wrong"><Icon name="x" />Yanlış tahminler: {lastWrong.map((x) => `${nameOf(x.by)}: ${x.w || '-'}`).join(' · ')}</p>
         )}
       </section>
 

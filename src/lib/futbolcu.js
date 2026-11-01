@@ -1,9 +1,26 @@
-// Futbolcuyu Bul: bir oyuncu (tutan) aklından bir futbolcu tutar; adı hiçbir yere yazılmaz.
-// Diğer oyuncular sırayla sözlü soru sorar, tutan yalnızca EVET / HAYIR der. Sırası gelen soran
-// "soruyu sordum" ya da "tahmin ediyorum" diyebilir. Doğru tahmin eden turu kazanır (3 puan).
-// Sunucuda gizli bilgi yoktur (futbolcu kimsenin telefonuna girilmez); sunucu yalnızca sıra ve yetkiyi denetler.
+// Futbolcuyu Bul: bir oyuncu (tutan) bir futbolcu seçer ve adını oyuna yazar (yalnızca sunucuda tutulur, tutan dışında
+// kimseye gönderilmez). Diğer oyuncular sırayla sözlü soru sorar, tutan yalnızca EVET / HAYIR der. Sırası gelen soran
+// "soruyu sordum" diyebilir ya da adı yazarak tahmin eder; tahmini oyun karşılaştırır (büyük/küçük harf, boşluk,
+// noktalama ve Türkçe karakter farkı sayılmaz; soyadı tek başına da kabul edilir). Doğru tahmin eden turu kazanır (3 puan).
 export const WIN_POINTS = 3;
 const LOG_MAX = 120;
+const NAME_MAX = 60;
+
+// Karşılaştırma için ad: küçük harf (Türkçe), aksan ve Türkçe karakterler ASCII'ye, harf/rakam dışı her şey silinir.
+const FOLD = { 'ı': 'i', 'ş': 's', 'ğ': 'g', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'ø': 'o', 'ł': 'l', 'đ': 'd', 'ß': 'ss', 'æ': 'ae', 'œ': 'oe' };
+export const norm = (s) =>
+  String(s ?? '').toLocaleLowerCase('tr').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[ışğüöçøłđßæœ]/g, (c) => FOLD[c]).replace(/[^a-z0-9]/g, '');
+const cleanName = (s) => String(s ?? '').replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX);
+// Tahmin doğru mu: tam ad ya da (en az 3 harfli) soyadı eşleşirse doğru.
+export function isMatch(secret, guess) {
+  const g = norm(guess);
+  if (g.length < 2) return false;
+  if (g === norm(secret)) return true;
+  const parts = String(secret).trim().split(/[\s]+/).map(norm).filter(Boolean);
+  const last = parts[parts.length - 1];
+  return parts.length > 1 && !!last && last.length >= 3 && g === last;
+}
 
 const shuffle = (a) => {
   for (let i = a.length - 1; i > 0; i--) {
@@ -23,9 +40,10 @@ function startRound(prev, seats, holder, note = '') {
     holder,
     order,
     turn: order[0],
-    phase: 'hold', // hold: tutan "tuttum" demeli | ask | answer | verdict | over
+    secret: null, // futbolcunun adı (yalnızca sunucuda; viewFor yalnızca tutana verir)
+    phase: 'hold', // hold: tutan adı yazmalı | ask | answer | over
     log: [], // { by, a: 'yes' | 'no' } sırayla cevaplanmış sorular
-    guessLog: [], // { by, ok }
+    guessLog: [], // { by, ok, w } (w: söylenen ad)
     questions: 0,
     guesses: 0,
     yes: 0,
@@ -55,7 +73,7 @@ function advance(g, seats) {
   return g.turn;
 }
 
-const finishRound = (g, seats, winner) => {
+const finishRound = (g, seats, winner, word) => {
   const scores = [...g.scores];
   const wins = [...g.wins];
   scores[winner] = (scores[winner] ?? 0) + WIN_POINTS;
@@ -63,12 +81,12 @@ const finishRound = (g, seats, winner) => {
   const history = [...g.history, { round: g.round, holder: g.holder, winner, q: g.questions, g: g.guesses + 1 }].slice(-30);
   return {
     ...g, phase: 'over', scores, wins, history, guesses: g.guesses + 1,
-    guessLog: [...g.guessLog, { by: winner, ok: true }],
-    over: { kind: 'win', winner, text: `${seats[winner].name} futbolcuyu buldu!` },
+    guessLog: [...g.guessLog, { by: winner, ok: true, w: word }],
+    over: { kind: 'win', winner, answer: g.secret, text: `${seats[winner].name} futbolcuyu buldu: ${g.secret}!` },
   };
 };
 
-// Eylemler: fbready, fbask, fbanswer (a.yes), fbguess, fbverdict (a.yes), fbnext
+// Eylemler: fbready (a.name), fbask, fbanswer (a.yes), fbguess (a.word), fbnext
 export function act(g, seats, idx, type, a = {}) {
   if (!g) return { error: 'Oyun yok.' };
   if (idx < 0 || seats[idx]?.left) return { error: 'Oyunda değilsiniz.' };
@@ -77,13 +95,26 @@ export function act(g, seats, idx, type, a = {}) {
     case 'fbready':
       if (!isHolder) return { error: 'Yalnızca futbolcuyu tutan oyuncu onaylayabilir.' };
       if (g.phase !== 'hold') return { error: 'Tur zaten başladı.' };
-      return { ...g, phase: 'ask', note: '' };
-    case 'fbask':
-    case 'fbguess': {
+      { const name = cleanName(a.name); if (norm(name).length < 2) return { error: 'Futbolcunun adını yazın.' }; return { ...g, phase: 'ask', secret: name, note: '' }; }
+    case 'fbask': {
       if (isHolder) return { error: 'Futbolcuyu tutan oyuncu soru soramaz.' };
       if (g.phase !== 'ask') return { error: 'Şu an soru sorulamaz.' };
       if (g.turn !== idx) return { error: 'Sıra sizde değil.' };
-      return { ...g, phase: type === 'fbask' ? 'answer' : 'verdict' };
+      return { ...g, phase: 'answer' };
+    }
+    case 'fbguess': {
+      if (isHolder) return { error: 'Futbolcuyu tutan oyuncu tahmin edemez.' };
+      if (g.phase !== 'ask') return { error: 'Şu an tahmin edilemez.' };
+      if (g.turn !== idx) return { error: 'Sıra sizde değil.' };
+      const word = cleanName(a.word);
+      if (norm(word).length < 2) return { error: 'Tahmininizi yazın.' };
+      if (isMatch(g.secret, word)) return finishRound(g, seats, idx, word);
+      return {
+        ...g, guesses: g.guesses + 1,
+        guessLog: [...g.guessLog, { by: idx, ok: false, w: word }].slice(-LOG_MAX),
+        note: `${seats[idx].name} "${word}" dedi, yanlış.`,
+        turn: advance(g, seats),
+      };
     }
     case 'fbanswer': {
       if (!isHolder) return { error: 'Yalnızca futbolcuyu tutan oyuncu cevap verebilir.' };
@@ -93,16 +124,6 @@ export function act(g, seats, idx, type, a = {}) {
         ...g, phase: 'ask',
         log: [...g.log, { by: g.turn, a: yes ? 'yes' : 'no' }].slice(-LOG_MAX),
         questions: g.questions + 1, yes: g.yes + (yes ? 1 : 0), no: g.no + (yes ? 0 : 1),
-        turn: advance(g, seats),
-      };
-    }
-    case 'fbverdict': {
-      if (!isHolder) return { error: 'Yalnızca futbolcuyu tutan oyuncu karar verebilir.' };
-      if (g.phase !== 'verdict') return { error: 'Şu an değerlendirilecek tahmin yok.' };
-      if (a.yes === true) return finishRound(g, seats, g.turn);
-      return {
-        ...g, phase: 'ask', guesses: g.guesses + 1,
-        guessLog: [...g.guessLog, { by: g.turn, ok: false }].slice(-LOG_MAX),
         turn: advance(g, seats),
       };
     }
@@ -142,7 +163,7 @@ export function onLeave(g, seats, idx) {
   return g;
 }
 
-// Gizli bilgi olmadığı için herkese aynı görünüm gider; yalnızca kendi rolü eklenir.
+// Futbolcunun adı yalnızca tutana gider; tur bitince (over.answer) herkes görür.
 export function viewFor(g, idx) {
   if (!g) return null;
   return {
@@ -150,5 +171,6 @@ export function viewFor(g, idx) {
     log: g.log, guessLog: g.guessLog, questions: g.questions, guesses: g.guesses, yes: g.yes, no: g.no,
     scores: g.scores, wins: g.wins, history: g.history, note: g.note, over: g.over,
     me: idx < 0 ? null : { holder: idx === g.holder, turn: idx === g.turn && idx !== g.holder },
+    secret: idx >= 0 && idx === g.holder && g.phase !== 'over' ? g.secret : null,
   };
 }
