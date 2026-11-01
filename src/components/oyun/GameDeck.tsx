@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import GameFace from './GameFace';
+import GameCover, { CoverDefs } from './GameCover';
 import DeckIntro from './DeckIntro';
 
 export type DeckGame = {
@@ -75,6 +75,7 @@ export default function GameDeck({ games, soon, introKey, table }: { games: Deck
 
   return (
     <div className={`dk${dealt ? ' dealt' : ' waiting'}`}>
+      <CoverDefs />
       <DeckIntro cards={games} storageKey={`oh-intro-${introKey}`} table={table} onDone={onIntroDone} />
       {deck.length === 0 ? (
         <div className="dk-empty" role="status">
@@ -93,10 +94,10 @@ export default function GameDeck({ games, soon, introKey, table }: { games: Deck
                     <span className={`dk-corner${suit.red ? ' red' : ''}`} aria-hidden="true">{g.name[0]}<i>{suit.s}</i></span>
                     <span className={`dk-corner br${suit.red ? ' red' : ''}`} aria-hidden="true">{g.name[0]}<i>{suit.s}</i></span>
                     {g.reward && <span className="dk-reward">★ Ödüllü</span>}
-                    <GameFace id={g.id} className="dk-face" />
+                    <GameCover id={g.id} className="dk-cover" />
                   </div>
                   <div className="dk-body">
-                    <h2>{g.name}</h2>
+                    <h2 className="dk-sr">{g.name}</h2>
                     <p>{g.note}</p>
                     <ul className="dk-meta">
                       <li>{label(g.players)} kişi</li>
