@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Lobby from './Lobby';
 import useRoom from './useRoom';
 import { TEAM } from '@/lib/ajanlar';
+import Icon from './Icon';
 
 const CONFETTI = ['🎉', '✨', '🏆', '🎊', '⭐'];
 
@@ -49,13 +50,13 @@ export default function AjanlarOnline({ cafe, masa }) {
       {!seated && <p className="mono-where">Tur başladı; izleyici olarak takip ediyorsunuz.</p>}
 
       <div className="aj-score">
-        {['r', 'b'].map((t) => (
-          <div key={t} className={`aj-team ${t}${g.turn === t && !over ? ' on' : ''}${over?.winner === t ? ' won' : ''}`}>
-            <span>{TEAM[t]}</span>
-            <b>{g.remaining[t]}</b>
-            <small>kalan ajan</small>
-          </div>
-        ))}
+        <div className={`aj-team r${g.turn === 'r' && !over ? ' on' : ''}${over?.winner === 'r' ? ' won' : ''}`}>
+          <b>{g.remaining.r}</b><span>{TEAM.r}</span>
+        </div>
+        <i>{over ? 'bitti' : 'sıra'}</i>
+        <div className={`aj-team b${g.turn === 'b' && !over ? ' on' : ''}${over?.winner === 'b' ? ' won' : ''}`}>
+          <b>{g.remaining.b}</b><span>{TEAM.b}</span>
+        </div>
       </div>
 
       {me && (
@@ -71,7 +72,7 @@ export default function AjanlarOnline({ cafe, masa }) {
               <span key={i} style={{ left: `${(i * 37) % 100}%`, animationDelay: `${(i % 6) * 0.3}s`, animationDuration: `${2.4 + (i % 4) * 0.4}s` }}>{CONFETTI[i % CONFETTI.length]}</span>
             ))}
           </div>
-          <div className="aj-trophy" aria-hidden="true">{over.winner === 'none' ? '🤝' : '🏆'}</div>
+          <div className="aj-trophy" aria-hidden="true"><Icon name={over.winner === 'none' ? 'scale' : 'trophy'} /></div>
           <p>{over.text}</p>
           <button className="btn primary" disabled={busy} onClick={() => { setSel(null); send('reset'); }}>Yeni tur (lobiye dön)</button>
         </section>
@@ -79,15 +80,18 @@ export default function AjanlarOnline({ cafe, masa }) {
         <section className={`aj-clue ${g.turn}`} role="status">
           {g.clue ? (
             <>
-              <span className="lbl">{TEAM[g.turn]} takımın ipucu</span>
-              <b className="word">{g.clue.word} <em>{g.clue.num === 0 ? '∞' : g.clue.num}</em></b>
-              <span className="left">{unlimited ? 'Sınırsız tahmin' : `${g.guessesLeft} tahmin hakkı`}</span>
+              <div className="txt">
+                <span className="lbl">{TEAM[g.turn]} takımın ipucu</span>
+                <b className="word">{g.clue.word}</b>
+                <span className="left">{unlimited ? 'Sınırsız tahmin' : `${g.guessesLeft} tahmin hakkı`}</span>
+              </div>
+              <em className="num" aria-label={unlimited ? 'sınırsız' : `${g.clue.num} kelime`}>{g.clue.num === 0 ? '∞' : g.clue.num}</em>
             </>
           ) : (
-            <>
+            <div className="txt">
               <span className="lbl">Sıra {TEAM[g.turn]} takımda</span>
               <b className="word wait">{names[g.spies[g.turn]]} ipucu veriyor…</b>
-            </>
+            </div>
           )}
         </section>
       )}
@@ -118,7 +122,8 @@ export default function AjanlarOnline({ cafe, masa }) {
             aria-pressed={canPick && !c.rev ? selCard === i : undefined}
           >
             <span>{c.w}</span>
-            {c.c === 'a' && (c.rev || me?.spy || over) && <i aria-hidden="true">💀</i>}
+            {c.c === 'a' && (c.rev || me?.spy || over) && <i aria-hidden="true"><Icon name="skull" /></i>}
+            {c.rev && (c.c === 'r' || c.c === 'b') && <i className="ag" aria-hidden="true"><Icon name="spy" /></i>}
           </button>
         ))}
       </div>

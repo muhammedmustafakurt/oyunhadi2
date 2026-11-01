@@ -4,6 +4,11 @@ import Lobby from './Lobby';
 import useRoom from './useRoom';
 import { ROLE } from '@/lib/vampir';
 import { PALETTE } from '@/lib/emlak';
+import Icon from './Icon';
+
+const ROLE_ICON = { vampir: 'bat', koylu: 'home', doktor: 'stethoscope', kahin: 'crystal' };
+// Köy meydanı: oyuncular çember üzerinde oturur (0. koltuk tepede, saat yönünde).
+const seatXY = (i, n) => { const a = ((-90 + (360 / n) * i) * Math.PI) / 180; return [50 + 38 * Math.cos(a), 50 + 38 * Math.sin(a)]; };
 
 function Avatar({ i, name }) {
   return <i className="sf-av" style={{ background: PALETTE[i % PALETTE.length] }}>{(name || '?').trim().charAt(0).toUpperCase()}</i>;
@@ -71,112 +76,113 @@ export default function VampirOnline({ cafe, masa }) {
   const prompt = { vampir: 'Bu gece kimi öldüreceksiniz?', doktor: 'Bu gece kimi koruyacaksın?', kahin: 'Bu gece kime bakacaksın?' }[role];
   const voted = new Set(g.voted);
 
+  const n = room.seats.length;
+  const pickable = (i) => !over && alive && (night ? nightTargets.includes(i) : day ? i !== room.me && g.alive[i] : false);
+  const choose = (i) => { if (night) send(nightType, { target: i }); else send('vote', { target: i }); };
+  const chosen = night ? g.choice : day ? g.myVote : null;
+  const [lx, ly] = chosen !== null && chosen !== undefined && chosen >= 0 ? seatXY(chosen, n) : [50, 50];
+  const vampTargets = role === 'vampir' ? Object.values(g.vampChoices || {}) : [];
+
   return (
     <div className={`vp ${over ? 'over' : g.phase}`}>
       {!seated && <p className="mono-where">Tur başladı; izleyici olarak takip ediyorsunuz.</p>}
 
-      <header className="vp-phase" role="status">
-        <span className="ico" aria-hidden="true">{over ? '🏁' : night ? '🌙' : '☀️'}</span>
-        <b>{over ? 'Tur bitti' : night ? `Gece ${g.day}` : `Gündüz ${g.day}`}</b>
-        <small>{over ? '' : night ? 'Köy uyuyor, gizli işler dönüyor.' : 'Tartışın ve oy verin.'}</small>
-        {running && deadline > 0 && <small>Kalan süre: {Math.ceil(left / 1000)} sn</small>}
+      <header className="vp-top" role="status">
+        <div>
+          <b>{over ? 'Tur bitti' : night ? `Gece ${g.day}` : `Gündüz ${g.day}`}</b>
+          <small>{over ? '' : night ? 'Köy uyuyor, gizli işler dönüyor.' : 'Tartışın ve oy verin.'}</small>
+        </div>
+        {me && (
+          <button className={`vp-chip${role === 'vampir' ? ' vamp' : ''}`} onClick={() => setShow((v) => !v)} aria-pressed={show} aria-label={show ? 'Rolü gizle' : 'Rolü göster'}>
+            <span className="ci"><Icon name={show ? ROLE_ICON[role] : 'mask'} /></span>
+            {show ? ROLE[role].name : 'Rolüm'}
+          </button>
+        )}
       </header>
 
       {over && (
         <section className={`vp-over ${over.winner}`} role="status">
-          <div className="vp-trophy" aria-hidden="true">{over.winner === 'village' ? '🏆' : over.winner === 'vampires' ? '🧛' : '🤝'}</div>
+          <div className="vp-trophy" aria-hidden="true"><Icon name={over.winner === 'village' ? 'trophy' : over.winner === 'vampires' ? 'bat' : 'scale'} /></div>
           <p>{over.text}</p>
           <button className="btn primary" disabled={busy} onClick={() => { setShow(false); send('reset'); }}>Yeni tur (lobiye dön)</button>
         </section>
       )}
 
-      {me && (
-        <section className="sf-deck">
-          <button className={`sf-flip vpcard${show ? ' open' : ''}${role === 'vampir' ? ' spy' : ''}`} onClick={() => setShow((v) => !v)} aria-pressed={show} aria-label={show ? 'Rolü gizle' : 'Rolü göster'}>
-            <span className="face front">
-              <b>GİZLİ ROL</b>
-              <i aria-hidden="true">🎭</i>
-              <small>Rolünü görmek için dokun</small>
-            </span>
-            <span className="face back">
-              <i aria-hidden="true">{ROLE[role].icon}</i>
-              <b>{ROLE[role].name}</b>
-              <small>{ROLE[role].info}</small>
-              {role === 'vampir' && mates.length > 0 && <span className="role">Ortakların: {mates.map((i) => names[i]).join(', ')}</span>}
-            </span>
-          </button>
-          <p className="sf-help">{show ? 'Tekrar dokunarak gizle.' : 'Rolünü yalnızca sen görürsün.'}</p>
+      {me && show && (
+        <section className="vp-role" role="note">
+          <span className="sf-badge"><Icon name={ROLE_ICON[role]} /></span>
+          <div>
+            <b>{ROLE[role].name}</b>
+            <small>{ROLE[role].info}</small>
+            {role === 'vampir' && mates.length > 0 && <small className="mates">Ortakların: {mates.map((i) => names[i]).join(', ')}</small>}
+          </div>
         </section>
       )}
 
       {!over && me && !alive && <p className="vp-dead">Öldün. Oyunu izleyebilirsin ama konuşmamalı ve ipucu vermemelisin.</p>}
 
+      <div className="vp-ring">
+        <svg className="vp-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {chosen !== null && chosen !== undefined && chosen >= 0 && <line x1="50" y1="50" x2={lx} y2={ly} />}
+        </svg>
+        <div className="vp-core">
+          <Icon name={over ? 'flag' : night ? 'moonstars' : 'sun'} />
+          <span>{over ? 'bitti' : night ? 'uyku' : 'oylama'}</span>
+          {running && deadline > 0 && <small>{Math.ceil(left / 1000)} sn</small>}
+        </div>
+        {room.seats.map((s, i) => {
+          const dead = !g.alive[i];
+          const [x, y] = seatXY(i, n);
+          const can = pickable(i);
+          const isMate = !g.roles[i] && mates.includes(i);
+          return (
+            <button
+              key={i}
+              className={`vp-seat${dead ? ' dead' : ''}${i === room.me ? ' me' : ''}${isMate ? ' mate' : ''}${chosen === i ? ' sel' : ''}${can ? ' can' : ''}`}
+              style={{ left: `${x}%`, top: `${y}%` }}
+              disabled={busy || !can}
+              onClick={() => choose(i)}
+              aria-label={`${s.name}${dead ? ' (öldü)' : ''}`}
+              aria-pressed={can ? chosen === i : undefined}
+            >
+              <i className="sf-av" style={{ background: PALETTE[i % PALETTE.length] }}>{(s.name || '?').trim().charAt(0).toUpperCase()}</i>
+              <span className="nm">{s.name}{i === room.me ? ' (sen)' : ''}</span>
+              {g.roles[i] && <em><Icon name={ROLE_ICON[g.roles[i]]} /> {ROLE[g.roles[i]].name}</em>}
+              {isMate && <em className="mate-l">ortağın</em>}
+              {day && !dead && voted.has(i) && <b className="tick" aria-label="oy verdi"><Icon name="check" /></b>}
+              {vampTargets.includes(i) && <b className="drop" aria-label="vampirlerin hedefi"><Icon name="droplet" /></b>}
+            </button>
+          );
+        })}
+      </div>
+
       {!over && night && alive && nightType && (
         <section className="vp-act">
           <h2>{prompt}</h2>
-          <div className="vp-targets">
-            {nightTargets.map((i) => (
-              <button key={i} className={`vp-t${g.choice === i ? ' on' : ''}`} disabled={busy} onClick={() => send(nightType, { target: i })}>
-                <Avatar i={i} name={names[i]} />
-                <span>{names[i]}{i === room.me ? ' (sen)' : ''}</span>
-                {role === 'vampir' && Object.values(g.vampChoices || {}).includes(i) && <em>🩸</em>}
-              </button>
-            ))}
-          </div>
           {role === 'vampir' && g.vampChoices && Object.keys(g.vampChoices).length > 0 && (
             <p className="sf-help">Seçenler: {Object.entries(g.vampChoices).map(([s, t]) => `${names[s]} → ${names[t]}`).join(', ')}</p>
           )}
-          <p className="sf-help">{g.choice !== null ? 'Seçimin kaydedildi. Değiştirebilirsin; herkes seçince sabah olur.' : 'Seçimini yap, herkes seçince sabah olur.'}</p>
+          <p className="sf-help">{g.choice !== null ? 'Seçimin kaydedildi. Başka birine dokunarak değiştirebilirsin; herkes seçince sabah olur.' : 'Çemberden bir kişiye dokun. Herkes seçince sabah olur.'}</p>
           {role === 'doktor' && blocked !== null && <p className="sf-help">Geçen gece koruduğun kişi bu gece seçilemez.</p>}
           {role === 'kahin' && g.seer && g.seer.length > 0 && (
             <ul className="vp-seer">
-              {g.seer.map((s, i) => <li key={i}>Gece {s.day}: <b>{names[s.target]}</b> {s.vamp ? '🧛 vampir!' : '🙂 vampir değil'}</li>)}
+              {g.seer.map((s, i) => <li key={i}>Gece {s.day}: <b>{names[s.target]}</b> {s.vamp ? 'vampir!' : 'vampir değil'}</li>)}
             </ul>
           )}
         </section>
       )}
 
       {!over && night && alive && role === 'koylu' && (
-        <p className="vp-sleep">😴 Gözlerini kapat. Sabah olunca haber verilecek.</p>
+        <p className="vp-sleep">Gözlerini kapat. Sabah olunca haber verilecek.</p>
       )}
 
       {!over && day && alive && (
         <section className="vp-act">
           <h2>Kim elensin?</h2>
-          <div className="vp-targets">
-            {aliveIdx.filter((i) => i !== room.me).map((i) => (
-              <button key={i} className={`vp-t${g.myVote === i ? ' on' : ''}`} disabled={busy} onClick={() => send('vote', { target: i })}>
-                <Avatar i={i} name={names[i]} />
-                <span>{names[i]}</span>
-              </button>
-            ))}
-            <button className={`vp-t skip${g.myVote === -1 ? ' on' : ''}`} disabled={busy} onClick={() => send('vote', { target: -1 })}>
-              <i className="sf-av" style={{ background: '#8a90b4' }}>–</i><span>Oy vermiyorum</span>
-            </button>
-          </div>
-          <p className="sf-help">{g.voted.length}/{aliveIdx.length} kişi oy verdi. Oy en çok alan elenir, eşitse kimse elenmez. Herkes oy verince sonuç belli olur.</p>
+          <button className={`vp-t skip${g.myVote === -1 ? ' on' : ''}`} disabled={busy} onClick={() => send('vote', { target: -1 })}>Oy vermiyorum</button>
+          <p className="sf-help">{g.voted.length}/{aliveIdx.length} kişi oy verdi. Çemberden elemek istediğin kişiye dokun; en çok oy alan elenir, eşitse kimse elenmez. Herkes oy verince sonuç belli olur.</p>
         </section>
       )}
-
-      <section className="sf-players">
-        <h2>Köy</h2>
-        <ul>
-          {room.seats.map((s, i) => {
-            const dead = !g.alive[i];
-            return (
-              <li key={i} className={`${dead ? 'gone' : ''}${i === room.me ? ' me' : ''}`}>
-                <Avatar i={i} name={s.name} />
-                <span className="nm">
-                  <b>{s.name}{i === room.me ? ' (sen)' : ''}</b>
-                  {g.roles[i] && <em>{ROLE[g.roles[i]].icon} {ROLE[g.roles[i]].name}{dead ? ' (öldü)' : ''}</em>}
-                  {!g.roles[i] && mates.includes(i) && <em>🧛 ortağın</em>}
-                  {day && !dead && voted.has(i) && <em>✓ oy verdi</em>}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
 
       {g.log.length > 0 && (
         <ul className="mono-log" aria-label="Köyde olanlar">
