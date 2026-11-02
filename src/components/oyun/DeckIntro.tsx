@@ -47,7 +47,7 @@ export default function DeckIntro({ cards, storageKey, table, onDone }: { cards:
       <div className="dk-intro-stage" aria-hidden="true">
         {five.map((c, i) => (
           <div key={c.id} className="dk-intro-card" style={{ '--i': i - mid, '--d': `${i * 70}ms`, zIndex: i === Math.round(mid) ? 9 : 5 - Math.abs(i - mid) } as React.CSSProperties}>
-            <div className="dk-intro-top" style={{ background: c.bg }}><GameCover id={c.id} title={false} className="dk-intro-cover" /></div>
+            <div className="dk-intro-top"><GameCover id={c.id} title={false} className="dk-intro-cover" /></div>
             <b>{c.name}</b>
           </div>
         ))}

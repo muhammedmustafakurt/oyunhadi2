@@ -52,27 +52,26 @@
 .dk-slot[data-active="true"] { transform: none; opacity: 1; z-index: 2; }
 
 .dk-card {
-  position: relative; display: flex; flex-direction: column; min-height: 410px; height: 100%;
-  border-radius: 22px; background: #fffdf8; color: var(--ink);
-  border: 3px solid var(--ink); box-shadow: 0 10px 0 rgba(0, 0, 0, .28);
-  overflow: hidden;
+  position: relative; display: flex; flex-direction: column; height: 100%; min-height: 440px;
+  padding: 9px; border-radius: 16px; background: var(--acc, #ff5a36); color: var(--ink);
+  border: 2px solid var(--ink); box-shadow: 0 10px 0 rgba(0, 0, 0, .28);
 }
-.dk-top { position: relative; height: 196px; display: grid; place-items: center; border-bottom: 3px solid var(--ink); }
-.dk-face { width: 150px; height: 150px; }
-.dk-slot[data-active="true"] .dk-face { animation: dk-wiggle 2.6s ease-in-out infinite; }
-@keyframes dk-wiggle { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-4deg) translateY(-3px); } }
-.dk-corner { position: absolute; top: 8px; left: 10px; display: grid; justify-items: center; font-weight: 800; font-size: 1.25rem; line-height: .95; }
-.dk-corner i { font-style: normal; font-size: 1rem; }
-.dk-corner.br { top: auto; left: auto; bottom: 8px; right: 10px; transform: rotate(180deg); }
-.dk-reward { position: absolute; top: 10px; right: 10px; padding: 3px 9px; border-radius: 999px; background: var(--accent); color: var(--ink); border: 2px solid var(--ink); font-size: .72rem; font-weight: 800; }
-.dk-body { padding: 14px 16px 6px; display: grid; gap: 6px; align-content: start; }
-.dk-body h2 { margin: 0; font-size: 1.65rem; line-height: 1; letter-spacing: -.03em; font-weight: 800; }
-.dk-body p { margin: 0; color: #5b5470; font-size: .92rem; line-height: 1.35; }
-.dk-meta { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.dk-meta li { padding: 2px 9px; border-radius: 999px; background: #f0ebe1; font-size: .78rem; font-weight: 700; }
-.dk-body .dk-prize { margin-top: 4px; padding: 6px 9px; border-radius: 10px; background: #fff4cc; color: var(--ink); font-size: .8rem; font-weight: 700; }
+.dk-in {
+  position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 12px 14px 14px; border-radius: 8px; background: #fff7ee; border: 1.5px solid var(--ink);
+}
+.dk-in::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(28, 18, 51, .55); border-radius: 4px; pointer-events: none; }
+.dk-no { margin: 4px 0 0; font-size: .62rem; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; }
+.dk-seal { display: block; width: 112px; height: 112px; margin: 8px 0 2px; }
+.dk-logo { margin: 0; display: grid; font-family: var(--font-logo), Georgia, serif; font-style: italic; font-weight: 800; font-size: 2rem; line-height: .98; letter-spacing: -.01em; text-wrap: balance; }
+.dk-logo.long { font-size: 1.6rem; }
+.dk-logo::after { content: ""; justify-self: center; width: 64px; height: 3px; margin-top: 8px; border-radius: 2px; background: var(--acc, #ff5a36); }
+.dk-note { margin: 10px 0 0; color: rgba(28, 18, 51, .72); font-size: .9rem; line-height: 1.35; text-wrap: balance; }
+.dk-meta { margin: auto 0 0; padding-top: 10px; font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.dk-reward { position: absolute; top: 40px; right: 14px; z-index: 1; padding: 2px 8px; border-radius: 999px; background: var(--acc); color: var(--ink); border: 1.5px solid var(--ink); font-size: .66rem; font-weight: 800; }
+.dk-prize { margin: 8px 0 0; padding: 5px 9px; border-radius: 8px; background: #fff4cc; font-size: .78rem; font-weight: 700; }
 .dk-play {
-  margin: auto 14px 14px; padding: 12px; border-radius: 14px; text-align: center; text-decoration: none;
+  align-self: stretch; margin: 12px 0 0; padding: 11px; border-radius: 14px; text-align: center; text-decoration: none;
   background: var(--brand); color: #fff !important; font-weight: 800; font-size: 1.05rem;
   border: 2.5px solid var(--ink); box-shadow: 0 4px 0 var(--ink);
   transition: transform .08s, box-shadow .08s;
@@ -110,7 +109,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dk-slot { transition: none; }
-  .dk-slot[data-active="true"] .dk-face { animation: none; }
 }
 
 /* Oyun sayfası başlık bandında karakter çizimi */
@@ -166,17 +164,10 @@
   .dk-card { animation: none; }
 }
 
-/* Kapak sanatı (parlak oyun logosu dili) */
-.dk-top { height: auto; aspect-ratio: 1.15; overflow: hidden; background: var(--ink); }
-.dk-cover { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* Kapak sanatı (premium kutu oyunu dili) */
 .dk-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-.dk-top .dk-corner { z-index: 2; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
-.dk-top .dk-reward { z-index: 2; }
-.dk-slot[data-active="true"] .dk-cover { animation: none; }
 .dk-intro-top { position: relative; overflow: hidden; }
 .dk-intro-top .dk-intro-cover { position: absolute; inset: 0; width: 100%; height: 100%; }
 .oh-band-cover { border-radius: 18px; overflow: hidden; border: 3px solid var(--ink); }
 .oh-band-cover svg { width: 100%; height: 100%; display: block; }
 
-/* Kapak başlıkları sayfanın kendi yazı tipiyle çizilir */
-svg.cv text { font-family: var(--font), system-ui, sans-serif; font-weight: 800; }

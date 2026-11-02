@@ -1,4 +1,4 @@
-import GameCover, { CoverDefs } from './GameCover';
+import GameCover from './GameCover';
 import { SPINE } from '@/lib/spines';
 
 type Game = { id: string; name: string; note: string; players: string; minutes: string };
@@ -17,7 +17,7 @@ export default function GameBand({ game }: { game: Game }) {
           <li>{game.minutes} dk</li>
         </ul>
       </div>
-      <span className="oh-band-art oh-band-cover"><CoverDefs /><GameCover id={game.id} title={false} /></span>
+      <span className="oh-band-art oh-band-cover"><GameCover id={game.id} title={false} /></span>
     </section>
   );
 }

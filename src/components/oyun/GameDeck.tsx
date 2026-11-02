@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import GameCover, { CoverDefs } from './GameCover';
+import { GameSeal } from './GameCover';
+import { accentOf, nameLines } from './emblems';
 import DeckIntro from './DeckIntro';
 
 export type DeckGame = {
@@ -17,12 +18,6 @@ export type DeckGame = {
   reward?: string;
 };
 
-const SUITS = [
-  { s: '♠', red: false },
-  { s: '♥', red: true },
-  { s: '♣', red: false },
-  { s: '♦', red: true },
-];
 const range = (p: string) => { const [a, b = a] = p.split('-').map(Number); return [a, b] as const; };
 const label = (p: string) => { const [a, b] = range(p); return a === b ? `${a}` : `${a}–${b}`; };
 const MAX = 10;
@@ -75,7 +70,6 @@ export default function GameDeck({ games, soon, introKey, table }: { games: Deck
 
   return (
     <div className={`dk${dealt ? ' dealt' : ' waiting'}`}>
-      <CoverDefs />
       <DeckIntro cards={games} storageKey={`oh-intro-${introKey}`} table={table} onDone={onIntroDone} />
       {deck.length === 0 ? (
         <div className="dk-empty" role="status">
@@ -85,27 +79,23 @@ export default function GameDeck({ games, soon, introKey, table }: { games: Deck
       ) : (
         <ul className="dk-rail" ref={rail} aria-label="Oyun destesi">
           {deck.map((g, i) => {
-            const suit = SUITS[i % SUITS.length];
             const off = i - active;
+            const lines = nameLines(g.name);
+            const long = Math.max(...lines.map((l) => l.length)) > 10;
+            const no = String(games.findIndex((x) => x.id === g.id) + 1).padStart(2, '0');
             return (
               <li key={g.id} className="dk-slot" data-active={off === 0} style={{ '--off': off, '--deal': `${Math.min(i, 4) * 90}ms` } as React.CSSProperties}>
-                <article className="dk-card" aria-label={g.name}>
-                  <div className="dk-top" style={{ background: g.bg, color: g.fg }}>
-                    <span className={`dk-corner${suit.red ? ' red' : ''}`} aria-hidden="true">{g.name[0]}<i>{suit.s}</i></span>
-                    <span className={`dk-corner br${suit.red ? ' red' : ''}`} aria-hidden="true">{g.name[0]}<i>{suit.s}</i></span>
+                <article className="dk-card" aria-label={g.name} style={{ '--acc': accentOf(g.id) } as React.CSSProperties}>
+                  <div className="dk-in">
                     {g.reward && <span className="dk-reward">★ Ödüllü</span>}
-                    <GameCover id={g.id} className="dk-cover" />
-                  </div>
-                  <div className="dk-body">
-                    <h2 className="dk-sr">{g.name}</h2>
-                    <p>{g.note}</p>
-                    <ul className="dk-meta">
-                      <li>{label(g.players)} kişi</li>
-                      <li>{g.minutes.replace('-', '–')} dk</li>
-                    </ul>
+                    <p className="dk-no" aria-hidden="true">Oyunhadi · {no}/{String(games.length).padStart(2, '0')}</p>
+                    <GameSeal id={g.id} className="dk-seal" />
+                    <h2 className={`dk-logo${long ? ' long' : ''}`}>{lines.map((l) => <span key={l}>{l}</span>)}</h2>
+                    <p className="dk-note">{g.note}</p>
+                    <p className="dk-meta">{label(g.players)} oyuncu · {g.minutes.replace('-', '–')} dk</p>
                     {g.reward && <p className="dk-prize">{g.reward}</p>}
+                    <Link href={g.href} className="dk-play" tabIndex={off === 0 ? 0 : -1}>Bu oyunu aç</Link>
                   </div>
-                  <Link href={g.href} className="dk-play" tabIndex={off === 0 ? 0 : -1}>Bu oyunu aç</Link>
                 </article>
               </li>
             );

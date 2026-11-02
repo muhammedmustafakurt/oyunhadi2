@@ -60,4 +60,3 @@
 }
 
 /* Oyun kapaklarının başlık yazı tipi */
-svg.cv text { font-family: var(--font-head), system-ui, sans-serif; font-weight: 900; }
