@@ -4,7 +4,8 @@ import { SPINE } from '@/lib/spines';
 import { GAMES } from '@/lib/games';
 import { SITE_URL } from '@/lib/site';
 
-const FAN = ['spyfall', 'vampir', 'tabu', 'bil', 'cizim'];
+const FAN = ['bil', 'monopoly', 'satranc', 'ajanlar', 'vampir', 'kimim'];
+const MID = 2; // "Bu oyunu aç" düğmeli, en önde duran kart
 const INK = '#1c1233';
 
 // Gerçek, okutulabilir karekod (demo masaya gider). Yüksek hata düzeltmesiyle üretilir ki ortasına logo sığsın.
@@ -92,12 +93,12 @@ export default function CardFan() {
       {FAN.map((id, i) => {
         const g = GAMES.find((x) => x.id === id)!;
         const [bg] = SPINE[id];
-        const mid = i === 2;
+        const mid = i === MID;
         return (
           <div
             key={id}
             className="fan-card absolute top-8 left-1/2 w-[160px] overflow-hidden rounded-[18px] border-[3px] border-ink bg-[#fffdf8] text-ink shadow-[0_10px_0_rgba(0,0,0,.25)] sm:w-[190px]"
-            style={{ '--i': i - 2, '--d': `${Math.abs(i - 2) * 60}ms`, zIndex: mid ? 15 : 13 - Math.abs(i - 2) } as React.CSSProperties}
+            style={{ '--i': i - (FAN.length - 1) / 2, '--d': `${Math.abs(i - MID) * 60}ms`, zIndex: mid ? 15 : 13 - Math.abs(i - MID) } as React.CSSProperties}
           >
             <div className="relative h-[118px] overflow-hidden border-b-[3px] border-ink sm:h-[140px]" style={{ background: bg }}>
               <GameCover id={id} title={false} className="absolute inset-0 h-full w-full" />

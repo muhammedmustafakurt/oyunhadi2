@@ -91,12 +91,12 @@
    38–52% kartlar telefondan çıkıp yelpaze gibi açılır, 88%'e kadar bekler, sonra toplanır */
 .scan-scene { --cycle: 9s; }
 .fan-card {
-  --spread: 34px;
+  --spread: 28px;
   transform-origin: 50% 125%;
   transform: translateX(calc(-50% + var(--i) * var(--spread))) rotate(calc(var(--i) * 11deg));
   animation: fan-loop var(--cycle) cubic-bezier(.2, .8, .2, 1) var(--d, 0ms) infinite both;
 }
-@media (min-width: 640px) { .fan-card { --spread: 46px; } }
+@media (min-width: 640px) { .fan-card { --spread: 38px; } }
 @keyframes fan-loop {
   0%, 37% { transform: translate(calc(-50% + 70px), -150px) scale(.18) rotate(-6deg); opacity: 0; }
   39% { opacity: 1; }

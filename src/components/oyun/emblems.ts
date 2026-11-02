@@ -28,7 +28,18 @@ const line = (d: string) => `<path d="${d}" fill="none" ${S}/>`;
 export const SYMBOLS: Record<string, string> = {
   monopoly: m('M14 46 L50 16 L86 46', 'a') + rc(22, 46, 56, 38) + rc(43, 62, 14, 22, 0, 'a') + rc(60, 22, 9, 14),
   satranc: ci(50, 26, 12, 'a') + m('M40 40 Q44 58 34 74 H66 Q56 58 60 40Z') + rc(26, 74, 48, 11, 3, 'a') + line('M30 36 H70'),
-  spyfall: ci(44, 44, 26, 'a') + line('M64 64 L86 86') + m('M20 44 Q44 22 68 44 Q44 66 20 44Z') + ci(44, 44, 6),
+  // Casus: fötr şapka, siyah gözlük, kaldırılmış yakalı trençkot
+  spyfall:
+    m('M6 96 L18 62 Q50 78 82 62 L94 96Z', 'a') +
+    m('M28 62 L14 40 L46 58Z', 'a') + m('M72 62 L86 40 L54 58Z', 'a') +
+    m('M33 40 Q33 66 50 70 Q67 66 67 40Z', '#f1d6bf') +
+    line('M42 62 L50 78 L58 62') +
+    m('M17 40 Q50 28 83 40 Q50 50 17 40Z', INK) +
+    m('M31 38 Q31 10 50 10 Q69 10 69 38 Q50 31 31 38Z', INK) +
+    `<path d="M31.5 31 Q50 25 68.5 31 L68.5 36 Q50 30 31.5 36Z" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round" style="fill:var(--acc)"/>` +
+    rc(35, 46, 13, 9, 3, INK) + rc(52, 46, 13, 9, 3, INK) + line('M48 49 H52') +
+    `<path d="M38 48.5 L41 48.5 M55 48.5 L58 48.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>` +
+    line('M44 61 H56'),
   ajanlar: Array.from({ length: 9 }, (_, i) => rc(16 + (i % 3) * 24, 16 + Math.floor(i / 3) * 24, 20, 20, 3, i === 4 || i === 2 || i === 6 ? 'a' : undefined)).join(''),
   // Vampir: yüksek yakalı pelerin, soluk yüz, sivri saç çizgisi, kırmızı gözler ve dişler
   vampir:
