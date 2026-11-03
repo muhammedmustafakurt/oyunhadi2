@@ -169,7 +169,13 @@ const SCHEMA = [
     created_at BIGINT NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS chat_reports_biz ON chat_reports (biz_id, status, created_at)`,
+  // Bir kereliğe mahsus veri düzeltmelerinin kaydı (aynı düzeltme ikinci kez çalışmaz).
+  `CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY, at BIGINT NOT NULL)`,
 ];
+
+// Tohum yalnızca boş veritabanında çalışır; sonradan eklenen oyunlar mevcut mekânların listesine girmez.
+// Bu düzeltme, 5 yeni masa oyununu mevcut mekânlara bir kez ekler (sonra paneldeki seçim geçerlidir).
+const ADD_GAMES_2026_11 = ['pisti', 'okey', 'tavla', 'g2048', 'adam'];
 
 // Veritabanı boş açılırsa ilk mekânlar örnek verilerle eklenir. Panel girişi test hesabıyla yapılır
 // (elif@hadikafe.com / demo1234); şifre alanında scrypt karması saklanır.
@@ -219,6 +225,16 @@ function ensure() {
           [v.slug, v.name, v.city, v.initials, v.logo_url, v.color, v.accent, v.ntables, v.lat, v.lng, v.games, v.welcome, v.ann_title, v.ann_body, v.reward_game, v.reward_goal, v.reward_prize, v.email, v.password, v.created_at, v.updated_at],
         );
       }
+    }
+    const done = await q('SELECT name FROM migrations WHERE name = $1', ['add-games-2026-11']);
+    if (!done.length) {
+      const venues = await q('SELECT slug, games FROM venues', []);
+      for (const v of venues) {
+        const have = String(v.games || '').split(',').filter(Boolean);
+        const next = [...have, ...ADD_GAMES_2026_11.filter((id) => !have.includes(id))];
+        if (next.length !== have.length) await q('UPDATE venues SET games = $1, updated_at = $2 WHERE slug = $3', [next.join(','), Date.now(), v.slug]);
+      }
+      await q('INSERT INTO migrations (name, at) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING', ['add-games-2026-11', Date.now()]);
     }
   })().catch((err) => {
     g.__dbReady = null; // sonraki istekte yeniden dene
