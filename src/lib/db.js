@@ -175,7 +175,10 @@ const SCHEMA = [
 
 // Tohum yalnızca boş veritabanında çalışır; sonradan eklenen oyunlar mevcut mekânların listesine girmez.
 // Bu düzeltme, 5 yeni masa oyununu mevcut mekânlara bir kez ekler (sonra paneldeki seçim geçerlidir).
-const ADD_GAMES_2026_11 = ['pisti', 'okey', 'tavla', 'g2048', 'adam'];
+const GAME_MIGRATIONS = [
+  { name: 'add-games-2026-11', ids: ['pisti', 'okey', 'tavla', 'g2048', 'adam'] },
+  { name: 'add-games-2026-11b', ids: ['kadro', 'futbolcu'] },
+];
 
 // Veritabanı boş açılırsa ilk mekânlar örnek verilerle eklenir. Panel girişi test hesabıyla yapılır
 // (elif@hadikafe.com / demo1234); şifre alanında scrypt karması saklanır.
@@ -226,15 +229,16 @@ function ensure() {
         );
       }
     }
-    const done = await q('SELECT name FROM migrations WHERE name = $1', ['add-games-2026-11']);
-    if (!done.length) {
+    for (const m of GAME_MIGRATIONS) {
+      const done = await q('SELECT name FROM migrations WHERE name = $1', [m.name]);
+      if (done.length) continue;
       const venues = await q('SELECT slug, games FROM venues', []);
       for (const v of venues) {
         const have = String(v.games || '').split(',').filter(Boolean);
-        const next = [...have, ...ADD_GAMES_2026_11.filter((id) => !have.includes(id))];
+        const next = [...have, ...m.ids.filter((id) => !have.includes(id))];
         if (next.length !== have.length) await q('UPDATE venues SET games = $1, updated_at = $2 WHERE slug = $3', [next.join(','), Date.now(), v.slug]);
       }
-      await q('INSERT INTO migrations (name, at) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING', ['add-games-2026-11', Date.now()]);
+      await q('INSERT INTO migrations (name, at) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING', [m.name, Date.now()]);
     }
   })().catch((err) => {
     g.__dbReady = null; // sonraki istekte yeniden dene
