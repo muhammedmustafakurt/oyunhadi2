@@ -24,7 +24,8 @@ export function getPid() {
 }
 
 // Masa odasını yoklar ve hamle gönderir. Tüm masa oyunları (Emlak Krallığı, Satranç) ortak kullanır.
-export default function useRoom({ cafe, masa, game, pollMs = POLL_MS }) {
+// event: Mekân Sınavı için etkinlik numarası (yalnızca game='bil' ile); sunucu açık olmayan etkinliği reddeder.
+export default function useRoom({ cafe, masa, game, event, pollMs = POLL_MS }) {
   const [pid, setPid] = useState(null);
   const [room, setRoom] = useState(null);
   const [err, setErr] = useState('');
@@ -57,7 +58,7 @@ export default function useRoom({ cafe, masa, game, pollMs = POLL_MS }) {
     const tick = async () => {
       if (document.hidden) return;
       try {
-        const r = await fetch(`/api/room?cafe=${cafe}&masa=${masa}&game=${game}&pid=${pid}&v=${ver.current}`, { cache: 'no-store' });
+        const r = await fetch(`/api/room?cafe=${cafe}&masa=${masa}&game=${game}&pid=${pid}&v=${ver.current}${event ? `&event=${event}` : ''}`, { cache: 'no-store' });
         const d = await r.json();
         if (dead) return;
         if (!r.ok) { setErr(d.error || 'Masa açılamadı.'); return; }
@@ -70,7 +71,7 @@ export default function useRoom({ cafe, masa, game, pollMs = POLL_MS }) {
     tick();
     const id = setInterval(tick, pollMs);
     return () => { dead = true; clearInterval(id); };
-  }, [pid, cafe, masa, game, pollMs]);
+  }, [pid, cafe, masa, game, event, pollMs]);
 
   // Masada oturan oyuncu "buradayım" bilgisini düzenli gönderir; sayfayı kapatan oyuncu böylece fark edilir.
   const seatedNow = !!room && room.me >= 0 && !room.seats[room.me]?.left;
@@ -81,11 +82,11 @@ export default function useRoom({ cafe, masa, game, pollMs = POLL_MS }) {
       fetch('/api/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cafe, masa, game, pid, action: { type: 'ping', ...(geo.current && { geo: geo.current }) } }),
+        body: JSON.stringify({ cafe, masa, game, event, pid, action: { type: 'ping', ...(geo.current && { geo: geo.current }) } }),
       }).catch(() => {});
     }, 20000);
     return () => clearInterval(id);
-  }, [pid, seatedNow, cafe, masa, game]);
+  }, [pid, seatedNow, cafe, masa, game, event]);
 
   const send = useCallback(async (type, extra = {}) => {
     if (!pid || busy) return;
@@ -94,7 +95,7 @@ export default function useRoom({ cafe, masa, game, pollMs = POLL_MS }) {
       const r = await fetch('/api/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cafe, masa, game, pid, action: { type, ...(geo.current && { geo: geo.current }), ...extra } }),
+        body: JSON.stringify({ cafe, masa, game, event, pid, action: { type, ...(geo.current && { geo: geo.current }), ...extra } }),
       });
       const d = await r.json();
       setErr(d.error && !d.seats ? d.error : '');
@@ -104,7 +105,7 @@ export default function useRoom({ cafe, masa, game, pollMs = POLL_MS }) {
     } finally {
       setBusy(false);
     }
-  }, [pid, busy, cafe, masa, game]);
+  }, [pid, busy, cafe, masa, game, event]);
 
   const join = async (extra) => {
     const n = name.trim();

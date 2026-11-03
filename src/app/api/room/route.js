@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { findCafe, hasTable, nearCafe, readRoom, mutate, view, ROOM_GAMES, MASA_RE, PID_RE } from '@/lib/rooms';
+import { findCafe, hasTable, nearCafe, readRoom, mutate, view, roomKey, ROOM_GAMES, MASA_RE, PID_RE } from '@/lib/rooms';
+import { gateEvent, QUIZ_CAT } from '@/lib/events';
 import { run } from '@/lib/db';
 import { PLUGINS } from '@/lib/plugins';
 import { clientIp, floodOk, hit } from '@/lib/ratelimit';
@@ -9,13 +10,22 @@ export const dynamic = 'force-dynamic';
 const json = (body, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 const ACTIONS = new Set(['rdeploy', 'rtrade', 'rattack', 'rmove', 'rendattack', 'rfortify', 'rendturn', 'scplay', 'scpass', 'scswap', 'scchallenge', 'scvote', 'sctimeout', 'sccommit', 'join', 'token', 'leave', 'start', 'roll', 'buy', 'skip', 'move', 'accuse', 'vote', 'guess', 'timeout', 'clue', 'pick', 'endturn', 'kill', 'protect', 'inspect', 'begin', 'right', 'pass', 'taboo', 'kok', 'kno', 'kskip', 'ktimeout', 'ddraw', 'dset', 'dguess', 'dswap', 'dtimeout', 'bpick', 'btimeout', 'wipe', 'ping', 'kick', 'reset', 'bid', 'build', 'sell', 'mortgage', 'unmortgage', 'payJail', 'jailCard', 'offer', 'accept', 'decline', 'claim', 'resign', 'atake', 'clroll', 'clstay', 'clpassage', 'clmove', 'clsuggest', 'clshow', 'claccuse', 'clend', 'ccplace', 'ccmeeple', 'csettle', 'ccity', 'croad', 'cdev', 'croll', 'cdrop', 'crobber', 'cplay', 'cend', 'cbank', 'coffer', 'cacc', 'cpick', 'cclose', 'tkdraw', 'tkclaim', 'tktickets', 'tkkeep', 'kdformasyon', 'kdpick', 'kdswap', 'kdlock', 'kdtimeout', 'fbready', 'fbask', 'fbanswer', 'fbguess', 'fbverdict', 'fbnext']);
 
-async function resolve({ cafe, masa, game, pid }) {
+// event: Mekân Sınavı (etkinlik) odası. KAPI: etkinlik bu mekâna ait, durumu 'acik' ve sınavlı değilse hiçbir istek
+// (oda okuma, katılma, hamle) geçmez; kapalı/bitmiş etkinlikte yalnızca masadan ayrılma (leave) kabul edilir.
+// Bu kontrol her GET ve POST'ta, oda okunmadan önce çalışır; istemcinin gizlemesine güvenilmez.
+async function resolve({ cafe, masa, game, pid, event }, { leave = false } = {}) {
   if (!/^[a-z0-9-]{1,50}$/.test(String(cafe)) || !MASA_RE.test(String(masa)) || !ROOM_GAMES.has(game) || !PID_RE.test(String(pid))) {
     return { err: json({ error: 'Geçersiz istek.' }, 400) };
   }
   const biz = await findCafe(cafe);
   if (!biz) return { err: json({ error: 'Mekân bulunamadı.' }, 404) };
   if (!hasTable(biz, String(masa))) return { err: json({ error: 'Bu masa kayıtlı değil.' }, 404) };
+  if (event != null && event !== '') {
+    if (game !== 'bil') return { err: json({ error: 'Geçersiz istek.' }, 400) };
+    const gate = await gateEvent(biz.id, event, { leave });
+    if (gate.error) return { err: json({ error: gate.error }, gate.status) };
+    return { biz, cafe: biz, ev: gate.ev };
+  }
   if (!biz.games.includes(game)) return { err: json({ error: 'Bu oyun bu mekânda kapalı.' }, 404) };
   return { biz, cafe: biz };
 }
@@ -24,9 +34,9 @@ async function resolve({ cafe, masa, game, pid }) {
 export async function GET(req) {
   try {
     const q = Object.fromEntries(new URL(req.url).searchParams);
-    const { biz, err } = await resolve(q);
+    const { biz, ev, err } = await resolve(q);
     if (err) return err;
-    const room = await readRoom(biz.id, q.masa, q.game);
+    const room = await readRoom(biz.id, q.masa, roomKey(q.game, ev?.id));
     if (String(room.version) === q.v) return json({ unchanged: true, version: room.version });
     return json({ ...view(room, q.pid, q.game), locked: biz.lat != null });
   } catch (e) {
@@ -42,7 +52,7 @@ export async function POST(req) {
     const ip = clientIp(req);
     // Kaba taşkın koruması (örnek başına).
     if (!floodOk(`room:${ip}`, 600, 60_000)) return json({ error: 'Çok fazla istek. Biraz yavaşlayın.' }, 429);
-    const { biz, err } = await resolve(body);
+    const { biz, ev, err } = await resolve(body, { leave: body?.action?.type === 'leave' });
     if (err) return err;
     const a = body.action;
     const plugAct = !!a && typeof a.type === 'string' && /^[a-z0-9]{3,24}$/.test(a.type) && !!PLUGINS[body.game] && a.type.startsWith(PLUGINS[body.game].PREFIX);
@@ -55,7 +65,7 @@ export async function POST(req) {
         return json({ error: 'Çok fazla katılma denemesi. Biraz sonra tekrar deneyin.' }, 429);
       }
     }
-    const res = await mutate(biz.id, body.masa, body.game, body.pid, { type: a.type, t: a.t, n: a.n, cards: a.cards, dice: a.dice, tiles: a.tiles, idxs: a.idxs, name: a.name, tok: a.tok, from: a.from, to: a.to, target: a.target, yes: a.yes, loc: a.loc, word: a.word, num: a.num, card: a.card, strokes: a.strokes, keep: a.keep, text: a.text, choice: a.choice, ms: a.ms, amount: a.amount, prop: a.prop, promo: a.promo, src: a.src, factory: a.factory, color: a.color, line: a.line, sus: a.sus, wpn: a.wpn, rm: a.rm, slot: a.slot, route: a.route, near:nearCafe(biz, a.geo), noGeo: !a.geo, cc: a.cc, cat: a.cat, pl: plugAct && JSON.stringify(a.pl ?? {}).length <= 4000 ? a.pl : undefined });
+    const res = await mutate(biz.id, body.masa, body.game, body.pid, { type: a.type, t: a.t, n: a.n, cards: a.cards, dice: a.dice, tiles: a.tiles, idxs: a.idxs, name: a.name, tok: a.tok, from: a.from, to: a.to, target: a.target, yes: a.yes, loc: a.loc, word: a.word, num: a.num, card: a.card, strokes: a.strokes, keep: a.keep, text: a.text, choice: a.choice, ms: a.ms, amount: a.amount, prop: a.prop, promo: a.promo, src: a.src, factory: a.factory, color: a.color, line: a.line, sus: a.sus, wpn: a.wpn, rm: a.rm, slot: a.slot, route: a.route, near:nearCafe(biz, a.geo), noGeo: !a.geo, cc: a.cc, cat: a.cat, pl: plugAct && JSON.stringify(a.pl ?? {}).length <= 4000 ? a.pl : undefined }, ev ? { event: ev.id, quiz: ev.quiz.map((x) => ({ c: QUIZ_CAT, q: x.q, a: x.a })) } : {});
     if (a.type === 'start') {
       // İstatistikler için oyun başlangıcını kaydet; başarısızsa odayı etkilemesin.
       run('INSERT INTO play_logs (biz_id, masa, game, players, at) VALUES (?, ?, ?, ?, ?)',

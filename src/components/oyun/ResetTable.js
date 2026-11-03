@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { getPid } from '@/components/games/useRoom';
 
 // Masadakiler kalkıp gitmiş ama oyun açık kalmışsa, odayı silip lobiyi sıfırdan kurar. Herkes (izleyici dahi) kullanabilir.
-export default function ResetTable({ cafe, masa, game }) {
+export default function ResetTable({ cafe, masa, game, event = /** @type {string | undefined} */ (undefined) }) {
   const [step, setStep] = useState('idle'); // idle | ask | busy
   const [err, setErr] = useState('');
 
@@ -14,7 +14,7 @@ export default function ResetTable({ cafe, masa, game }) {
       const r = await fetch('/api/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cafe, masa, game, pid: getPid(), action: { type: 'wipe' } }),
+        body: JSON.stringify({ cafe, masa, game, event, pid: getPid(), action: { type: 'wipe' } }),
       });
       if (!r.ok) throw new Error();
       window.location.reload();

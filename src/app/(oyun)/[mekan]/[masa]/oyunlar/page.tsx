@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation';
 import GameDeck, { type DeckGame } from '@/components/oyun/GameDeck';
 import VenueBadge from '@/components/oyun/VenueBadge';
 import ChatWidget from '@/components/sohbet/ChatWidget';
+import Link from 'next/link';
 import { findCafe, hasTable } from '@/lib/rooms';
+import { listOpenEvents } from '@/lib/events';
 import { GAMES } from '@/lib/games';
 import { SPINE } from '@/lib/spines';
 
@@ -20,6 +22,8 @@ export default async function TableGames({ params }: PageProps<'/[mekan]/[masa]/
   const v = await findCafe(mekan);
   if (!v || !hasTable(v, masa)) notFound();
   const no = masa.replace('masa-', '');
+  // Yalnızca durumu 'acik' olan etkinlikler; yoksa hiçbir şey gösterilmez. Hata sayfayı düşürmesin.
+  const open: { id: number; title: string; body: string; questions: number }[] = await listOpenEvents(v.id).catch(() => []);
   const base = `/${mekan}/${masa}/oyunlar`;
 
   const games: DeckGame[] = GAMES.filter((g) => g.play && v.games.includes(g.id)).map((g) => ({
@@ -47,6 +51,15 @@ export default async function TableGames({ params }: PageProps<'/[mekan]/[masa]/
       {v.announcement && (
         <p className="felt-news"><b>Duyuru</b> {v.announcement.title}. {v.announcement.body}</p>
       )}
+
+      {open.map((e) => (
+        <Link key={e.id} href={`/${mekan}/${masa}/etkinlik/${e.id}`} className="felt-live">
+          <b>Şimdi açık</b>
+          <span className="t">{e.title}</span>
+          {e.body && <span className="d">{e.body}</span>}
+          <span className="go">{e.questions > 0 ? 'Sınava gir' : 'Ayrıntılar'} →</span>
+        </Link>
+      ))}
 
       <GameDeck games={games} soon={soon} introKey={`${mekan}-${masa}`} table={no} />
 

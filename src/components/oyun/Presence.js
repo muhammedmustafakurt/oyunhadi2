@@ -6,7 +6,7 @@ const IDLE_MS = 45 * 1000; // lib/rooms.js ile aynı
 
 // Sayfayı kapatıp giden oyuncuyu fark eder: masadaki biri onu bir tıkla masadan çıkarabilir,
 // böylece oyun onu beklemeden devam eder (ya da biter).
-export default function Presence({ cafe, masa, game }) {
+export default function Presence({ cafe, masa, game, event = /** @type {string | undefined} */ (undefined) }) {
   const [snap, setSnap] = useState(null); // { room, at }
   const [tick, setTick] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -18,7 +18,7 @@ export default function Presence({ cafe, masa, game }) {
     const poll = async () => {
       if (document.hidden) return;
       try {
-        const r = await fetch(`/api/room?cafe=${cafe}&masa=${masa}&game=${game}&pid=${pid}&v=${ver}`, { cache: 'no-store' });
+        const r = await fetch(`/api/room?cafe=${cafe}&masa=${masa}&game=${game}&pid=${pid}&v=${ver}${event ? `&event=${event}` : ''}`, { cache: 'no-store' });
         const d = await r.json();
         if (dead || !r.ok || d.unchanged) return;
         ver = d.version;
@@ -29,7 +29,7 @@ export default function Presence({ cafe, masa, game }) {
     const a = setInterval(poll, 6000);
     const b = setInterval(() => setTick((t) => t + 1), 5000);
     return () => { dead = true; clearInterval(a); clearInterval(b); };
-  }, [cafe, masa, game]);
+  }, [cafe, masa, game, event]);
 
   const room = snap?.room;
   if (!room || room.me < 0 || room.seats[room.me]?.left) return null;
@@ -44,7 +44,7 @@ export default function Presence({ cafe, masa, game }) {
       await fetch('/api/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cafe, masa, game, pid: getPid(), action: { type: 'kick', target } }),
+        body: JSON.stringify({ cafe, masa, game, event, pid: getPid(), action: { type: 'kick', target } }),
       });
     } catch {}
     setBusy(false);

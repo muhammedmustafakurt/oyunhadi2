@@ -51,7 +51,10 @@ const sq = (p) => Array.isArray(p) && p.length === 2 && p.every((n) => Number.is
 
 // Mekân bilgisi veritabanından gelir (src/lib/venues.js); kayıtlı olmayan masa numarasında oda açılmaz.
 export const findCafe = async (slug) => getVenueBySlug(slug);
-export const hasTable = (venue, masa) => MASA_RE.test(masa) && Number(masa.slice(5)) >= 1 && Number(masa.slice(5)) <= venue.tables;
+// Mekân Sınavı odası: oyun motoru 'bil' kalır, ama oda etkinliğe özel bir anahtarla saklanır ('bil@<etkinlik>'); böylece
+// genel Bil Bakalım odasıyla karışmaz. Etkinlik kapısı api/room/route.js'te (events.gateEvent) uygulanır.
+export const roomKey = (game, eventId) => (eventId ? `${game}@${eventId}` : game);
+export const hasTable =(venue, masa) => MASA_RE.test(masa) && Number(masa.slice(5)) >= 1 && Number(masa.slice(5)) <= venue.tables;
 
 // Kafenin konumu girilmişse oyuncunun telefonu bu yarıçap (metre) içinde olmalı; GPS sapması kadar pay bırakılır.
 export const NEAR_M = 250;
@@ -229,7 +232,7 @@ function scrabbleAct(s, idx, a, g) {
   return { state: s };
 }
 
-function apply(s, pid, a, game) {
+function apply(s, pid, a, game, extra = {}) {
   const cfg = CONFIG[game];
   const idx = s.seats.findIndex((x) => x.pid === pid);
   const g = s.game;
@@ -315,7 +318,7 @@ function apply(s, pid, a, game) {
       } else if (game === 'futbolcu') {
         s.game = FB.newGame(s.seats);
       } else if (game === 'bil') {
-        s.game = B.newGame(s.seats.length);
+        s.game = B.newGame(s.seats.length, Date.now(), extra.quiz); // quiz: Mekân Sınavı soruları (yoksa genel banka)
       } else if (game === 'cluedo') {
         s.game = CL.newGame(s.seats.length);
       } else if (game === 'azul') {
@@ -557,10 +560,12 @@ function apply(s, pid, a, game) {
 }
 
 // Hamleyi uygular; aynı anda iki telefon yazarsa sürüm denetimiyle yeniden dener.
-export async function mutate(biz, tbl, game, pid, action) {
+// extra: { event, quiz } yalnızca Mekân Sınavı odasında (kapıdan geçmiş etkinlik) verilir.
+export async function mutate(biz, tbl, game, pid, action, extra = {}) {
+  const key = roomKey(game, extra.event);
   for (let i = 0; i < 4; i++) {
-    const r = await readRoom(biz, tbl, game);
-    const res = apply(structuredClone(r.state), pid, action, game);
+    const r = await readRoom(biz, tbl, key);
+    const res = apply(structuredClone(r.state), pid, action, game, extra);
     if (res.error) return { error: res.error, room: r };
     if (game === 'vampir') vampStamp(res.state.game, r.state.game);
     const me = res.state.seats.findIndex((x) => x.pid === pid);

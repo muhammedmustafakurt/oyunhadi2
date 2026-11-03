@@ -13,12 +13,13 @@ const CONFETTI = ['🎉', '✨', '🏆', '🎊', '⭐'];
 const CAT = {
   'Coğrafya': '🌍', 'Tarih': '🏛️', 'Bilim': '🔬', 'Spor': '⚽',
   'Kültür ve sanat': '🎨', 'Yemek': '🍽️', 'Genel kültür': '💡',
-  'Hayvanlar': '🐾', 'Edebiyat': '📚', 'Müzik': '🎵', 'Film ve dizi': '🎬', 'Teknoloji': '💻',
+  'Mekân Sınavı': '🎯', 'Hayvanlar': '🐾', 'Edebiyat': '📚', 'Müzik': '🎵', 'Film ve dizi': '🎬', 'Teknoloji': '💻',
 };
 
 // Masada Bil Bakalım: herkes aynı soruyu aynı anda cevaplar, hızlı bilen daha çok puan alır.
-export default function BilOnline({ cafe, masa }) {
-  const ui = useRoom({ cafe, masa, game: 'bil', pollMs: 1000 });
+// event verilirse Mekân Sınavı (mekân sahibinin soruları) oynanır; sunucu etkinlik açık değilse odayı vermez.
+export default function BilOnline({ cafe, masa, event = /** @type {string | undefined} */ (undefined) }) {
+  const ui = useRoom({ cafe, masa, game: 'bil', event, pollMs: 1000 });
   const { room, err, busy, send } = ui;
   const [sure, setSure] = useState(false);
   const [deadline, setDeadline] = useState(0);

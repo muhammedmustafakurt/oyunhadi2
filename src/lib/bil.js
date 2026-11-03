@@ -359,7 +359,7 @@ const activeSeats = (seats) => seats.map((_, i) => i).filter((i) => !seats[i].le
 
 // Yeni soruyu açar: seçenekler karıştırılır, doğru cevabın yeri sunucuda kalır.
 function ask(g, now) {
-  const b = BANK[g.deck[g.turnNo]];
+  const b = (g.bank ?? BANK)[g.deck[g.turnNo]];
   const opts = shuffle(b.a.map((t, i) => ({ t, right: i === 0 })));
   return {
     ...g,
@@ -372,11 +372,15 @@ function ask(g, now) {
   };
 }
 
-export function newGame(n, now = Date.now()) {
+// bank verilirse (Mekân Sınavı) sorular yalnızca ondan, karıştırılarak sorulur; verilmezse genel soru bankası kullanılır.
+// bank sunucuda oyun durumunda kalır, viewFor ile istemciye gitmez.
+export function newGame(n, now = Date.now(), bank = null) {
+  const custom = Array.isArray(bank) && bank.length ? bank : null;
   return ask({
-    deck: pickDeck(),
+    deck: custom ? shuffle(custom.map((_, i) => i)) : pickDeck(),
+    bank: custom,
     turnNo: 0,
-    total: ROUNDS,
+    total: custom ? custom.length : ROUNDS,
     extra: 0,
     scores: Array(n).fill(0),
     streak: Array(n).fill(0),
@@ -441,9 +445,11 @@ export function timeout(g, seats, now = Date.now()) {
   if (n.turnNo < total) return ask(n, now);
   // Beraberlik: fark çıkana kadar (en fazla 5) ek soru sorulur.
   if (activeSeats(seats).length > 1 && leaders(n, seats).length > 1 && (n.extra || 0) < MAX_EXTRA) {
-    const unused = BANK.map((_, i) => i).filter((i) => !n.deck.includes(i));
-    const q = unused[Math.floor(Math.random() * unused.length)];
-    return ask({ ...n, total: total + 1, extra: (n.extra || 0) + 1, deck: [...n.deck, q] }, now);
+    const unused = (n.bank ?? BANK).map((_, i) => i).filter((i) => !n.deck.includes(i));
+    if (unused.length) {
+      const q = unused[Math.floor(Math.random() * unused.length)];
+      return ask({ ...n, total: total + 1, extra: (n.extra || 0) + 1, deck: [...n.deck, q] }, now);
+    }
   }
   return finish(n, seats);
 }

@@ -169,6 +169,20 @@ const SCHEMA = [
     created_at BIGINT NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS chat_reports_biz ON chat_reports (biz_id, status, created_at)`,
+  // Mekâna özel etkinlikler (src/lib/events.js). status: kapali | acik | bitti; yalnızca 'acik' olan oyunculara görünür.
+  // quiz: Mekân Sınavı soruları (JSON metni: [{ q, a: [doğru, yanlış, yanlış, yanlış] }]); sınavsız etkinlikte boş.
+  `CREATE TABLE IF NOT EXISTS events (
+    id SERIAL PRIMARY KEY,
+    biz_id INTEGER NOT NULL, -- venues.id
+    title TEXT NOT NULL,
+    body TEXT NOT NULL DEFAULT '',
+    kind TEXT NOT NULL DEFAULT 'diger', -- sinav | turnuva | diger
+    status TEXT NOT NULL DEFAULT 'kapali', -- kapali | acik | bitti
+    quiz TEXT NOT NULL DEFAULT '',
+    created_at BIGINT NOT NULL,
+    updated_at BIGINT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS events_biz ON events (biz_id, status)`,
   // Bir kereliğe mahsus veri düzeltmelerinin kaydı (aynı düzeltme ikinci kez çalışmaz).
   `CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY, at BIGINT NOT NULL)`,
 ];
