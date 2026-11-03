@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { panelVenue } from '@/lib/venues';
-import { createEvent, updateEvent, setStatus, deleteEvent } from '@/lib/events';
+import { createEvent, updateEvent, setStatus, deleteEvent, gateEvent } from '@/lib/events';
+import { loadState, panelAct, panelView } from '@/lib/eventgames';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,24 @@ export async function POST(req) {
       case 'update': if (!needId()) return json({ error: 'Geçersiz etkinlik.' }, 400); r = await updateEvent(v.id, id, b); break;
       case 'status': if (!needId()) return json({ error: 'Geçersiz etkinlik.' }, 400); r = await setStatus(v.id, id, b.status); break;
       case 'delete': if (!needId()) return json({ error: 'Geçersiz etkinlik.' }, 400); r = await deleteEvent(v.id, id); break;
+      // Toplu oyun yönetimi: state (canlı görünüm), draw, auto, reset, score. Etkinlik oturumdaki mekâna ait olmalı (biz_id denetimi);
+      // oyunu ilerleten işlemler (draw/auto/score) yalnızca etkinlik 'acik' iken kabul edilir.
+      case 'state': case 'draw': case 'auto': case 'reset': case 'score': {
+        if (!needId()) return json({ error: 'Geçersiz etkinlik.' }, 400);
+        const g = await gateEvent(v.id, id, { mass: true, results: true, leave: true });
+        if (g.error) return json({ error: g.error }, g.status);
+        const ev = g.ev;
+        if (b.op === 'state') {
+          const row = await loadState(v.id, ev);
+          return json({ view: panelView(ev, row) });
+        }
+        if (ev.status === 'bitti' || (b.op !== 'reset' && ev.status !== 'acik')) {
+          return json({ error: ev.status === 'bitti' ? 'Etkinlik bitti.' : 'Önce etkinliği açın.' }, 409);
+        }
+        const out = await panelAct(v.id, ev, b.op, b, v.tables);
+        if (out.error) return json({ error: out.error }, 409);
+        return json({ ok: true, view: panelView(ev, await loadState(v.id, ev)) });
+      }
       default: return json({ error: 'Bilinmeyen işlem.' }, 400);
     }
     if (r.error) return json({ error: r.error }, r.status || 400);

@@ -11,7 +11,7 @@ export default async function EventsPage() {
   const events = (await listEvents(v.id)) as EventRow[];
   return (
     <PageContainer title="Etkinlikler" description="Etkinlik ve Mekân Sınavı oluşturun. Yalnızca “Açık” etkinlikler masalarda görünür ve girilebilir; açmayı, kapatmayı ve bitirmeyi siz yaparsınız.">
-      <EventsManager events={events} />
+      <EventsManager events={events} tables={v.tables} />
     </PageContainer>
   );
 }

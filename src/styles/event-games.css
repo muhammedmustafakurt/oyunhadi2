@@ -1,0 +1,39 @@
+/* Toplu etkinlik oyunları: tombala, masa turnuvası, çekiliş (components/games/EventGame.js). */
+.eg { display: grid; gap: 14px; }
+.eg-lab { font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
+.eg-hint { margin: 0; font-size: .85rem; opacity: .75; }
+.eg-who { margin: 0; font-size: .9rem; }
+.eg-ball { display: grid; justify-items: center; gap: 2px; padding: 14px; border-radius: 18px; background: var(--accent); color: var(--ink); border: 2.5px solid var(--ink); box-shadow: 0 4px 0 var(--ink); }
+.eg-ball b { font-size: 4.2rem; line-height: 1; font-weight: 900; }
+.eg-ball b.pop { animation: eg-pop .5s ease-out; }
+@keyframes eg-pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .eg-ball b.pop { animation: none; } }
+.eg-claims, .eg-rank, .eg-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.eg-claims li, .eg-rank li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(0, 0, 0, .06); }
+.eg-claims li span { font-weight: 800; flex: none; }
+.eg-claims li em { opacity: .6; margin-left: auto; }
+.eg-claims li b { margin-left: auto; text-align: right; }
+.eg-claims li.won { background: #d9f7be; color: #1b3a05; }
+.eg-card { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; padding: 8px; border-radius: 14px; background: #fff8e1; border: 2.5px solid var(--ink); }
+.eg-card button, .eg-card i { aspect-ratio: 1 / 1.05; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: clamp(.8rem, 4vw, 1.1rem); }
+.eg-card i.blank { background: repeating-linear-gradient(45deg, rgba(0, 0, 0, .05) 0 4px, transparent 4px 8px); }
+.eg-card button { border: 1.5px solid rgba(0, 0, 0, .25); background: #fff; color: var(--ink); }
+.eg-card button.hit { background: #ffe58f; }
+.eg-card button.mark { background: #52c41a; color: #fff; border-color: #237804; }
+.eg-card button:disabled:not(.hit):not(.mark) { opacity: .85; }
+.eg-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.eg-btns .btn { flex: 1 1 30%; }
+.eg-board { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; font-size: .7rem; text-align: center; }
+.eg-board li { padding: 3px 0; border-radius: 5px; background: rgba(0, 0, 0, .06); opacity: .6; }
+.eg-board li.on { background: var(--ink); color: #fff; opacity: 1; font-weight: 800; }
+.eg-join { display: grid; gap: 8px; }
+.eg-join input { padding: 10px 12px; border-radius: 10px; border: 2px solid var(--ink); font: inherit; }
+.eg-rank li i { font-style: normal; font-weight: 900; width: 1.6em; }
+.eg-rank li span { flex: 1; }
+.eg-rank li b { font-size: 1.2rem; }
+.eg-rank li.me { background: var(--accent); color: var(--ink); border: 2px solid var(--ink); font-weight: 800; }
+.eg-log { font-size: .85rem; opacity: .8; }
+.eg-win { margin: 0; padding: 12px 14px; border-radius: 14px; background: #fff1b8; color: #3b2a00; border: 2.5px solid var(--ink); font-weight: 800; display: grid; gap: 6px; }
+.eg-win ul { margin: 0; padding-left: 1.1em; }
+.eg-count { margin: 0; font-size: 1.1rem; }
+.eg-count b { font-size: 2.2rem; }

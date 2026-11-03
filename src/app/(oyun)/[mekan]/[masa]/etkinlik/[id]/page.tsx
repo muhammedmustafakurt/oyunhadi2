@@ -5,7 +5,9 @@ import ResetTable from '@/components/oyun/ResetTable';
 import Presence from '@/components/oyun/Presence';
 import VenueBadge from '@/components/oyun/VenueBadge';
 import { findCafe, hasTable } from '@/lib/rooms';
+import EventGame from '@/components/games/EventGame';
 import { getEvent } from '@/lib/events';
+import { MASS } from '@/lib/event-kinds';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +23,9 @@ export default async function EventPage({ params }: PageProps<'/[mekan]/[masa]/e
   if (!ev || ev.bizId !== v.id) notFound();
   const back = `/${mekan}/${masa}/oyunlar`;
   const open = ev.status === 'acik';
+  const mass = MASS.includes(ev.kind);
+  // Toplu oyunda bitmiş etkinliğin sonuç ekranı (kazananlar) da gösterilir; yazma işlemleri sunucuda yine reddedilir.
+  const show = open || (mass && ev.status === 'bitti');
 
   return (
     <main className="oh-play">
@@ -32,13 +37,15 @@ export default async function EventPage({ params }: PageProps<'/[mekan]/[masa]/e
         <span className="oh-play-where">{v.name}<small>Masa {masa.replace('masa-', '')}</small></span>
       </header>
       <div className="shell oh-play-body">
-        {open ? (
+        {show ? (
           <>
             <section className="ev-head">
               <h1>{ev.title}</h1>
               {ev.body && <p>{ev.body}</p>}
             </section>
-            {ev.questions > 0 ? (
+            {mass ? (
+              <EventGame cafe={mekan} masa={masa} event={String(ev.id)} kind={ev.kind} />
+            ) : ev.questions > 0 ? (
               <>
                 <BilOnline cafe={mekan} masa={masa} event={String(ev.id)} />
                 <Presence cafe={mekan} masa={masa} game="bil" event={String(ev.id)} />

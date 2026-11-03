@@ -184,6 +184,8 @@ const SCHEMA = [
     updated_at BIGINT NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS events_biz ON events (biz_id, status)`,
+  // Türe özel ayar (JSON metni; masa turnuvasının oyun adı). Eski satırlar boş kalır.
+  `ALTER TABLE events ADD COLUMN IF NOT EXISTS cfg TEXT NOT NULL DEFAULT ''`,
   // Süper-admin (platform yöneticisi) hesapları; mekân hesaplarından ayrıdır. password: scrypt karması salt:hash.
   `CREATE TABLE IF NOT EXISTS admins (
     id SERIAL PRIMARY KEY,

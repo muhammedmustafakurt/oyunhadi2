@@ -8,15 +8,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { KIND_INFO, MASS } from '@/lib/event-kinds';
+import EventLive from '@/components/panel/event-live';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type EventRow = {
-  id: number; title: string; body: string; kind: 'sinav' | 'turnuva' | 'diger';
+  id: number; title: string; body: string; kind: 'sinav' | 'tombala' | 'skor' | 'cekilis' | 'turnuva' | 'diger'; cfg?: { game?: string };
   status: 'kapali' | 'acik' | 'bitti'; questions: number; quiz: { q: string; a: string[] }[];
 };
 type Q = { q: string; a: string[] };
 
-const KIND = { sinav: 'Sınav', turnuva: 'Turnuva', diger: 'Diğer' } as const;
 const STATE = { kapali: 'Kapalı', acik: 'Açık', bitti: 'Bitti' } as const;
 const MIN = 5, MAX = 30;
 const emptyQ = (): Q => ({ q: '', a: ['', '', '', ''] });
@@ -29,7 +30,7 @@ async function call(body: Record<string, unknown>) {
 
 // Etkinlik listesi + oluşturma/düzenleme formu + soru editörü. Durum değişikliği (Aç/Kapat/Bitir) elle yapılır.
 // Doğrulama sunucuda da yapılır (src/lib/events.js); buradaki sınırlar yalnızca kullanım kolaylığı içindir.
-export default function EventsManager({ events }: { events: EventRow[] }) {
+export default function EventsManager({ events, tables }: { events: EventRow[]; tables: number }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<number | 'new' | null>(null);
@@ -37,10 +38,11 @@ export default function EventsManager({ events }: { events: EventRow[] }) {
   const [body, setBody] = useState('');
   const [kind, setKind] = useState<EventRow['kind']>('sinav');
   const [qs, setQs] = useState<Q[]>([]);
+  const [game, setGame] = useState('');
 
   const open = (e?: EventRow) => {
     setEditing(e ? e.id : 'new');
-    setTitle(e?.title ?? ''); setBody(e?.body ?? ''); setKind(e?.kind ?? 'sinav');
+    setGame(e?.cfg?.game ?? ''); setTitle(e?.title ?? ''); setBody(e?.body ?? ''); setKind(e?.kind ?? 'sinav');
     setQs(e ? e.quiz.map((q) => ({ q: q.q, a: [...q.a] })) : Array.from({ length: MIN }, emptyQ));
   };
 
@@ -56,7 +58,7 @@ export default function EventsManager({ events }: { events: EventRow[] }) {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const quiz = qs.filter((q) => q.q.trim() || q.a.some((x) => x.trim()));
-    const payload = { title, body, kind, quiz };
+    const payload = { title, body, kind, quiz: MASS.includes(kind) ? [] : quiz, cfg: { game } };
     const done = editing === 'new'
       ? await act({ op: 'create', ...payload }, 'Etkinlik oluşturuldu (kapalı)')
       : await act({ op: 'update', id: editing, ...payload }, 'Etkinlik güncellendi');
@@ -79,7 +81,8 @@ export default function EventsManager({ events }: { events: EventRow[] }) {
               </CardAction>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-muted-foreground text-sm">{KIND[e.kind]} · {e.questions > 0 ? `${e.questions} soru` : 'sınavsız'}</p>
+              <p className="text-muted-foreground text-sm">{KIND_INFO[e.kind]?.icon} {KIND_INFO[e.kind]?.name} · {MASS.includes(e.kind) ? 'tüm masalar' : e.questions > 0 ? `${e.questions} soru` : 'sınavsız'}</p>
+              {MASS.includes(e.kind) && <EventLive ev={e} tables={tables} />}
               <div className="flex flex-wrap gap-2">
                 {e.status === 'kapali' && <Button size="sm" disabled={busy} onClick={() => act({ op: 'status', id: e.id, status: 'acik' }, 'Etkinlik açıldı; masalarda görünüyor')}>Aç</Button>}
                 {e.status === 'acik' && <Button size="sm" variant="outline" disabled={busy} onClick={() => act({ op: 'status', id: e.id, status: 'kapali' }, 'Etkinlik kapatıldı')}>Kapat</Button>}
@@ -104,13 +107,16 @@ export default function EventsManager({ events }: { events: EventRow[] }) {
               <div className="grid gap-2"><Label htmlFor="ev-t">Başlık</Label><Input id="ev-t" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} placeholder="Cuma Mekân Sınavı" required /></div>
               <div className="grid gap-2"><Label htmlFor="ev-b">Açıklama</Label><Textarea id="ev-b" value={body} onChange={(e) => setBody(e.target.value)} maxLength={200} rows={2} placeholder="Doğru bilen masaya tatlı bizden!" /></div>
               <div className="grid gap-2">
-                <Label htmlFor="ev-k">Kategori</Label>
+                <Label htmlFor="ev-k">Tür</Label>
                 <select id="ev-k" value={kind} onChange={(e) => setKind(e.target.value as EventRow['kind'])} className="border-input bg-background h-9 rounded-md border px-3 text-sm">
-                  <option value="sinav">Sınav</option><option value="turnuva">Turnuva</option><option value="diger">Diğer</option>
+                  <option value="sinav">Sınav (soru-cevap)</option><option value="tombala">Tombala (tüm mekân)</option><option value="skor">Turnuva (masa skor tablosu)</option><option value="cekilis">Çekiliş</option>{(kind === 'turnuva' || kind === 'diger') && <option value={kind}>{KIND_INFO[kind].name} (eski)</option>}
                 </select>
               </div>
 
-              <fieldset className="grid gap-3">
+              {kind === 'skor' && (
+                <div className="grid gap-2"><Label htmlFor="ev-g">Turnuva oyunu</Label><Input id="ev-g" value={game} onChange={(e) => setGame(e.target.value)} maxLength={40} placeholder="Örn. Tabu, Okey, Satranç" /></div>
+              )}
+              {!MASS.includes(kind) && <fieldset className="grid gap-3">
                 <legend className="text-sm font-medium">Mekân Sınavı soruları ({qs.filter((q) => q.q.trim()).length}/{MAX}, en az {MIN})</legend>
                 <p className="text-muted-foreground text-xs">Her sorunun ilk şıkkı doğru cevaptır; oyunda şıklar karıştırılır. Soru eklemezseniz etkinlik sınavsız olur (yalnızca duyuru).</p>
                 {qs.map((q, i) => (
@@ -128,7 +134,7 @@ export default function EventsManager({ events }: { events: EventRow[] }) {
                   </div>
                 ))}
                 {qs.length < MAX && <Button type="button" variant="outline" size="sm" onClick={() => setQs((l) => [...l, emptyQ()])}>Soru ekle</Button>}
-              </fieldset>
+              </fieldset>}
 
               <Button type="submit" disabled={busy}>{busy ? 'Kaydediliyor…' : 'Kaydet'}</Button>
               <Button type="button" variant="ghost" disabled={busy} onClick={() => setEditing(null)}>Vazgeç</Button>

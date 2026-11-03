@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { findCafe, hasTable } from '@/lib/rooms';
 import { activeRuleMap } from '@/lib/rewards';
 import { listOpenEvents } from '@/lib/events';
+import { KIND_INFO, MASS } from '@/lib/event-kinds';
 import { GAMES } from '@/lib/games';
 import { SPINE } from '@/lib/spines';
 
@@ -24,7 +25,7 @@ export default async function TableGames({ params }: PageProps<'/[mekan]/[masa]/
   if (!v || !hasTable(v, masa)) notFound();
   const no = masa.replace('masa-', '');
   // Yalnızca durumu 'acik' olan etkinlikler; yoksa hiçbir şey gösterilmez. Hata sayfayı düşürmesin.
-  const open: { id: number; title: string; body: string; questions: number }[] = await listOpenEvents(v.id).catch(() => []);
+  const open: { id: number; title: string; body: string; kind: string; questions: number }[] = await listOpenEvents(v.id).catch(() => []);
   const rules = await activeRuleMap(v.id).catch(() => ({} as Record<string, { target: number; prize: string }>));
   const base = `/${mekan}/${masa}/oyunlar`;
 
@@ -56,10 +57,10 @@ export default async function TableGames({ params }: PageProps<'/[mekan]/[masa]/
 
       {open.map((e) => (
         <Link key={e.id} href={`/${mekan}/${masa}/etkinlik/${e.id}`} className="felt-live">
-          <b>Şimdi açık</b>
+          <b>{KIND_INFO[e.kind]?.icon} Şimdi açık · {KIND_INFO[e.kind]?.name ?? 'Etkinlik'}</b>
           <span className="t">{e.title}</span>
           {e.body && <span className="d">{e.body}</span>}
-          <span className="go">{e.questions > 0 ? 'Sınava gir' : 'Ayrıntılar'} →</span>
+          <span className="go">{(e.questions > 0 || MASS.includes(e.kind) ? KIND_INFO[e.kind]?.go : null) ?? 'Ayrıntılar'} →</span>
         </Link>
       ))}
 
