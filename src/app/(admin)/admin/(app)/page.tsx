@@ -1,49 +1,53 @@
+import Link from 'next/link';
 import PageContainer from '@/components/panel/page-container';
-import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { overview, requireAdminPage } from '@/lib/admin';
-import { GAMES } from '@/lib/games';
+import StatCard from '@/components/panel/stat-card';
+import { WeekChart, GameBarChart } from '@/components/panel/charts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { buttonVariants } from '@/components/ui/button';
+import { dailyPlays, overview, requireAdminPage } from '@/lib/admin';
+import { gameColor, gameName } from '@/lib/game-meta';
 
 export const metadata = { title: 'Özet' };
 export const dynamic = 'force-dynamic';
 
 export default async function AdminHome() {
   await requireAdminPage();
-  const o = await overview();
-  const name = (id: string) => GAMES.find((g) => g.id === id)?.name ?? id;
-  const stats: [string, number][] = [['Mekân', o.venues], ['Toplam masa', o.tables], ['Oyun, son 7 gün', o.plays7], ['Oyun, son 30 gün', o.plays30]];
+  const [o, days] = await Promise.all([overview(), dailyPlays(14)]);
   return (
-    <PageContainer title="Özet" description="Platformun genel durumu.">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map(([label, n]) => (
-          <Card key={label}>
-            <CardHeader>
-              <CardDescription>{label}</CardDescription>
-              <CardTitle className="text-3xl font-semibold tabular-nums">{n.toLocaleString('tr-TR')}</CardTitle>
-            </CardHeader>
-          </Card>
-        ))}
+    <PageContainer
+      title="Özet"
+      description="Platformun genel durumu."
+      action={<Link href="/admin/mekanlar/yeni" className={buttonVariants({ variant: 'outline' })}>Yeni mekân</Link>}
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Mekân" value={o.venues.toLocaleString('tr-TR')} note="Kayıtlı mekân sayısı" />
+        <StatCard label="Toplam masa" value={o.tables.toLocaleString('tr-TR')} note="Tüm mekânların masa toplamı" />
+        <StatCard label="Oyun, son 7 gün" value={o.plays7.toLocaleString('tr-TR')} note="Başlanan oyun sayısı" />
+        <StatCard label="Oyun, son 30 gün" value={o.plays30.toLocaleString('tr-TR')} note="Başlanan oyun sayısı" />
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>En çok oynananlar</CardTitle>
-          <CardDescription>Son 30 gün, tüm mekânlar.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {o.top.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Henüz oyun kaydı yok.</p>
-          ) : (
-            <Table>
-              <TableHeader><TableRow><TableHead>Oyun</TableHead><TableHead className="text-right">Oyun sayısı</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {o.top.map((t: { game: string; n: number }) => (
-                  <TableRow key={t.game}><TableCell>{name(t.game)}</TableCell><TableCell className="text-right tabular-nums">{t.n.toLocaleString('tr-TR')}</TableCell></TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
+        <Card className="lg:col-span-4">
+          <CardHeader>
+            <CardTitle>Günlük kullanım</CardTitle>
+            <CardDescription>Son 14 gün, tüm mekânlarda başlayan oyun ve oyuncu sayısı</CardDescription>
+          </CardHeader>
+          <CardContent><WeekChart data={days} /></CardContent>
+        </Card>
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>En çok oynanan oyunlar</CardTitle>
+            <CardDescription>Son 30 gün, tüm mekânlar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {o.top.length ? (
+              <GameBarChart data={o.top.slice(0, 6).map((t: { game: string; n: number }) => ({ name: gameName(t.game), oyun: t.n, color: gameColor(t.game) }))} />
+            ) : (
+              <p className="text-muted-foreground text-sm">Henüz oyun kaydı yok.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </PageContainer>
   );
 }

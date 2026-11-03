@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import PageContainer from '@/components/panel/page-container';
 import { buttonVariants } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { requireAdminPage, venueRows } from '@/lib/admin';
 
@@ -14,7 +16,7 @@ export default async function VenuesPage() {
   const rows = await venueRows();
   return (
     <PageContainer title="Mekânlar" description={`${rows.length} mekân`} action={<Link href="/admin/mekanlar/yeni" className={buttonVariants()}>Yeni mekân</Link>}>
-      <div className="overflow-x-auto rounded-xl border">
+      <Card><CardContent className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -25,7 +27,7 @@ export default async function VenuesPage() {
           <TableBody>
             {rows.map((r: { id: number; slug: string; name: string; city: string; tables: number; openGames: number; lastPlay: number | null }) => (
               <TableRow key={r.id}>
-                <TableCell><Link href={`/admin/mekanlar/${r.id}`} className="font-medium underline-offset-4 hover:underline">{r.name}</Link><span className="text-muted-foreground ml-2 text-xs">{r.slug}</span></TableCell>
+                <TableCell><Link href={`/admin/mekanlar/${r.id}`} className="font-medium underline-offset-4 hover:underline">{r.name}</Link><Badge variant="outline" className="ml-2">{r.slug}</Badge></TableCell>
                 <TableCell>{r.city}</TableCell>
                 <TableCell className="text-right tabular-nums">{r.tables}</TableCell>
                 <TableCell className="text-right tabular-nums">{r.openGames}</TableCell>
@@ -35,7 +37,7 @@ export default async function VenuesPage() {
             {rows.length === 0 && <TableRow><TableCell colSpan={5} className="text-muted-foreground text-center">Mekân yok.</TableCell></TableRow>}
           </TableBody>
         </Table>
-      </div>
+      </CardContent></Card>
     </PageContainer>
   );
 }

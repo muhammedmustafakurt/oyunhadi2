@@ -53,7 +53,7 @@ export default function AdminsManager({ admins, meId }: { admins: A[]; meId: num
 
   return (
     <div className="grid gap-6">
-      <div className="overflow-x-auto rounded-xl border">
+      <Card><CardContent className="overflow-x-auto">
         <Table>
           <TableHeader><TableRow><TableHead>E-posta</TableHead><TableHead>Eklenme</TableHead><TableHead>Son giriş</TableHead><TableHead /></TableRow></TableHeader>
           <TableBody>
@@ -69,7 +69,7 @@ export default function AdminsManager({ admins, meId }: { admins: A[]; meId: num
             ))}
           </TableBody>
         </Table>
-      </div>
+      </CardContent></Card>
 
       <Card>
         <CardHeader><CardTitle>Yeni yönetici</CardTitle><CardDescription>Şifre rastgele üretilir ve yalnızca bir kez gösterilir.</CardDescription></CardHeader>

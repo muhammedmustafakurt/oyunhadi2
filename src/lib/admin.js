@@ -302,3 +302,25 @@ export async function venueRows() {
   }));
 }
 export const venueDetail = getVenue;
+
+// Tüm mekânlar: son N günün günlük oyun/oyuncu sayısı (panelin weekDocs biçimi; WeekChart'a doğrudan verilir).
+export async function dailyPlays(days = 14) {
+  const DAY = 86_400_000, GN = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+  const d0 = new Date(); d0.setUTCHours(0, 0, 0, 0);
+  const from = d0.getTime() - (days - 1) * DAY;
+  const rows = await all('SELECT at, players FROM play_logs WHERE at >= ?', from);
+  const out = Array.from({ length: days }, (_, i) => ({ day: GN[(new Date(from + i * DAY).getUTCDay() + 6) % 7], oyun: 0, oyuncu: 0 }));
+  for (const r of rows) {
+    const d = out[Math.floor((Number(r.at) - from) / DAY)];
+    if (d) { d.oyun++; d.oyuncu += Number(r.players) || 0; }
+  }
+  return out;
+}
+
+// Oturumdaki yöneticinin e-postası (kenar menüsü için); oturum yoksa null.
+export async function currentAdminEmail() {
+  const id = await currentAdminId();
+  if (id == null) return null;
+  const r = await get('SELECT email FROM admins WHERE id = ?', id);
+  return r ? String(r.email) : null;
+}
