@@ -2,8 +2,8 @@ import Link from 'next/link';
 import PhoneMock from '@/components/site/phone-mock';
 import CardFan from '@/components/site/card-fan';
 import TableChat from '@/components/site/table-chat';
-import GameCover from '@/components/oyun/GameCover';
-import { SPINE } from '@/lib/spines';
+import { GameSeal } from '@/components/oyun/GameCover';
+import { accentOf } from '@/components/oyun/emblems';
 import { GAMES } from '@/lib/games';
 import Accordion from '@/components/site/accordion';
 import Icon, { IconBox } from '@/components/site/icon';
@@ -83,12 +83,13 @@ export default function Home() {
           <ul className="rail -mx-4 flex gap-4 overflow-x-auto px-4 pb-3 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-9">
             {DECK.map((g) => (
               <li key={g.id} className="w-36 shrink-0 sm:w-auto">
-                <Link href={`/oyunlar/${g.id}`} className="group block overflow-hidden rounded-[14px] border-[2.5px] border-ink bg-[#fffdf8] shadow-[0_4px_0_var(--color-ink)] transition hover:-translate-y-1">
-                  <span className="grid h-24 place-items-center border-b-[2.5px] border-ink" style={{ background: SPINE[g.id][0] }}>
-                    <GameCover id={g.id} title={false} className="h-[72px] w-[72px] overflow-hidden rounded-2xl transition-transform group-hover:-rotate-6" />
+                {/* Mini oyun kartı: takım renginde çerçeve, krem iç yüz, mühür simge, italik logo */}
+                <Link href={`/oyunlar/${g.id}`} className="group block rounded-[14px] border-[2.5px] border-ink p-[5px] shadow-[0_4px_0_var(--color-ink)] transition hover:-translate-y-1" style={{ background: accentOf(g.id) }}>
+                  <span className="flex flex-col items-center rounded-lg border-[1.5px] border-ink bg-[#fff7ee] px-2 pt-3 pb-2.5 text-center">
+                    <GameSeal id={g.id} className="h-[84px] w-[84px] transition-transform duration-300 group-hover:-rotate-6" />
+                    <span className="mt-1.5 flex min-h-[2.1em] items-center text-[15px] leading-[1.05] font-extrabold italic" style={{ fontFamily: 'var(--font-logo), Georgia, serif' }}>{g.name}</span>
+                    <span className="mt-1.5 text-[10px] font-extrabold tracking-[.12em] text-ink uppercase">{g.players.replace('-', '–')} oyuncu</span>
                   </span>
-                  <span className="block px-2.5 py-2 text-sm leading-tight font-extrabold">{g.name}</span>
-                  <span className="block px-2.5 pb-2.5 text-xs text-muted">{g.players.replace('-', '–')} kişi</span>
                 </Link>
               </li>
             ))}

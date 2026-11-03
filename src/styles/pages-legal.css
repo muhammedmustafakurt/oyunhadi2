@@ -1,0 +1,22 @@
+/* Yasal metin sayfaları: okunur genişlik, rahat satır aralığı, yazdırma için sade görünüm. */
+.legal { font-size: 1.0625rem; line-height: 1.75; color: var(--color-ink); }
+.legal h2 { margin-top: 2.5rem; font-size: 1.5rem; line-height: 1.25; font-weight: 800; scroll-margin-top: 6rem; }
+.legal p { margin-top: 0.9rem; overflow-wrap: anywhere; }
+.legal ul, .legal ol { margin-top: 0.9rem; padding-left: 1.4rem; }
+.legal ul { list-style: disc; }
+.legal ol { list-style: decimal; }
+.legal li { margin-top: 0.45rem; padding-left: 0.2rem; overflow-wrap: anywhere; }
+.legal a:not(.btn) { text-decoration: underline; text-underline-offset: 3px; }
+.legal a:focus-visible, .legal-toc a:focus-visible { outline: 3px solid var(--color-grape); outline-offset: 3px; border-radius: 4px; }
+.legal-toc a { text-decoration: none; }
+.legal-toc a:hover { text-decoration: underline; }
+.legal-notice { border: 1.5px solid var(--color-sun); background: #fff6d9; border-radius: 1rem; padding: 0.9rem 1.1rem; font-size: 0.95rem; line-height: 1.5; }
+
+@media print {
+  header, footer, nav.legal-toc, a[href^="https://wa.me"], .no-print { display: none !important; }
+  body, .legal { background: #fff !important; color: #000 !important; }
+  .legal-wrap { padding: 0 !important; max-width: none !important; }
+  .legal { font-size: 11pt; line-height: 1.5; }
+  .legal h2 { break-after: avoid; }
+  .legal-notice { background: none; border: 1px solid #000; }
+}

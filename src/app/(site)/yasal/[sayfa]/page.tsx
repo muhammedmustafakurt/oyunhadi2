@@ -1,30 +1,58 @@
 import { notFound } from 'next/navigation';
-
-// Yasal metinler. TASLAK: içerikler hukuk danışmanıyla yazılıp buraya eklenecek.
-const PAGES: Record<string, string> = {
-  kvkk: 'KVKK Aydınlatma Metni',
-  gizlilik: 'Gizlilik ve Çerez Politikası',
-  'mesafeli-satis': 'Mesafeli Satış Sözleşmesi',
-  iade: 'Teslimat ve İade Koşulları',
-};
+import Link from 'next/link';
+import '@/styles/pages-legal.css';
+import { LEGAL_DOCS, LEGAL_DISCLAIMER, LEGAL_UPDATED, legalBySlug, type Block } from '@/lib/legal';
 
 export function generateStaticParams() {
-  return Object.keys(PAGES).map((sayfa) => ({ sayfa }));
+  return LEGAL_DOCS.map((d) => ({ sayfa: d.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<'/yasal/[sayfa]'>) {
   const { sayfa } = await params;
-  return { title: PAGES[sayfa] ?? 'Yasal', robots: { index: false } };
+  const doc = legalBySlug(sayfa);
+  if (!doc) return { title: 'Yasal' };
+  return { title: doc.title, description: doc.intro, alternates: { canonical: `/yasal/${doc.slug}` } };
+}
+
+function Blocks({ blocks }: { blocks: Block[] }) {
+  return (
+    <>
+      {blocks.map((b, i) => {
+        if (typeof b === 'string') return <p key={i}>{b}</p>;
+        const Tag = b.ordered ? 'ol' : 'ul';
+        return <Tag key={i}>{b.list.map((li, j) => <li key={j}>{li}</li>)}</Tag>;
+      })}
+    </>
+  );
 }
 
 export default async function LegalPage({ params }: PageProps<'/yasal/[sayfa]'>) {
   const { sayfa } = await params;
-  const title = PAGES[sayfa];
-  if (!title) notFound();
+  const doc = legalBySlug(sayfa);
+  if (!doc) notFound();
   return (
-    <section className="mx-auto max-w-3xl px-4 pt-32 pb-20 sm:px-6 md:pt-40">
-      <h1 className="text-4xl font-black md:text-5xl">{title}</h1>
-      <p className="mt-8 rounded-2xl bg-sun/40 p-5 font-medium">Bu metin hazırlanıyor. Yayına almadan önce hukuki içerik eklenecek.</p>
-    </section>
+    <article className="legal-wrap mx-auto max-w-3xl px-4 pt-32 pb-20 sm:px-6 md:pt-40">
+      <p className="no-print text-sm font-bold"><Link href="/yasal" className="text-grape-deep hover:underline">← Yasal metinler</Link></p>
+      <h1 className="mt-3 text-4xl font-black text-balance md:text-5xl">{doc.title}</h1>
+      <p className="mt-3 text-sm font-semibold text-muted">Son güncelleme: {LEGAL_UPDATED}</p>
+      <p className="legal-notice mt-5" role="note">{LEGAL_DISCLAIMER}</p>
+
+      <nav className="legal-toc card mt-8 p-5" aria-labelledby="icindekiler">
+        <h2 id="icindekiler" className="text-base font-black">İçindekiler</h2>
+        <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-[15px]">
+          {doc.sections.map((s) => <li key={s.id}><a className="font-semibold text-grape-deep" href={`#${s.id}`}>{s.title}</a></li>)}
+        </ol>
+      </nav>
+
+      <div className="legal">
+        <p>{doc.intro}</p>
+        {doc.sections.map((s, i) => (
+          <section key={s.id} aria-labelledby={s.id}>
+            <h2 id={s.id}>{i + 1}. {s.title}</h2>
+            <Blocks blocks={s.body} />
+          </section>
+        ))}
+      </div>
+    </article>
   );
 }

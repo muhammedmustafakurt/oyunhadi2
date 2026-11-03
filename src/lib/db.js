@@ -186,7 +186,7 @@ const SEED_VENUES = () => {
     {
       slug: 'demo', name: 'Hadi Kafe', city: 'Kadıköy, İstanbul', initials: 'HK', logo_url: null,
       color: '#ff4f2e', accent: '#ffc83d', ntables: 12, lat: null, lng: null,
-      games: 'monopoly,satranc,spyfall,ajanlar,vampir,tabu,kimim,cizim,bil,azul,catan,risk,cluedo,scrabble,ticket,carcassonne,kadro,futbolcu',
+      games: 'monopoly,satranc,spyfall,ajanlar,vampir,tabu,kimim,cizim,bil,azul,catan,risk,cluedo,scrabble,ticket,carcassonne,kadro,futbolcu,pisti,okey,tavla,g2048,adam',
       welcome: 'Çaylar bizden değil ama oyunlar bizden!',
       ann_title: 'Cuma akşamı Tabu turnuvası', ann_body: "Saat 20:00'de. Kazanan masaya büyük boy pizza ikramımız.",
       reward_game: 'bil', reward_goal: "Bil Bakalım'da 6.000 puanı geç", reward_prize: '1 tatlı ikram',

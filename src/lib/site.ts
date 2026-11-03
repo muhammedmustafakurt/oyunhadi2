@@ -20,6 +20,7 @@ export const NAV = [
   { href: '/ozellikler', label: 'Özellikler' },
   { href: '/nasil-calisir', label: 'Nasıl Çalışır' },
   { href: '/oyunlar', label: 'Oyunlar' },
+  { href: '/cozumler', label: 'Çözümler' },
   { href: '/fiyat', label: 'Fiyat' },
   { href: '/sss', label: 'SSS' },
   { href: '/blog', label: 'Blog' },

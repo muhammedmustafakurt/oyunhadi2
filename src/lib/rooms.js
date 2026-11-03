@@ -21,9 +21,10 @@ import * as CA from './catan';
 import * as TK from './ticket';
 import * as KD from './kadro';
 import * as FB from './futbolcu';
+import { PLUGINS } from './plugins';
 
 // Oyun başına koltuk sayısı; satrançta 1. koltuk Beyaz, 2. koltuk Siyah.
-const CONFIG = { monopoly: { max: 4, min: 2 }, satranc: { max: 2, min: 2 }, spyfall: { max: 8, min: 3 }, ajanlar: { max: 8, min: 4 }, vampir: { max: 10, min: 5 }, tabu: { max: 10, min: 4 }, kimim: { max: 10, min: 3 }, cizim: { max: 10, min: 3 }, bil: { max: 10, min: 2 }, azul: { max: 4, min: 2 }, cluedo: { max: 6, min: 3 }, scrabble: { max: 4, min: 2 }, risk: { max: 6, min: 2 }, carcassonne: { max: 5, min: 2 }, catan: { max: 4, min: 3 }, ticket: { max: 5, min: 2 }, kadro: { max: 8, min: 2 }, futbolcu: { max: 10, min: 2 } };
+const CONFIG = { monopoly: { max: 4, min: 2 }, satranc: { max: 2, min: 2 }, spyfall: { max: 8, min: 3 }, ajanlar: { max: 8, min: 4 }, vampir: { max: 10, min: 5 }, tabu: { max: 10, min: 4 }, kimim: { max: 10, min: 3 }, cizim: { max: 10, min: 3 }, bil: { max: 10, min: 2 }, azul: { max: 4, min: 2 }, cluedo: { max: 6, min: 3 }, scrabble: { max: 4, min: 2 }, risk: { max: 6, min: 2 }, carcassonne: { max: 5, min: 2 }, catan: { max: 4, min: 3 }, ticket: { max: 5, min: 2 }, kadro: { max: 8, min: 2 }, futbolcu: { max: 10, min: 2 }, ...Object.fromEntries(Object.entries(PLUGINS).map(([k, m]) => [k, m.CONFIG])) };
 export const ROOM_GAMES = new Set(Object.keys(CONFIG));
 export const MASA_RE = /^masa-\d{1,3}$/;
 export const PID_RE = /^[a-zA-Z0-9]{16,64}$/;
@@ -100,7 +101,7 @@ export function view(room, pid, game) {
     // Vampirde kalan süre (ms); istemci geri sayım gösterebilsin diye.
     leftMs: game === 'vampir' && s.game?.endsAt ? Math.max(0, s.game.endsAt - Date.now()) : null,
     // Casus oyununda mekân ve casus sunucuda kalır; her oyuncuya yalnızca kendi kartı gider.
-    game: game === 'spyfall' ? S.viewFor(s.game, me) : game === 'ajanlar' ? A.viewFor(s.game, me) : game === 'vampir' ? V.viewFor(s.game, me) : game === 'tabu' ? T.viewFor(s.game, me) : game === 'kimim' ? K.viewFor(s.game, me) : game === 'cizim' ? P.viewFor(s.game, me) : game === 'bil' ? B.viewFor(s.game, me) : game === 'azul' ? Z.viewFor(s.game, me) : game === 'cluedo' ? CL.viewFor(s.game, me) : game === 'scrabble' ? SC.viewFor(s.game, me) : game === 'risk' ? R.viewFor(s.game, me) : game === 'carcassonne' ? CC.viewFor(s.game, me) : game === 'catan' ? CA.viewFor(s.game, me) : game === 'ticket' ? TK.viewFor(s.game, me) : game === 'kadro' ? KD.viewFor(s.game, me) : game === 'futbolcu' ? FB.viewFor(s.game, me) : s.game,
+    game: game === 'spyfall' ? S.viewFor(s.game, me) : game === 'ajanlar' ? A.viewFor(s.game, me) : game === 'vampir' ? V.viewFor(s.game, me) : game === 'tabu' ? T.viewFor(s.game, me) : game === 'kimim' ? K.viewFor(s.game, me) : game === 'cizim' ? P.viewFor(s.game, me) : game === 'bil' ? B.viewFor(s.game, me) : game === 'azul' ? Z.viewFor(s.game, me) : game === 'cluedo' ? CL.viewFor(s.game, me) : game === 'scrabble' ? SC.viewFor(s.game, me) : game === 'risk' ? R.viewFor(s.game, me) : game === 'carcassonne' ? CC.viewFor(s.game, me) : game === 'catan' ? CA.viewFor(s.game, me) : game === 'ticket' ? TK.viewFor(s.game, me) : game === 'kadro' ? KD.viewFor(s.game, me) : game === 'futbolcu' ? FB.viewFor(s.game, me) : PLUGINS[game] ? PLUGINS[game].viewFor(s.game, me) : s.game,
   };
 }
 
@@ -120,6 +121,7 @@ function leaveSeat(s, idx, game) {
   else if (game === 'ticket') s.game = TK.onLeave(g, s.seats, idx);
   else if (game === 'kadro') s.game = KD.onLeave(g, s.seats, idx);
   else if (game === 'futbolcu') s.game = FB.onLeave(g, s.seats, idx);
+  else if (PLUGINS[game]) s.game = PLUGINS[game].onLeave(g, s.seats, idx);
   else if (game === 'risk') s.game = R.onLeave(g, s.seats, idx);
   else if (game === 'azul') s.game = Z.onLeave(g, s.seats, idx);
   else if (game === 'cluedo') s.game = CL.onLeave(g, s.seats, idx);
@@ -231,6 +233,15 @@ function apply(s, pid, a, game) {
   const cfg = CONFIG[game];
   const idx = s.seats.findIndex((x) => x.pid === pid);
   const g = s.game;
+  // Eklenti oyunlar (plugins.js): kendi önekli eylemleri oyun modülüne gider.
+  const pl = PLUGINS[game];
+  if (pl && typeof a.type === 'string' && a.type.startsWith(pl.PREFIX) && a.type !== 'start') {
+    if (s.phase !== 'play' || idx < 0 || s.seats[idx].left) return { error: 'Oyunda değilsiniz.' };
+    const r = pl.act(g, s.seats, idx, a.type, a.pl && typeof a.pl === 'object' ? a.pl : {});
+    if (r.error) return { error: r.error };
+    s.game = r;
+    return { state: s };
+  }
   if (game === 'monopoly' && MONO_ACTS.has(a.type)) return monoAct(s, idx, a, g);
   if (game === 'satranc' && CHESS_ACTS.has(a.type)) return chessAct(s, idx, a, g);
   if (game === 'risk' && RISK_ACTS.has(a.type)) return riskAct(s, idx, a, g);
@@ -323,6 +334,8 @@ function apply(s, pid, a, game) {
       } else if (game === 'spyfall') {
         s.game = S.newGame(s.seats.length);
         s.game.note = `${s.seats[s.game.first].name} ilk soruyu soruyor.`;
+      } else if (PLUGINS[game]) {
+        s.game = PLUGINS[game].newGame(s.seats);
       } else if (game === 'catan') {
         s.game = CA.newGame(s.seats.length);
         s.game.names = s.seats.map((x) => x.name);

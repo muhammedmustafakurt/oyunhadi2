@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { findCafe, hasTable, nearCafe, readRoom, mutate, view, ROOM_GAMES, MASA_RE, PID_RE } from '@/lib/rooms';
 import { run } from '@/lib/db';
+import { PLUGINS } from '@/lib/plugins';
 import { clientIp, floodOk, hit } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
@@ -44,7 +45,8 @@ export async function POST(req) {
     const { biz, err } = await resolve(body);
     if (err) return err;
     const a = body.action;
-    if (!a || !ACTIONS.has(a.type)) return json({ error: 'Bilinmeyen işlem.' }, 400);
+    const plugAct = !!a && typeof a.type === 'string' && /^[a-z0-9]{3,24}$/.test(a.type) && !!PLUGINS[body.game] && a.type.startsWith(PLUGINS[body.game].PREFIX);
+    if (!a || !(ACTIONS.has(a.type) || plugAct)) return json({ error: 'Bilinmeyen işlem.' }, 400);
     // Masaya katılma kötüye kullanıma açık (rastgele pid'lerle koltuk doldurma): hem IP'ye hem masaya göre sınır.
     // Masa sınırı IP'den bağımsızdır; sahte IP başlığı onu aşamaz.
     if (a.type === 'join') {
@@ -53,7 +55,7 @@ export async function POST(req) {
         return json({ error: 'Çok fazla katılma denemesi. Biraz sonra tekrar deneyin.' }, 429);
       }
     }
-    const res = await mutate(biz.id, body.masa, body.game, body.pid, { type: a.type, t: a.t, n: a.n, cards: a.cards, dice: a.dice, tiles: a.tiles, idxs: a.idxs, name: a.name, tok: a.tok, from: a.from, to: a.to, target: a.target, yes: a.yes, loc: a.loc, word: a.word, num: a.num, card: a.card, strokes: a.strokes, keep: a.keep, text: a.text, choice: a.choice, ms: a.ms, amount: a.amount, prop: a.prop, promo: a.promo, src: a.src, factory: a.factory, color: a.color, line: a.line, sus: a.sus, wpn: a.wpn, rm: a.rm, slot: a.slot, route: a.route, near:nearCafe(biz, a.geo), noGeo: !a.geo, cc: a.cc, cat: a.cat });
+    const res = await mutate(biz.id, body.masa, body.game, body.pid, { type: a.type, t: a.t, n: a.n, cards: a.cards, dice: a.dice, tiles: a.tiles, idxs: a.idxs, name: a.name, tok: a.tok, from: a.from, to: a.to, target: a.target, yes: a.yes, loc: a.loc, word: a.word, num: a.num, card: a.card, strokes: a.strokes, keep: a.keep, text: a.text, choice: a.choice, ms: a.ms, amount: a.amount, prop: a.prop, promo: a.promo, src: a.src, factory: a.factory, color: a.color, line: a.line, sus: a.sus, wpn: a.wpn, rm: a.rm, slot: a.slot, route: a.route, near:nearCafe(biz, a.geo), noGeo: !a.geo, cc: a.cc, cat: a.cat, pl: plugAct && JSON.stringify(a.pl ?? {}).length <= 4000 ? a.pl : undefined });
     if (a.type === 'start') {
       // İstatistikler için oyun başlangıcını kaydet; başarısızsa odayı etkilemesin.
       run('INSERT INTO play_logs (biz_id, masa, game, players, at) VALUES (?, ?, ?, ?, ?)',

@@ -13,6 +13,7 @@ export const SUIT_OF: Record<string, Suit> = {
   tabu: 'parti', kimim: 'parti', cizim: 'parti', bil: 'parti', futbolcu: 'parti',
   spyfall: 'gizem', ajanlar: 'gizem', vampir: 'gizem', cluedo: 'gizem',
   scrabble: 'kelime', kadro: 'kelime',
+  pisti: 'parti', okey: 'strateji', tavla: 'strateji', g2048: 'kelime', adam: 'kelime',
 };
 export const accentOf = (id: string) => SUIT_COLOR[SUIT_OF[id] ?? 'strateji'];
 
@@ -63,6 +64,16 @@ export const SYMBOLS: Record<string, string> = {
   carcassonne: line('M50 8 V30') + m('M50 8 L70 16 L50 24Z', 'a') + m('M24 30 h12 v8 h8 v-8 h12 v8 h8 v-8 h12 v56 H24Z') + m('M42 86 V68 a8 8 0 0 1 16 0 V86Z', 'a'),
   kadro: rc(10, 16, 80, 68, 4, 'a') + line('M50 16 V84') + ci(50, 50, 10) + rc(10, 34, 14, 32) + rc(76, 34, 14, 32) + ci(36, 28, 4) + ci(36, 50, 4) + ci(36, 72, 4) + ci(64, 38, 4) + ci(64, 62, 4),
   futbolcu: ci(46, 54, 34) + m('M46 38 L60 48 L55 64 H37 L32 48Z', 'a') + line('M46 38 V22 M60 48 L74 42 M55 64 L64 76 M37 64 L28 76 M32 48 L18 42') + ci(78, 24, 15, 'a') + tx(78, 31, 22, '?'),
+  // Pişti: üst üste iki kart, öndekinde kupa
+  pisti: '<g transform="rotate(-12 50 50)">' + rc(18, 16, 40, 58, 5) + '</g>' + '<g transform="rotate(10 50 50)">' + rc(40, 26, 40, 58, 5) + '</g>' + m('M60 62 C48 52 52 44 60 50 C68 44 72 52 60 62Z', 'a'),
+  // Okey: taş, üstünde sayı ve renkli nokta
+  okey: rc(20, 16, 60, 68, 8) + tx(50, 62, 40, '101') + ci(50, 28, 5, 'a'),
+  // Tavla: iki üçgen (nokta) ve pul
+  tavla: rc(10, 16, 80, 68, 4) + m('M16 22 L28 60 L40 22Z', 'a') + m('M44 22 L56 60 L68 22Z') + m('M16 78 L28 40 L40 78Z') + m('M44 78 L56 40 L68 78Z', 'a') + ci(78, 50, 8, 'a'),
+  // 2048: karo
+  g2048: rc(12, 12, 76, 76, 10, 'a') + tx(50, 62, 34, '2048'),
+  // Adam Asmaca: darağacı ve harf çizgileri
+  adam: line('M20 86 H80 M32 86 V14 H64 V26') + ci(64, 36, 9, 'a') + line('M64 45 V64 M64 52 L54 60 M64 52 L74 60') + line('M30 94 H42 M48 94 H60'),
   azul: rc(14, 14, 72, 72, 5) + m('M50 22 L78 50 L50 78 L22 50Z', 'a') + m('M50 36 L64 50 L50 64 L36 50Z') + ci(50, 50, 3, 'a'),
 };
 

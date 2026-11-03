@@ -1,0 +1,27 @@
+.ad { display: grid; gap: 14px; color: #1c1233; }
+.ad button:focus-visible { outline: 3px solid #5a3fd1; outline-offset: 2px; }
+.ad-scores { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.ad-scores li { display: grid; gap: 2px; padding: 10px 12px; background: #fff7ee; border: 2px solid #1c123322; border-radius: 12px; }
+.ad-scores li.on { border-color: #ff5a36; box-shadow: 0 0 0 3px #ff5a3640; }
+.ad-scores li.left { opacity: 0.5; }
+.ad-board { display: grid; justify-items: center; gap: 10px; padding: 14px 10px; background: #fff7ee; border: 3px solid #1c123322; border-radius: 18px; }
+.ad-board.me { border-color: #f2b01e; box-shadow: 0 0 14px #f2b01e90; }
+.ad-meta { margin: 0; text-align: center; }
+.ad-svg { width: 150px; height: auto; }
+.ad-word { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.ad-word span { display: grid; place-items: center; width: 34px; height: 44px; border-bottom: 4px solid #1c1233; font: 800 1.6rem/1 inherit; color: #5a3fd1; }
+.ad-turn { margin: 0; font-size: 1.1rem; }
+.ad-note { margin: 0; text-align: center; font-weight: 600; }
+.ad-round { display: grid; justify-items: center; gap: 8px; text-align: center; }
+.ad-keys { display: grid; grid-template-columns: repeat(auto-fit, minmax(44px, 1fr)); gap: 6px; }
+.ad-keys button { min-height: 48px; min-width: 44px; border: 2px solid #1c1233; border-radius: 10px; background: #fff7ee; color: #1c1233; font: 700 1.1rem/1 inherit; cursor: pointer; }
+.ad-keys button:disabled { cursor: not-allowed; opacity: 0.55; }
+.ad-keys button.hit { background: #14a38b; color: #fff; border-color: #14a38b; opacity: 1; }
+.ad-keys button.miss { background: #ff5a36; color: #fff; border-color: #ff5a36; opacity: 0.7; text-decoration: line-through; }
+.ad-over { display: grid; gap: 12px; justify-items: center; padding: 14px; background: #fff7ee; border: 2px solid #5a3fd1; border-radius: 16px; }
+.ad-over h2 { margin: 0; text-align: center; }
+.ad-over ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; width: 100%; }
+.ad-over li { display: flex; justify-content: space-between; padding: 8px 12px; border-radius: 10px; background: #1c123308; }
+.ad-over li.win { background: #f2b01e55; }
+
+.ad .av { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font-style: normal; font-size: .78rem; font-weight: 800; border: 2px solid #fff; box-shadow: 0 0 0 1px #1c123333; }

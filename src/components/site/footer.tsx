@@ -3,9 +3,9 @@ import Logo from './logo';
 import { whatsappLink } from '@/lib/site';
 
 const COLS = [
-  { title: 'Ürün', links: [['/ozellikler', 'Özellikler'], ['/nasil-calisir', 'Nasıl çalışır'], ['/oyunlar', 'Oyunlar'], ['/fiyat', 'Fiyat']] },
-  { title: 'Kaynaklar', links: [['/sss', 'Sıkça sorulan sorular'], ['/blog', 'Blog'], ['/demo/masa-1/oyunlar', 'Demo masa'], ['/panel/giris', 'Mekân girişi']] },
-  { title: 'Yasal', links: [['/yasal/kvkk', 'KVKK aydınlatma metni'], ['/yasal/gizlilik', 'Gizlilik ve çerezler'], ['/yasal/mesafeli-satis', 'Mesafeli satış sözleşmesi'], ['/yasal/iade', 'Teslimat ve iade']] },
+  { title: 'Ürün', links: [['/ozellikler', 'Özellikler'], ['/nasil-calisir', 'Nasıl çalışır'], ['/oyunlar', 'Oyunlar'], ['/fiyat', 'Fiyat'], ['/cozumler', 'Mekân çözümleri'], ['/kurumsal', 'Kurumsal ve zincirler'], ['/kampus', 'Kampüs']] },
+  { title: 'Kaynaklar', links: [['/sss', 'Sıkça sorulan sorular'], ['/blog', 'Blog'], ['/kafe-oyunlari-rehberi', 'Kafe oyunları rehberi'], ['/yarisma-gecesi', 'Yarışma gecesi'], ['/oyuncular-icin', 'Oyuncular için'], ['/gunluk-test', 'Günlük test'], ['/guven', 'Güven ve veri'], ['/ortaklik', 'Ortaklık programları'], ['/demo/masa-1/oyunlar', 'Demo masa'], ['/panel/giris', 'Mekân girişi']] },
+  { title: 'Yasal', links: [['/yasal/kvkk', 'KVKK aydınlatma metni'], ['/yasal/gizlilik', 'Gizlilik politikası'], ['/yasal/cerezler', 'Çerez politikası'], ['/yasal/kullanim-sartlari', 'Kullanım şartları'], ['/yasal/mesafeli-satis', 'Mesafeli satış sözleşmesi'], ['/yasal/abonelik-sozlesmesi', 'Abonelik sözleşmesi'], ['/yasal/iade', 'Teslimat ve iade']] },
 ] as const;
 
 // Alt bilgi: kum renginde zemin, üstte oyun renklerinden ince şerit.
