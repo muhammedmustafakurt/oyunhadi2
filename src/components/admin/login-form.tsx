@@ -17,12 +17,12 @@ export default function AdminLoginForm() {
     setErr('');
     const f = new FormData(e.currentTarget);
     try {
-      const r = await fetch('/api/yonetim/login', {
+      const r = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: f.get('email'), password: f.get('pw') }),
       });
-      if (r.ok) { router.push('/'); router.refresh(); return; }
+      if (r.ok) { router.push('/admin'); router.refresh(); return; }
       setErr((await r.json().catch(() => null))?.error || 'Giriş yapılamadı.');
     } catch {
       setErr('Bağlantı hatası.');

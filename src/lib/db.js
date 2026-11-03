@@ -169,6 +169,15 @@ const SCHEMA = [
     created_at BIGINT NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS chat_reports_biz ON chat_reports (biz_id, status, created_at)`,
+  // Süper-admin (platform yöneticisi) hesapları; mekân hesaplarından ayrıdır. password: scrypt karması salt:hash.
+  `CREATE TABLE IF NOT EXISTS admins (
+    id SERIAL PRIMARY KEY,
+    email TEXT NOT NULL,
+    password TEXT NOT NULL,
+    created_at BIGINT NOT NULL,
+    last_login_at BIGINT
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS admins_email ON admins (lower(email))`,
   // Bir kereliğe mahsus veri düzeltmelerinin kaydı (aynı düzeltme ikinci kez çalışmaz).
   `CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY, at BIGINT NOT NULL)`,
 ];

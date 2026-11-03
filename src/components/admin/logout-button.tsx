@@ -7,8 +7,8 @@ export default function LogoutButton() {
   const router = useRouter();
   return (
     <Button variant="outline" size="sm" onClick={async () => {
-      await fetch('/api/yonetim/logout', { method: 'POST' }).catch(() => {});
-      router.push('/giris');
+      await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {});
+      router.push('/admin/giris');
       router.refresh();
     }}>Çıkış</Button>
   );

@@ -32,7 +32,7 @@ export default function VenueEditor({ venue, games }: { venue: V; games: GameOpt
     e.preventDefault();
     setBusy(true);
     const f = new FormData(e.currentTarget);
-    const r = await call(`/api/yonetim/venues/${venue.id}`, 'PATCH', {
+    const r = await call(`/api/admin/venues/${venue.id}`, 'PATCH', {
       name: f.get('name'), city: f.get('city'), email: f.get('email'), tables: Number(f.get('tables')), games: sel,
     });
     setBusy(false);
@@ -41,13 +41,13 @@ export default function VenueEditor({ venue, games }: { venue: V; games: GameOpt
 
   const reset = async () => {
     if (!window.confirm('Mevcut şifre geçersiz olur ve yeni bir şifre üretilir. Devam edilsin mi?')) return;
-    const r = await call(`/api/yonetim/venues/${venue.id}/password`, 'POST');
+    const r = await call(`/api/admin/venues/${venue.id}/password`, 'POST');
     if (r.ok) setPw(r.data.password); else toast.error(r.data?.error || 'Sıfırlanamadı.');
   };
 
   const remove = async () => {
-    const r = await call(`/api/yonetim/venues/${venue.id}`, 'DELETE', { confirmName: confirm });
-    if (r.ok) { toast.success('Mekân silindi'); router.push('/mekanlar'); router.refresh(); } else toast.error(r.data?.error || 'Silinemedi.');
+    const r = await call(`/api/admin/venues/${venue.id}`, 'DELETE', { confirmName: confirm });
+    if (r.ok) { toast.success('Mekân silindi'); router.push('/admin/mekanlar'); router.refresh(); } else toast.error(r.data?.error || 'Silinemedi.');
   };
 
   return (

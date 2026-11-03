@@ -13,7 +13,7 @@ export default async function VenuesPage() {
   await requireAdminPage();
   const rows = await venueRows();
   return (
-    <PageContainer title="Mekânlar" description={`${rows.length} mekân`} action={<Link href="/mekanlar/yeni" className={buttonVariants()}>Yeni mekân</Link>}>
+    <PageContainer title="Mekânlar" description={`${rows.length} mekân`} action={<Link href="/admin/mekanlar/yeni" className={buttonVariants()}>Yeni mekân</Link>}>
       <div className="overflow-x-auto rounded-xl border">
         <Table>
           <TableHeader>
@@ -25,7 +25,7 @@ export default async function VenuesPage() {
           <TableBody>
             {rows.map((r: { id: number; slug: string; name: string; city: string; tables: number; openGames: number; lastPlay: number | null }) => (
               <TableRow key={r.id}>
-                <TableCell><Link href={`/mekanlar/${r.id}`} className="font-medium underline-offset-4 hover:underline">{r.name}</Link><span className="text-muted-foreground ml-2 text-xs">{r.slug}</span></TableCell>
+                <TableCell><Link href={`/admin/mekanlar/${r.id}`} className="font-medium underline-offset-4 hover:underline">{r.name}</Link><span className="text-muted-foreground ml-2 text-xs">{r.slug}</span></TableCell>
                 <TableCell>{r.city}</TableCell>
                 <TableCell className="text-right tabular-nums">{r.tables}</TableCell>
                 <TableCell className="text-right tabular-nums">{r.openGames}</TableCell>

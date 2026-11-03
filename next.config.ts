@@ -5,8 +5,6 @@ const nextConfig: NextConfig = {
   // Yerel geliştirmede DATABASE_URL yoksa oyun odaları bellekteki PGlite'ta tutulur (bkz. src/lib/db.js).
   serverExternalPackages: ['@electric-sql/pglite'],
   experimental: { globalNotFound: true },
-  // Geliştirmede admin alt alanı (http://admin.localhost:3000) için dev kaynaklarına izin.
-  allowedDevOrigins: ['admin.localhost'],
   // Ana klasörde başka bir package-lock.json olduğu için proje kökünü açıkça belirtiyoruz.
   turbopack: { root: path.resolve(__dirname) },
   // Tüm yanıtlara temel güvenlik başlıkları (clickjacking, MIME sniffing, referrer sızıntısı, HTTP'ye düşme).
@@ -23,6 +21,15 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
         ],
+      },
+      // Süper-admin: arama motorlarına kapalı, önbelleğe alınmaz.
+      {
+        source: '/admin/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }, { key: 'Cache-Control', value: 'no-store' }],
+      },
+      {
+        source: '/api/admin/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }, { key: 'Cache-Control', value: 'no-store' }],
       },
     ];
   },

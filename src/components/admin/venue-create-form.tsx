@@ -21,7 +21,7 @@ export default function VenueCreateForm({ games }: { games: GameOpt[] }) {
     setErr('');
     const f = new FormData(e.currentTarget);
     try {
-      const r = await fetch('/api/yonetim/venues', {
+      const r = await fetch('/api/admin/venues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug: f.get('slug'), name: f.get('name'), city: f.get('city'), email: f.get('email'), tables: Number(f.get('tables')) || 1, games: sel }),
@@ -42,8 +42,8 @@ export default function VenueCreateForm({ games }: { games: GameOpt[] }) {
         <p className="font-medium">Mekân oluşturuldu.</p>
         <PasswordReveal email={done.email} password={done.password} />
         <div className="flex gap-3">
-          <Link href={`/mekanlar/${done.id}`} className={buttonVariants()}>Mekân sayfasına git</Link>
-          <Link href="/mekanlar" className={buttonVariants({ variant: 'outline' })}>Listeye dön</Link>
+          <Link href={`/admin/mekanlar/${done.id}`} className={buttonVariants()}>Mekân sayfasına git</Link>
+          <Link href="/admin/mekanlar" className={buttonVariants({ variant: 'outline' })}>Listeye dön</Link>
         </div>
       </div>
     );

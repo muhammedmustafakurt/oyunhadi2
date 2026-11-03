@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminLoginPage() {
   const { signedIn, configured } = await adminLoginPageState();
-  if (signedIn) redirect('/');
+  if (signedIn) redirect('/admin');
   return (
     <div className="flex min-h-svh items-center justify-center p-6">
       <div className="w-full max-w-sm">
@@ -16,7 +16,7 @@ export default async function AdminLoginPage() {
         {configured ? (
           <AdminLoginForm />
         ) : (
-          <p role="alert" className="rounded-lg border p-4 text-sm">Yönetici girişi yapılandırılmamış. ADMIN_EMAIL, ADMIN_PASSWORD_HASH ve SESSION_SECRET ortam değişkenlerini ayarlayın.</p>
+          <p role="alert" className="rounded-lg border p-4 text-sm">Yönetici girişi yapılandırılmamış. SESSION_SECRET, ADMIN_EMAIL ve ADMIN_PASSWORD_HASH ortam değişkenlerini ayarlayın.</p>
         )}
       </div>
     </div>
