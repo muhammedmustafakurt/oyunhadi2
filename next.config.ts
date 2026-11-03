@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   // Yerel geliştirmede DATABASE_URL yoksa oyun odaları bellekteki PGlite'ta tutulur (bkz. src/lib/db.js).
   serverExternalPackages: ['@electric-sql/pglite'],
   experimental: { globalNotFound: true },
+  // Geliştirmede admin alt alanı (http://admin.localhost:3000) için dev kaynaklarına izin.
+  allowedDevOrigins: ['admin.localhost'],
   // Ana klasörde başka bir package-lock.json olduğu için proje kökünü açıkça belirtiyoruz.
   turbopack: { root: path.resolve(__dirname) },
   // Tüm yanıtlara temel güvenlik başlıkları (clickjacking, MIME sniffing, referrer sızıntısı, HTTP'ye düşme).
