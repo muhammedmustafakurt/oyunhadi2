@@ -3,6 +3,8 @@ import { findCafe, hasTable, nearCafe, readRoom, mutate, view, roomKey, ROOM_GAM
 import { gateEvent, QUIZ_CAT } from '@/lib/events';
 import { run } from '@/lib/db';
 import { PLUGINS } from '@/lib/plugins';
+import { settleRoom } from '@/lib/rewards';
+import { isRewardGame } from '@/lib/reward-games';
 import { clientIp, floodOk, hit } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
@@ -70,6 +72,11 @@ export async function POST(req) {
       // İstatistikler için oyun başlangıcını kaydet; başarısızsa odayı etkilemesin.
       run('INSERT INTO play_logs (biz_id, masa, game, players, at) VALUES (?, ?, ?, ?, ?)',
         biz.id, body.masa, body.game, res.room.state.seats.length, Date.now()).catch(() => {});
+    }
+    // Oyun bittiyse ödül kodları sunucudaki nihai puana göre üretilir (idempotent; hata oyunu etkilemesin).
+    // Mekân Sınavı (etkinlik) odaları ödül kapsamı dışındadır.
+    if (!ev && isRewardGame(body.game) && res.room?.state?.phase === 'play') {
+      await settleRoom(biz, body.masa, body.game, res.room).catch((e) => console.error('[reward settle]', e));
     }
     return json({ ...view(res.room, body.pid, body.game), locked: biz.lat != null, ...(res.error && { error: res.error }) }, res.error ? 409 : 200);
   } catch (e) {

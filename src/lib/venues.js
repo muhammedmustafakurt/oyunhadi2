@@ -6,7 +6,7 @@ import { createHmac, scryptSync, timingSafeEqual, randomBytes } from 'node:crypt
 import { get, all, run } from './db';
 // Venue tipi veren dosya TS olduğu için JS dosyasında yalnızca JSDoc ile Referanslı tip kullanılır:
 
-const COLS = 'id, slug, name, city, initials, logo_url, color, accent, ntables, lat, lng, games, welcome, ann_title, ann_body, reward_game, reward_goal, reward_prize, email';
+const COLS = 'id, slug, name, city, initials, logo_url, color, accent, ntables, lat, lng, games, welcome, ann_title, ann_body, email';
 export const VENUE_GAMES = 'monopoly satranc spyfall ajanlar vampir tabu kimim cizim bil azul cluedo scrabble risk ticket carcassonne catan kadro futbolcu pisti okey tavla g2048 adam'.split(' ');
 const SCRYPT = { N: 16384, r: 8, p: 1 }; // db.js hashPassword ile aynı olmalı
 
@@ -16,7 +16,7 @@ function deg(raw) {
   return Number.isFinite(n) && n !== 0 ? n / 1_000_000 : null;
 }
 
-// Satırı Venue tipine dönüştürür; duyuru ve ödül boşsa null olur, konum yarımlıysa tamamen null.
+// Satırı Venue tipine dönüştürür; duyuru boşsa null olur, konum yarımlıysa tamamen null.
 export function shapeVenue(r) {
   const v = {
     id: r.id, slug: r.slug, name: r.name, city: r.city, initials: r.initials,
@@ -25,7 +25,6 @@ export function shapeVenue(r) {
     games: String(r.games || '').split(',').filter((x) => VENUE_GAMES.includes(x)),
     welcome: r.welcome, email: r.email,
     announcement: r.ann_title && r.ann_body ? { title: r.ann_title, body: r.ann_body } : null,
-    reward: r.reward_game && r.reward_goal && r.reward_prize ? { game: r.reward_game, goal: r.reward_goal, prize: r.reward_prize } : null,
   };
   if (v.lat == null) v.lng = null;
   if (v.lng == null) v.lat = null;
@@ -83,12 +82,6 @@ export async function updateVenue(id, patch = {}) {
     const a = patch.announcement;
     if (a && clean(a.title, 60)) parts.push(['ann_title', clean(a.title, 60)], ['ann_body', clean(a.body ?? '', 200)]);
     else parts.push(['ann_title', null], ['ann_body', null]);
-  }
-  if ('reward' in patch) {
-    const w = patch.reward;
-    if (w && clean(w.goal, 60) && clean(w.prize, 60) && VENUE_GAMES.includes(w.game)) {
-      parts.push(['reward_game', w.game], ['reward_goal', clean(w.goal, 60)], ['reward_prize', clean(w.prize, 60)]);
-    } else parts.push(['reward_game', null], ['reward_goal', null], ['reward_prize', null]);
   }
   if (!parts.length) return getVenue(id);
   parts.push(['updated_at', Date.now()]);

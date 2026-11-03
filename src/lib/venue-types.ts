@@ -21,5 +21,4 @@ export type Venue = {
   /** Panel girişi için kayıtlı e-posta */
   email: string;
   announcement: { title: string; body: string } | null;
-  reward: { game: string; goal: string; prize: string } | null;
 };

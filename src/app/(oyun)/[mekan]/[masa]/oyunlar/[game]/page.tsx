@@ -25,6 +25,8 @@ import G2048Online from '@/components/games/G2048Online';
 import AdamOnline from '@/components/games/AdamOnline';
 import ResetTable from '@/components/oyun/ResetTable';
 import Presence from '@/components/oyun/Presence';
+import RewardNotice from '@/components/oyun/RewardNotice';
+import { activeRuleMap } from '@/lib/rewards';
 import GameBand from '@/components/oyun/GameBand';
 import VenueBadge from '@/components/oyun/VenueBadge';
 import ChatWidget from '@/components/sohbet/ChatWidget';
@@ -52,6 +54,7 @@ export default async function TablePlay({ params }: PageProps<'/[mekan]/[masa]/o
   const v = await findCafe(mekan);
   if (!g || !v || !hasTable(v, masa) || !v.games.includes(g.id)) notFound();
   const View = VIEWS[g.id];
+  const rule = (await activeRuleMap(v.id).catch(() => ({} as Record<string, { target: number; prize: string }>)))[g.id] ?? null;
   const back = `/${mekan}/${masa}/oyunlar`;
 
   return (
@@ -66,6 +69,7 @@ export default async function TablePlay({ params }: PageProps<'/[mekan]/[masa]/o
       <GameBand game={g} />
       <div className={`shell oh-play-body${g.id === 'monopoly' ? ' game-board' : ''}`}>
         <View cafe={mekan} masa={masa} />
+        <RewardNotice cafe={mekan} masa={masa} game={g.id} rule={rule} />
         <Presence cafe={mekan} masa={masa} game={g.id} />
         <ResetTable cafe={mekan} masa={masa} game={g.id} />
         <p className="oh-play-back"><Link href={back}>← Tüm oyunlar</Link></p>

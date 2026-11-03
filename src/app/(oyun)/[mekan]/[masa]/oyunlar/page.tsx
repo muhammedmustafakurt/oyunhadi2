@@ -4,6 +4,7 @@ import VenueBadge from '@/components/oyun/VenueBadge';
 import ChatWidget from '@/components/sohbet/ChatWidget';
 import Link from 'next/link';
 import { findCafe, hasTable } from '@/lib/rooms';
+import { activeRuleMap } from '@/lib/rewards';
 import { listOpenEvents } from '@/lib/events';
 import { GAMES } from '@/lib/games';
 import { SPINE } from '@/lib/spines';
@@ -24,12 +25,13 @@ export default async function TableGames({ params }: PageProps<'/[mekan]/[masa]/
   const no = masa.replace('masa-', '');
   // Yalnızca durumu 'acik' olan etkinlikler; yoksa hiçbir şey gösterilmez. Hata sayfayı düşürmesin.
   const open: { id: number; title: string; body: string; questions: number }[] = await listOpenEvents(v.id).catch(() => []);
+  const rules = await activeRuleMap(v.id).catch(() => ({} as Record<string, { target: number; prize: string }>));
   const base = `/${mekan}/${masa}/oyunlar`;
 
   const games: DeckGame[] = GAMES.filter((g) => g.play && v.games.includes(g.id)).map((g) => ({
     id: g.id, name: g.name, note: g.note, players: g.players, minutes: g.minutes,
     bg: SPINE[g.id][0], fg: SPINE[g.id][1], href: `${base}/${g.id}`,
-    reward: v.reward?.game === g.id ? `${v.reward.goal}: ${v.reward.prize}` : undefined,
+    reward: rules[g.id] ? `${rules[g.id].target.toLocaleString('tr-TR')} puan ve üstü: ${rules[g.id].prize}` : undefined,
   }));
   // Ödüllü oyun destenin en üstünde
   games.sort((a, b) => Number(!!b.reward) - Number(!!a.reward));

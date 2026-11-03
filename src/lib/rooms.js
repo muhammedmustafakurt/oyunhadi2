@@ -1,6 +1,7 @@
 // Kafe masası odaları: bir (kafe, masa, oyun) için tek oda. Oyun kuralları ve zarlar sunucuda işlenir;
 // telefonlar yalnızca kendi sırasında hamle isteyebilir. Durum veritabanında tutulur (sunucusuz ortamda
 // bellek paylaşılmadığı için), istemciler kısa aralıkla sürüm numarasını sorar.
+import { randomBytes } from 'node:crypto';
 import { get, run } from './db';
 import { getVenueBySlug } from './venues';
 import * as E from './emlak';
@@ -346,6 +347,7 @@ function apply(s, pid, a, game, extra = {}) {
         s.game = C.newGame();
       }
       s.phase = 'play';
+      s.round = randomBytes(8).toString('hex'); // tur kimliği: ödül kodu üretiminin idempotentliği için (lib/rewards.js)
       return { state: s };
     }
     case 'roll':

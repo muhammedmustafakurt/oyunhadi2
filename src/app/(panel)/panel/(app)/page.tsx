@@ -5,7 +5,8 @@ import { WeekChart, GameBarChart } from '@/components/panel/charts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardAction } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
-import { REWARD_CODES, SUBSCRIPTION } from '@/lib/demo';
+import { recentCodes, rewardStats } from '@/lib/rewards';
+import { getSubscription } from '@/lib/subscriptions';
 import { gameColor, gameName } from '@/lib/game-meta';
 import { weekDocs, gameDocs, tableRows } from '@/lib/stats';
 import { requireVenue } from '@/lib/venues';
@@ -17,10 +18,13 @@ const pct = (a: number, b: number) => (b === 0 ? undefined : Math.round(((a - b)
 
 export default async function Overview() {
   const v = await requireVenue();
-  const [week14, byGame, rows] = await Promise.all([
+  const [week14, byGame, rows, codes, rst, sub] = await Promise.all([
     weekDocs(v.id, 14),
     gameDocs(v.id, 7),
     tableRows(v.id, v.tables),
+    recentCodes(v.id, 4),
+    rewardStats(v.id),
+    getSubscription(v.id),
   ]);
   const week = week14.slice(7), prev = week14.slice(0, 7);
   const games = week.reduce((n, d) => n + d.oyun, 0);
@@ -38,7 +42,7 @@ export default async function Overview() {
         <StatCard label="Bu hafta oynanan oyun" value={String(games)} change={pct(games, prevGames)} note="Geçen haftaya göre" />
         <StatCard label="Oyuncu" value={String(players)} change={pct(players, prevPlayers)} note="Başlanan oyunlardaki kişi sayısı toplamı" />
         <StatCard label="Şu an oynanan masa" value={`${live.length} / ${rows.length}`} note="Masadaki telefonlar yokluyor" />
-        <StatCard label="Ödül kodu" value={String(REWARD_CODES.length)} note="Örnek veri · sistem bağlanınca gerçek olur" />
+        <StatCard label="Ödül kodu" value={String(rst.issued)} note={`Bu ay verilen · ${rst.used} kullanıldı`} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
@@ -92,11 +96,12 @@ export default async function Overview() {
               <CardAction><Link href="/panel/oduller/dogrula" className={buttonVariants({ size: 'sm' })}>Kod doğrula</Link></CardAction>
             </CardHeader>
             <CardContent>
+              {codes.length === 0 && <p className="text-muted-foreground text-sm">Henüz ödül kodu verilmedi.</p>}
               <ul className="space-y-3">
-                {REWARD_CODES.slice(0, 4).map((r) => (
+                {codes.map((r) => (
                   <li key={r.code} className="flex items-center gap-3 text-sm">
                     <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">{r.code}</code>
-                    <span className="truncate">{r.table} · {gameName(r.game)}</span>
+                    <span className="truncate">Masa {r.masa.replace('masa-', '')} · {gameName(r.game)}</span>
                     <Badge variant={r.status === 'bekliyor' ? 'default' : 'outline'} className="ml-auto">{STATUS[r.status]}</Badge>
                   </li>
                 ))}
@@ -106,15 +111,17 @@ export default async function Overview() {
           <Card>
             <CardHeader>
               <CardTitle>Abonelik</CardTitle>
-              <CardDescription>{SUBSCRIPTION.plan} · {SUBSCRIPTION.endsAt} tarihine kadar</CardDescription>
-              <CardAction><Badge className="bg-emerald-600 text-white">Aktif</Badge></CardAction>
+              {sub ? <CardDescription>{sub.plan} · {new Date(sub.endsAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul' })} tarihine kadar</CardDescription> : <CardDescription>Henüz bir aboneliğiniz görünmüyor.</CardDescription>}
+              {sub && <CardAction><Badge className={sub.status === 'aktif' ? 'bg-emerald-600 text-white' : sub.status === 'deneme' ? 'bg-sky-600 text-white' : sub.status === 'bitti' ? 'bg-amber-600 text-white' : 'bg-destructive text-white'}>{({ aktif: 'Aktif', deneme: 'Deneme', bitti: 'Bitti', iptal: 'İptal' } as Record<string, string>)[sub.status]}</Badge></CardAction>}
             </CardHeader>
-            <CardContent>
-              <div className="bg-muted h-2 overflow-hidden rounded-full">
-                <div className="bg-primary h-full rounded-full" style={{ width: `${100 - (SUBSCRIPTION.daysLeft / SUBSCRIPTION.totalDays) * 100}%` }} />
-              </div>
-              <p className="text-muted-foreground mt-2 text-sm">{SUBSCRIPTION.daysLeft} gün kaldı</p>
-            </CardContent>
+            {sub && (
+              <CardContent>
+                <div className="bg-muted h-2 overflow-hidden rounded-full">
+                  <div className="bg-primary h-full rounded-full" style={{ width: `${sub.usedPct}%` }} />
+                </div>
+                <p className="text-muted-foreground mt-2 text-sm">{sub.daysLeft > 0 ? `${sub.daysLeft} gün kaldı` : 'Süre doldu'}</p>
+              </CardContent>
+            )}
           </Card>
         </div>
       </div>

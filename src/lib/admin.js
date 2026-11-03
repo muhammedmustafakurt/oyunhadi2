@@ -268,7 +268,11 @@ export async function deleteVenue(id, confirmName) {
      d6 AS (DELETE FROM chat_sessions WHERE biz_id = $1),
      d7 AS (DELETE FROM chat_settings WHERE biz_id = $1),
      d8 AS (DELETE FROM game_rooms WHERE biz_id = $1),
-     d9 AS (DELETE FROM play_logs WHERE biz_id = $1)
+     d9 AS (DELETE FROM play_logs WHERE biz_id = $1),
+     d10 AS (DELETE FROM reward_codes WHERE biz_id = $1),
+     d11 AS (DELETE FROM reward_rules WHERE biz_id = $1),
+     d12 AS (DELETE FROM subscriptions WHERE biz_id = $1),
+     d13 AS (DELETE FROM payments WHERE biz_id = $1)
      DELETE FROM venues WHERE id = $1`,
     id,
   );

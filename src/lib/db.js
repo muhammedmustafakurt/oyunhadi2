@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { randomBytes, scryptSync } from 'node:crypto';
+import { isRewardGame } from './reward-games';
 
 // Neon (sunucusuz Postgres). Bağlantı adresi DATABASE_URL ortam değişkeninden gelir.
 // DATABASE_URL yoksa (yerel tasarım/deneme aşaması) aynı SQL bellekteki PGlite'ta çalışır; sunucu kapanınca silinir.
@@ -192,6 +193,67 @@ const SCHEMA = [
     last_login_at BIGINT
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS admins_email ON admins (lower(email))`,
+  // Ödül kuralları (src/lib/rewards.js): mekân + oyun için sayısal hedef puan ve ikram. Bir oyunda en çok bir AÇIK kural olur.
+  // daily_limit: günde (Türkiye saati) en çok kaç kod; null = sınırsız. cost_try: ikramın tahmini maliyeti (₺), null = girilmemiş.
+  `CREATE TABLE IF NOT EXISTS reward_rules (
+    id SERIAL PRIMARY KEY,
+    biz_id INTEGER NOT NULL, -- venues.id
+    game TEXT NOT NULL,
+    target INTEGER NOT NULL,
+    prize TEXT NOT NULL,
+    daily_limit INTEGER,
+    cost_try INTEGER,
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at BIGINT NOT NULL
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS reward_rules_active ON reward_rules (biz_id, game) WHERE active`,
+  // Verilen ödül kodları. round_key = oyun turu + oyuncu karması (masa|oyun|tur|pid); (biz_id, round_key) benzersizliği
+  // aynı turdan aynı oyuncuya ikinci kod üretilmesini engeller. Kural silinse de kod ve ikram bilgisi (prize, cost_try) kalır.
+  `CREATE TABLE IF NOT EXISTS reward_codes (
+    id SERIAL PRIMARY KEY,
+    biz_id INTEGER NOT NULL,
+    rule_id INTEGER,
+    round_key TEXT NOT NULL,
+    code TEXT NOT NULL,
+    masa TEXT NOT NULL,
+    game TEXT NOT NULL,
+    prize TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    cost_try INTEGER,
+    status TEXT NOT NULL DEFAULT 'bekliyor', -- bekliyor | kullanildi (süresi dolmuş bekleyen kod okunurken hesaplanır)
+    issued_at BIGINT NOT NULL,
+    expires_at BIGINT NOT NULL,
+    used_at BIGINT
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS reward_codes_code ON reward_codes (biz_id, code)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS reward_codes_round ON reward_codes (biz_id, round_key)`,
+  `CREATE INDEX IF NOT EXISTS reward_codes_issued ON reward_codes (biz_id, issued_at)`,
+  // Mekân abonelikleri (src/lib/subscriptions.js). Ödeme entegrasyonu gelene kadar kayıtlar yalnızca süper-admin panelinden girilir.
+  // Mekân başına tek satır. status: aktif | deneme | bitti | iptal (bitiş tarihi geçmişse okunurken 'bitti' sayılır).
+  `CREATE TABLE IF NOT EXISTS subscriptions (
+    id SERIAL PRIMARY KEY,
+    biz_id INTEGER NOT NULL UNIQUE, -- venues.id
+    plan TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'aktif',
+    started_at BIGINT NOT NULL,
+    ends_at BIGINT NOT NULL,
+    total_try INTEGER, -- paket tutarı (₺, tam sayı); null = girilmemiş
+    vat_note TEXT NOT NULL DEFAULT '', -- ör. "+ KDV"
+    method TEXT NOT NULL DEFAULT '',
+    renewal TEXT NOT NULL DEFAULT 'elle', -- elle | otomatik
+    updated_at BIGINT NOT NULL
+  )`,
+  // Alınan/beklenen ödemeler. status: odendi | bekliyor | iade. invoice_url doluysa panelde fatura bağlantısı görünür.
+  `CREATE TABLE IF NOT EXISTS payments (
+    id SERIAL PRIMARY KEY,
+    biz_id INTEGER NOT NULL,
+    paid_at BIGINT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    amount_try INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'odendi',
+    invoice_url TEXT
+  )`,
+  `CREATE INDEX IF NOT EXISTS payments_biz ON payments (biz_id, paid_at)`,
   // Bir kereliğe mahsus veri düzeltmelerinin kaydı (aynı düzeltme ikinci kez çalışmaz).
   `CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY, at BIGINT NOT NULL)`,
 ];
@@ -262,6 +324,26 @@ function ensure() {
         if (next.length !== have.length) await q('UPDATE venues SET games = $1, updated_at = $2 WHERE slug = $3', [next.join(','), Date.now(), v.slug]);
       }
       await q('INSERT INTO migrations (name, at) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING', [m.name, Date.now()]);
+    }
+
+    // Eski tek serbest metin ödül (venues.reward_*) varsa, hedefi tek bir sayıya çevrilebiliyorsa bir kereliğine kural olur.
+    // Çevrilemeyenler (sayı yok/birden çok sayı ya da puanlı olmayan oyun) aktarılmaz; uyarı yazılır. Eski sütunlar silinmez.
+    const LEGACY = 'reward-rules-2026-11';
+    if (!(await q('SELECT name FROM migrations WHERE name = $1', [LEGACY])).length) {
+      const old = await q('SELECT id, slug, reward_game, reward_goal, reward_prize FROM venues WHERE reward_game IS NOT NULL AND reward_goal IS NOT NULL AND reward_prize IS NOT NULL', []);
+      for (const v of old) {
+        const nums = String(v.reward_goal).match(/\d[\d.,]*/g) || [];
+        const target = nums.length === 1 ? Number(nums[0].replace(/[.,]/g, '')) : NaN;
+        if (!isRewardGame(v.reward_game) || !Number.isInteger(target) || target < 1 || target > 1_000_000_000) {
+          console.warn(`[migration ${LEGACY}] ${v.slug}: ödül "${v.reward_goal}" kurala çevrilemedi, aktarılmadı.`);
+          continue;
+        }
+        await q(
+          'INSERT INTO reward_rules (biz_id, game, target, prize, daily_limit, active, created_at) SELECT $1, $2, $3, $4, NULL, true, $5 WHERE NOT EXISTS (SELECT 1 FROM reward_rules WHERE biz_id = $1 AND game = $2)',
+          [v.id, v.reward_game, target, String(v.reward_prize).slice(0, 60), Date.now()],
+        );
+      }
+      await q('INSERT INTO migrations (name, at) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING', [LEGACY, Date.now()]);
     }
   })().catch((err) => {
     g.__dbReady = null; // sonraki istekte yeniden dene
