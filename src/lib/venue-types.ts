@@ -12,6 +12,11 @@ export type Venue = {
   color: string;
   /** İkinci renk: süslemeler, rozetler */
   accent: string;
+  /** Oyunlar sayfasının üstündeki isteğe bağlı kapak görseli (yalnız https) ve kısa başlığı */
+  coverUrl: string | null;
+  coverTitle: string | null;
+  /** Panelde seçilen hazır tema kimliği (src/lib/themes.js); özel renkte null */
+  themeId: string | null;
   tables: number;
   /** Konum kontrolü: doluysa masaya yalnızca mekândaki telefonlar katılabilir */
   lat: number | null;

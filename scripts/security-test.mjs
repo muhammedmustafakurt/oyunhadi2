@@ -374,6 +374,62 @@ async function main() {
     await gpost(g1, { type: 'leave' });
   }
 
+  // ---------- 14. Mekâna özel görünüm: kapak, başlık, tema ----------
+  section('14. Kapak görseli, başlık ve hazır tema (panel -> oyuncu sayfası)');
+  const lg = await call('POST', '/api/panel/login', { body: { email: 'elif@hadikafe.com', password: 'demo1234' }, headers: withOrigin() });
+  const ck = (lg.res.headers.getSetCookie?.() ?? []).map((c) => c.split(';')[0]).find((c) => c.startsWith('oh-panel='));
+  ok(!!ck, 'görünüm testi için panel girişi', lg.status);
+  if (ck) {
+    const PH = withOrigin({ Cookie: ck });
+    const save = (patch) => call('POST', '/api/panel/venue', { body: patch, headers: PH });
+    const before = (await save({})).body?.venue;
+    const orig = { color: before.color, accent: before.accent, themeId: before.themeId ?? '', coverUrl: before.coverUrl ?? '', coverTitle: before.coverTitle ?? '' };
+    try {
+      const GOOD = 'https://example.com/kapak/test-gorsel.jpg?v=1';
+      let r = await save({ coverUrl: GOOD, coverTitle: 'Turnuva & Gece', themeId: 'okyanus', color: '#0369a1', accent: '#67e8f9' });
+      ok(r.status === 200 && r.body?.venue?.coverUrl === GOOD, 'geçerli https kapak adresi kabul edilir', r.body?.venue?.coverUrl);
+      ok(r.body?.venue?.themeId === 'okyanus' && r.body?.venue?.color === '#0369a1', 'bilinen theme_id ve renkler kaydedilir', r.body?.venue);
+      const bads = ['javascript:alert(1)', 'data:image/svg+xml;base64,PHN2Zz4=', 'http://example.com/a.jpg', 'https://example.com/a b.jpg', 'https://example.com/a"onerror="x', "https://example.com/a'x", 'https://example.com/a(1).jpg', 'https://' + 'a'.repeat(200) + '.com/x.jpg', '//example.com/a.jpg'];
+      for (const u of bads) {
+        const b = await save({ coverUrl: u });
+        ok(b.status === 200 && b.body?.venue?.coverUrl === GOOD, `reddedilen kapak adresi (önceki değer korunur): ${u.slice(0, 40)}`, b.body?.venue?.coverUrl);
+      }
+      const nonStr = await save({ coverUrl: ['https://example.com/x.jpg'], coverTitle: { a: 1 } });
+      ok(nonStr.status === 200 && nonStr.body?.venue?.coverUrl === GOOD && nonStr.body?.venue?.coverTitle === 'Turnuva & Gece', 'dizi/nesne kapak alanları yok sayılır', nonStr.body?.venue);
+      const long = await save({ coverTitle: 'ABCDEFGHIJ'.repeat(10) });
+      ok(long.body?.venue?.coverTitle?.length === 60, 'başlık 60 karaktere kısaltılır', long.body?.venue?.coverTitle?.length);
+      const lt = await save({ coverTitle: '<script>alert(1)</script>Kapak' });
+      ok(!/[<>]/.test(lt.body?.venue?.coverTitle ?? '<'), 'başlıktaki < > temizlenir', lt.body?.venue?.coverTitle);
+      const badTheme = await save({ themeId: 'kotu-tema' });
+      ok(badTheme.body?.venue?.themeId === 'okyanus', 'bilinmeyen theme_id reddedilir (önceki değer korunur)', badTheme.body?.venue?.themeId);
+      const badTheme2 = await save({ themeId: "x'; DROP TABLE venues;--" });
+      ok(badTheme2.body?.venue?.themeId === 'okyanus', 'enjeksiyon denemesi theme_id reddedilir', badTheme2.body?.venue?.themeId);
+      const badColor = await save({ color: 'red;background:url(x)' });
+      ok(badColor.body?.venue?.color === '#0369a1', 'geçersiz HEX renk reddedilir', badColor.body?.venue?.color);
+
+      await save({ coverTitle: 'Turnuva & Gece' });
+      const page = await fetch(`${BASE}/demo/masa-1/oyunlar`, { cache: 'no-store' });
+      const html = await page.text();
+      ok(page.status === 200 && html.includes(GOOD), 'oyuncu oyunlar sayfasında kapak adresi görünür', page.status);
+      ok(html.includes('Turnuva &amp; Gece'), 'başlık kaçışlı görünür (&amp;)');
+      ok(!html.includes('<script>alert(1)'), 'sayfada ham <script> enjeksiyonu yok');
+      ok(/referrerpolicy="no-referrer"/i.test(html) && html.includes('loading="lazy"'), 'kapak görseli no-referrer + lazy ile yazılır');
+      ok(/--brand:\s*#0369a1/.test(html), 'oyuncu sayfası yeni ana rengi kullanır (--brand)');
+      ok(!html.includes('elif@hadikafe.com') && !/[a-f0-9]{16,}:[a-f0-9]{64}/.test(html), 'oyunlar sayfasında e-posta/parola karması yok');
+      const room = await call('GET', '/api/room?cafe=demo&masa=masa-1&game=satranc');
+      ok(!JSON.stringify(room.body ?? {}).includes('elif@hadikafe.com'), 'oyuncu oda yanıtında e-posta yok');
+
+      r = await save({ coverUrl: '', coverTitle: '', themeId: '' });
+      ok(r.body?.venue?.coverUrl === null && r.body?.venue?.coverTitle === null && r.body?.venue?.themeId === null, 'boş değerler kapak/başlık/tema alanlarını temizler', r.body?.venue);
+      const html2 = await (await fetch(`${BASE}/demo/masa-1/oyunlar`, { cache: 'no-store' })).text();
+      ok(!html2.includes('felt-cover'), 'kapak yokken band çizilmez (mevcut görünüm korunur)');
+    } finally {
+      await save({ ...orig });
+      const after = (await save({})).body?.venue;
+      ok(after?.color === orig.color && (after?.coverUrl ?? '') === orig.coverUrl && (after?.coverTitle ?? '') === orig.coverTitle && (after?.themeId ?? '') === orig.themeId, 'demo mekânın ayarları eski haline döndürüldü', after);
+    }
+  }
+
   console.log(`\n${pass} PASS, ${fail} FAIL`);
   process.exit(fail ? 1 : 0);
 }

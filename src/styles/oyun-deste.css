@@ -24,6 +24,14 @@
 .felt-name { display: grid; font-weight: 800; line-height: 1.15; min-width: 0; }
 .felt-name small { font-weight: 500; font-size: .8rem; opacity: .8; }
 .felt-seat { margin-left: auto; flex: none; padding: 5px 12px; border-radius: 999px; background: var(--accent); color: var(--on-accent, #0b1033); font-weight: 800; border: 2.5px solid var(--ink); box-shadow: 0 3px 0 var(--ink); transform: rotate(3deg); }
+/* Mekân kapağı: neobrütalist band (kalın ink kenarlık, sert gölge). Görsel sabit 16:7 oranda, yüklenmezken yer kaymaz;
+   görsel yoksa/yüklenmezse mekân rengi + ikinci renk çizgisiyle kalır. Yazı --on-brand ile okunur. */
+.felt-cover { max-width: 528px; width: calc(100% - 32px); margin: 16px auto 0; border: 2.5px solid var(--ink); border-radius: 14px; overflow: hidden; background: var(--brand); color: var(--on-brand, #fff); box-shadow: 0 5px 0 var(--ink); }
+.felt-cover-img { aspect-ratio: 16 / 7; background: var(--brand); border-bottom: 2.5px solid var(--ink); }
+.felt-cover-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.felt-cover figcaption { padding: 9px 14px 10px; font-weight: 800; font-size: 1.05rem; line-height: 1.2; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.felt-cover.no-img { border-bottom-width: 2.5px; box-shadow: 0 5px 0 var(--ink), inset 0 -6px 0 var(--accent); }
+.felt-cover.no-img figcaption { padding: 12px 14px 16px; }
 .felt-intro { max-width: 560px; width: 100%; margin: 0 auto; padding: 18px 16px 0; }
 .felt-intro h1 { margin: 0; font-size: clamp(1.8rem, 8.5vw, 2.4rem); line-height: 1; letter-spacing: -.03em; font-weight: 800; }
 .felt-intro p { margin: 8px 0 0; opacity: .85; font-size: .95rem; max-width: 34ch; }

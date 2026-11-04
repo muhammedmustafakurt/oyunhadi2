@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import GameDeck, { type DeckGame } from '@/components/oyun/GameDeck';
+import CoverBand from '@/components/oyun/CoverBand';
 import VenueBadge from '@/components/oyun/VenueBadge';
 import ActiveReward from '@/components/oyun/ActiveReward';
 import ChatWidget from '@/components/sohbet/ChatWidget';
@@ -46,6 +47,8 @@ export default async function TableGames({ params }: PageProps<'/[mekan]/[masa]/
         <span className="felt-name">{v.name}<small>{v.city}</small></span>
         <span className="felt-seat">Masa {no}</span>
       </header>
+
+      <CoverBand url={v.coverUrl} title={v.coverTitle} />
 
       <div className="felt-intro">
         <h1>Hadi, bir oyun seçin!</h1>

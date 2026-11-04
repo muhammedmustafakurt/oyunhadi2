@@ -5,10 +5,11 @@ import { redirect } from 'next/navigation';
 import { scrypt, timingSafeEqual, randomBytes } from 'node:crypto';
 import { promisify } from 'node:util';
 import { get, all, run } from './db';
+import { THEME_IDS } from './themes';
 import { passwordVersion, signToken, parseToken, versionMatches } from './session-token';
 // Venue tipi veren dosya TS olduğu için JS dosyasında yalnızca JSDoc ile Referanslı tip kullanılır:
 
-const COLS = 'id, slug, name, city, initials, logo_url, color, accent, ntables, lat, lng, games, welcome, ann_title, ann_body, email';
+const COLS = 'id, slug, name, city, initials, logo_url, color, accent, ntables, lat, lng, games, welcome, ann_title, ann_body, email, cover_url, cover_title, theme_id';
 export const VENUE_GAMES = 'monopoly satranc spyfall ajanlar vampir tabu kimim cizim bil azul cluedo scrabble risk ticket carcassonne catan kadro futbolcu pisti okey g2048 adam'.split(' ');
 const SCRYPT = { N: 16384, r: 8, p: 1 }; // db.js hashPassword ile aynı olmalı
 const scryptAsync = promisify(scrypt); // olay döngüsünü bloke etmez
@@ -27,6 +28,7 @@ export function shapeVenue(r) {
     lat: deg(r.lat), lng: deg(r.lng),
     games: String(r.games || '').split(',').filter((x) => VENUE_GAMES.includes(x)),
     welcome: r.welcome, email: r.email,
+    coverUrl: r.cover_url || null, coverTitle: r.cover_title || null, themeId: THEME_IDS.includes(r.theme_id) ? r.theme_id : null,
     announcement: r.ann_title && r.ann_body ? { title: r.ann_title, body: r.ann_body } : null,
   };
   if (v.lat == null) v.lng = null;
@@ -67,6 +69,18 @@ export async function updateVenue(id, patch = {}) {
     if ((k === 'color' || k === 'accent') && !HEX.test(val)) continue;
     if (k === 'logoUrl' && val && !SAFE_URL.test(val)) continue;
     parts.push([col, val]);
+  }
+  // Mekâna özel görünüm: kapak adresi yalnız https (logoUrl ile aynı desen), başlık temizlenir (≤ 60), tema kimliği beyaz listeden.
+  // Boş değer alanı temizler; geçersiz değer sessizce yazılmaz (mevcut değer korunur).
+  if ('coverUrl' in patch && typeof patch.coverUrl === 'string') {
+    const val = clean(patch.coverUrl, 200);
+    if (!val) parts.push(['cover_url', null]);
+    else if (val === patch.coverUrl.trim() && SAFE_URL.test(val)) parts.push(['cover_url', val]);
+  }
+  if ('coverTitle' in patch && typeof patch.coverTitle === 'string') parts.push(['cover_title', clean(patch.coverTitle, 60) || null]);
+  if ('themeId' in patch) {
+    if (patch.themeId === '' || patch.themeId === null) parts.push(['theme_id', null]);
+    else if (typeof patch.themeId === 'string' && THEME_IDS.includes(patch.themeId)) parts.push(['theme_id', patch.themeId]);
   }
   if ('tables' in patch) {
     const n = Math.max(1, Math.min(500, Math.floor(Number(patch.tables) || 1)));

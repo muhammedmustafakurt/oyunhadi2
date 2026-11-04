@@ -257,6 +257,10 @@ const SCHEMA = [
     invoice_url TEXT
   )`,
   `CREATE INDEX IF NOT EXISTS payments_biz ON payments (biz_id, paid_at)`,
+  // Mekâna özel görünüm (geriye dönük uyumlu, boş olabilir): kapak görseli (https), kapak başlığı, seçilen hazır tema kimliği.
+  `ALTER TABLE venues ADD COLUMN IF NOT EXISTS cover_url TEXT`,
+  `ALTER TABLE venues ADD COLUMN IF NOT EXISTS cover_title TEXT`,
+  `ALTER TABLE venues ADD COLUMN IF NOT EXISTS theme_id TEXT`,
   // Bir kereliğe mahsus veri düzeltmelerinin kaydı (aynı düzeltme ikinci kez çalışmaz).
   `CREATE TABLE IF NOT EXISTS migrations (name TEXT PRIMARY KEY, at BIGINT NOT NULL)`,
 ];
