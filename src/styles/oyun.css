@@ -1603,6 +1603,10 @@ polygon.ct-hit:hover { fill: rgba(255, 255, 255, .28); }
 .sf-loc { padding: 9px 3px 7px; gap: 5px; font-size: .74rem; line-height: 1.1; border-radius: 14px; }
 .sf-loc i { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: color-mix(in srgb, var(--c, var(--blue)) 16%, var(--white)); color: var(--c, var(--blue)); }
 .sf-loc i svg { width: 26px; height: 26px; }
+/* Koyu temada koyu kategori renkleri siliniyordu: ikonu aç, zemini biraz belirginleştir */
+@media (prefers-color-scheme: dark) {
+  .sf-loc i { background: color-mix(in srgb, var(--c, var(--blue)) 26%, var(--white)); color: color-mix(in srgb, var(--c, var(--blue)) 55%, #fff); }
+}
 .sf-loc span { overflow-wrap: anywhere; text-align: center; }
 .sf-loc.pick { border-color: var(--c, var(--blue)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c, var(--blue)) 30%, transparent); background: color-mix(in srgb, var(--c, var(--blue)) 8%, var(--white)); }
 .sf-pin { font-size: 1rem; }
