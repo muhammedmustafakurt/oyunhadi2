@@ -12,7 +12,7 @@ export const PRICE = {
 };
 
 export const whatsappLink = (text = 'Merhaba, oyunhadi hakkında bilgi almak istiyorum.') => {
-  const n = (process.env.NEXT_PUBLIC_WHATSAPP || '905000000000').replace(/\D/g, '');
+  const n = (process.env.NEXT_PUBLIC_WHATSAPP || '905466916307').replace(/\D/g, '');
   return `https://wa.me/${n}?text=${encodeURIComponent(text)}`;
 };
 

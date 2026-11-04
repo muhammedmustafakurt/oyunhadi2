@@ -11,7 +11,7 @@ import { whatsappLink } from '@/lib/site';
 // Derleme zamanında belirlenir (NEXT_PUBLIC değil, NODE_ENV): üretimde demo bilgisi gösterilmez.
 const DEV = process.env.NODE_ENV !== 'production';
 // Destek bağlantısı yalnızca gerçek bir WhatsApp numarası tanımlıysa gösterilir (site.ts'teki yedek numara sahtedir, kullanılmaz).
-const HELP_HREF = process.env.NEXT_PUBLIC_WHATSAPP ? whatsappLink('Merhaba, oyunhadi panel şifremi unuttum.') : '';
+const HELP_HREF = whatsappLink('Merhaba, oyunhadi panel şifremi unuttum.');
 
 // Panel girişi: /api/panel/login venues tablosundaki mekân şifresiyle karşılaştırır.
 export default function LoginForm() {
