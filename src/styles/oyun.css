@@ -1874,3 +1874,17 @@ button.kd-slot { cursor: pointer; touch-action: manipulation; }
 .rwd b { color: var(--ink); }
 .rwd.win { justify-items: center; text-align: center; border: 2px solid var(--mint); background: color-mix(in srgb, var(--mint) 8%, var(--white)); color: var(--ink); padding: 16px 14px; }
 .rwd-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 2rem; font-weight: 800; letter-spacing: .12em; }
+
+/* Koyu tema düzeltmeleri: sabit açık zemin / sabit koyu yazı çakışmaları */
+@media (prefers-color-scheme: dark) {
+  /* Beyaz zeminde açık (--ink) yazı kalıyordu */
+  .km-head p b, .km-stage .km-skip { color: #0b1033; }
+  /* Koyu zeminde sabit koyu yazı kalıyordu */
+  .pc-top .tiles b { color: var(--ink); border-bottom-color: color-mix(in srgb, var(--pc) 70%, #000); }
+  .tb-hist .chips .ok { color: #8be0bc; }
+  .tb-hist .chips .tabu { color: #ff9b94; }
+  .km-card .stamp { border-color: #4fd6a0; color: #4fd6a0; }
+  .fb-stats .y b { color: #5fd88c; }
+  /* --ink açık olunca beyaz yazı görünmez oluyordu */
+  .aj-card.key.a, .aj-card.rev.a { color: var(--paper); }
+}
