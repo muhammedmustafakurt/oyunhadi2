@@ -83,7 +83,7 @@ export default function RewardsManager({ rules, games, allNames }: { rules: Rule
                   <TableCell className="font-medium">{r.gameName}</TableCell>
                   <TableCell className="tabular-nums">{r.target.toLocaleString('tr-TR')} puan ve üstü</TableCell>
                   <TableCell>{r.prize}{r.costTry != null && <span className="text-muted-foreground"> · ₺{r.costTry}</span>}</TableCell>
-                  <TableCell className="text-muted-foreground hidden md:table-cell">{r.dailyLimit == null ? 'Sınırsız' : `Günde ${r.dailyLimit}`}</TableCell>
+                  <TableCell className="text-muted-foreground hidden md:table-cell">{r.dailyLimit == null ? 'Varsayılan (200)' : `Günde ${r.dailyLimit}`}</TableCell>
                   <TableCell className="text-right">
                     <Switch checked={r.active} disabled={busy} aria-label={`${r.gameName} kuralını aç/kapat`}
                       onCheckedChange={(v) => act({ op: 'active', id: r.id, active: v }, v ? 'Kural açıldı' : 'Kural kapatıldı')} />
@@ -99,11 +99,11 @@ export default function RewardsManager({ rules, games, allNames }: { rules: Rule
         )}
 
         {editing !== null && (
-          <form onSubmit={save} className="mx-6 grid gap-4 rounded-lg border p-4 sm:mx-0">
+          <form onSubmit={save} className="mx-6 grid gap-4 rounded-lg border-2 p-4 sm:mx-0">
             <h3 className="font-semibold">{editing === 'new' ? 'Yeni kural' : 'Kuralı düzenle'}</h3>
             <div className="grid gap-2">
               <Label htmlFor="rw-g">Oyun</Label>
-              <select id="rw-g" value={game} onChange={(e) => setGame(e.target.value)} disabled={editing !== 'new'} className="border-input bg-background h-9 rounded-md border px-3 text-sm">
+              <select id="rw-g" value={game} onChange={(e) => setGame(e.target.value)} disabled={editing !== 'new'} className="border-input bg-background h-9 rounded-md border-2 px-3 text-sm">
                 {editing === 'new' ? games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>) : <option value={game}>{rules.find((x) => x.id === editing)?.gameName}</option>}
               </select>
               <p className="text-muted-foreground text-xs">Yalnızca mekânınızda açık ve puanı sunucuda güvenilir tutulan oyunlar listelenir. Diğer oyunlar ({allNames}) puan/kazanan yapısı nedeniyle ödüle bağlanamaz.</p>
@@ -111,7 +111,7 @@ export default function RewardsManager({ rules, games, allNames }: { rules: Rule
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2"><Label htmlFor="rw-t">Hedef puan</Label><Input id="rw-t" type="number" inputMode="numeric" min={1} step={1} required value={target} onChange={(e) => setTarget(e.target.value)} placeholder="6000" /></div>
               <div className="grid gap-2"><Label htmlFor="rw-p">Ödül (ikram)</Label><Input id="rw-p" required maxLength={60} value={prize} onChange={(e) => setPrize(e.target.value)} placeholder="1 tatlı ikram" /></div>
-              <div className="grid gap-2"><Label htmlFor="rw-l">Günlük sınır (boş = sınırsız)</Label><Input id="rw-l" type="number" inputMode="numeric" min={1} step={1} value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="10" /></div>
+              <div className="grid gap-2"><Label htmlFor="rw-l">Günlük sınır (boş = varsayılan 200)</Label><Input id="rw-l" type="number" inputMode="numeric" min={1} step={1} value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="10" /></div>
               <div className="grid gap-2"><Label htmlFor="rw-c">İkram maliyeti ₺ (isteğe bağlı)</Label><Input id="rw-c" type="number" inputMode="numeric" min={0} step={1} value={cost} onChange={(e) => setCost(e.target.value)} placeholder="45" /></div>
             </div>
             <div className="flex gap-2">

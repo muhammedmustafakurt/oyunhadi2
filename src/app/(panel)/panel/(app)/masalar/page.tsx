@@ -53,7 +53,7 @@ export default async function TablesPage() {
                   <TableRow key={t.no}>
                     <TableCell className="font-medium">{t.label}<span className="text-muted-foreground block text-xs">masa-{t.no}</span></TableCell>
                     <TableCell>
-                      {t.status === 'oynaniyor' ? <Badge className="bg-emerald-600 text-white">Oynanıyor</Badge> : <Badge variant="outline">Boş</Badge>}
+                      {t.status === 'oynaniyor' ? <Badge className="bg-chart-5 text-primary-foreground">Oynanıyor</Badge> : <Badge variant="outline">Boş</Badge>}
                     </TableCell>
                     <TableCell className="text-muted-foreground hidden md:table-cell">
                       {t.status === 'oynaniyor' ? `${gameName(t.game)} · ${t.players} kişi` : '—'}

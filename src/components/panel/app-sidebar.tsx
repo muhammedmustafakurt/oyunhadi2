@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
+import { onColor } from '@/components/oyun/on-color';
 import { IconChevronsDown, IconExternalLink, IconLogout, IconUser, IconCreditCard } from '@tabler/icons-react';
 import {
   Sidebar,
@@ -46,7 +47,7 @@ export default function AppSidebar({ venue: v }: { venue: Venue }) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/panel" />}>
-              <span className="flex aspect-square size-8 items-center justify-center rounded-lg text-xs font-bold text-white" style={{ background: v.color }}>
+              <span className="flex aspect-square size-8 items-center justify-center rounded-lg text-xs font-bold" style={{ background: v.color, color: onColor(v.color) }}>
                 {v.initials}
               </span>
               <span className="grid flex-1 text-left text-sm leading-tight">

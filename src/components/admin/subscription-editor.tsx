@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 export type SubForm = { plan: string; status: string; start: string; end: string; totalTry: string; vatNote: string; method: string; renewal: string };
 export type PayRow = { id: number; date: string; description: string; amountTry: number; status: string };
 
-const SEL = 'border-input bg-background h-9 rounded-md border px-3 text-sm';
+const SEL = 'border-input bg-background h-9 rounded-md border-2 px-3 text-sm';
 const PAY = { odendi: 'Ödendi', bekliyor: 'Bekliyor', iade: 'İade' } as const;
 
 async function call(method: string, body: unknown, id: number) {
@@ -98,7 +98,7 @@ export default function SubscriptionEditor({ venueId, initial, payments, today }
               </TableBody>
             </Table>
           )}
-          <form className="grid gap-3 rounded-lg border p-3 sm:grid-cols-2" onSubmit={addPay}>
+          <form className="grid gap-3 rounded-lg border-2 p-3 sm:grid-cols-2" onSubmit={addPay}>
             <div className="grid gap-2"><Label htmlFor="py-d">Tarih</Label><Input id="py-d" name="date" type="date" defaultValue={today} required /></div>
             <div className="grid gap-2"><Label htmlFor="py-a">Tutar (₺)</Label><Input id="py-a" name="amountTry" type="number" min={0} step={1} required /></div>
             <div className="grid gap-2"><Label htmlFor="py-x">Açıklama</Label><Input id="py-x" name="description" maxLength={100} placeholder="1. taksit" /></div>

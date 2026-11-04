@@ -52,12 +52,12 @@ export default function EventLive({ ev, tables }: { ev: EventRow; tables: number
   if (ev.kind === 'tombala') {
     const c = view.claims as Record<string, { name: string; masa: string } | null>;
     return (
-      <div className="space-y-3 rounded-lg border p-3 text-sm">
+      <div className="space-y-3 rounded-lg border-2 p-3 text-sm">
         <p><b className="text-3xl">{view.last ?? '–'}</b> <span className="text-muted-foreground">son sayı · {view.drawn.length}/90 · {view.cards} kart</span></p>
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" disabled={busy || !live || view.over} onClick={() => act({ op: 'draw' })}>Sayı çek</Button>
           <label className="flex items-center gap-1">Otomatik
-            <select disabled={busy || !live} value={view.auto} onChange={(e) => act({ op: 'auto', sec: Number(e.target.value) }, 'Aralık güncellendi')} className="border-input bg-background h-8 rounded-md border px-2">
+            <select disabled={busy || !live} value={view.auto} onChange={(e) => act({ op: 'auto', sec: Number(e.target.value) }, 'Aralık güncellendi')} className="border-input bg-background h-8 rounded-md border-2 px-2">
               <option value={0}>Kapalı</option>{[5, 8, 10, 15, 20, 30].map((x) => <option key={x} value={x}>{x} sn</option>)}
             </select>
           </label>
@@ -77,12 +77,12 @@ export default function EventLive({ ev, tables }: { ev: EventRow; tables: number
   if (ev.kind === 'skor') {
     const rank = view.ranking as { masa: number; pts: number }[];
     return (
-      <div className="space-y-3 rounded-lg border p-3 text-sm">
+      <div className="space-y-3 rounded-lg border-2 p-3 text-sm">
         <p className="font-medium">{view.game}</p>
         {live && (
           <form className="flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); act({ op: 'score', masa, delta, note }, 'Puan işlendi'); setNote(''); }}>
             <label className="grid gap-1">Masa
-              <select value={masa} onChange={(e) => setMasa(Number(e.target.value))} className="border-input bg-background h-8 rounded-md border px-2">
+              <select value={masa} onChange={(e) => setMasa(Number(e.target.value))} className="border-input bg-background h-8 rounded-md border-2 px-2">
                 {Array.from({ length: tables }, (_, i) => <option key={i} value={i + 1}>Masa {i + 1}</option>)}
               </select>
             </label>
@@ -109,7 +109,7 @@ export default function EventLive({ ev, tables }: { ev: EventRow; tables: number
 
   const winners = view.winners as { name: string; masa: string }[];
   return (
-    <div className="space-y-3 rounded-lg border p-3 text-sm">
+    <div className="space-y-3 rounded-lg border-2 p-3 text-sm">
       <p><b className="text-2xl">{view.entries.length}</b> katılımcı</p>
       <div className="flex flex-wrap items-end gap-2">
         <label className="grid gap-1">Kazanan sayısı

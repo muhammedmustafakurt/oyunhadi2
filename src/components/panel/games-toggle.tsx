@@ -37,8 +37,8 @@ export default function GamesToggle({ games, initial }: { games: G[]; initial: s
       {games.map((g) => {
         const active = on.has(g.id);
         return (
-          <li key={g.id} className={`bg-card flex items-center gap-4 rounded-xl border p-4 transition-opacity ${active ? '' : 'opacity-60'}`}>
-            <span className="grid size-12 shrink-0 place-items-center rounded-xl text-lg font-extrabold" style={{ background: g.color, color: g.fg }}>{g.name[0]}</span>
+          <li key={g.id} className={`bg-card flex items-center gap-4 rounded-lg border-2 shadow-md p-4 transition-opacity ${active ? '' : 'opacity-60'}`}>
+            <span className="grid size-12 shrink-0 place-items-center rounded-md border-2 border-foreground text-lg font-extrabold" style={{ background: g.color, color: g.fg }}>{g.name[0]}</span>
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-2 font-semibold">{g.name} {g.plays > 40 && <Badge variant="secondary">Popüler</Badge>}</p>
               <p className="text-muted-foreground truncate text-sm">{g.players.replace('-', '–')} kişi · {g.minutes.replace('-', '–')} dk · bu hafta {g.plays}</p>

@@ -14,10 +14,10 @@ export const dynamic = 'force-dynamic';
 const fmtDate = (ms: number) => new Date(ms).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul' });
 const money = (n: number) => `₺${n.toLocaleString('tr-TR')}`;
 const STATUS = {
-  aktif: { label: 'Aktif', cls: 'bg-emerald-600 text-white' },
-  deneme: { label: 'Deneme', cls: 'bg-sky-600 text-white' },
-  bitti: { label: 'Bitti', cls: 'bg-amber-600 text-white' },
-  iptal: { label: 'İptal', cls: 'bg-destructive text-white' },
+  aktif: { label: 'Aktif', cls: 'bg-chart-5 text-primary-foreground' },
+  deneme: { label: 'Deneme', cls: 'bg-chart-4 text-primary-foreground' },
+  bitti: { label: 'Bitti', cls: 'bg-secondary text-primary-foreground' },
+  iptal: { label: 'İptal', cls: 'bg-destructive text-destructive-foreground' },
 } as const;
 const PAY = { odendi: 'Ödendi', bekliyor: 'Bekliyor', iade: 'İade' } as const;
 
@@ -57,7 +57,7 @@ export default async function BillingPage() {
                 <span className="font-medium">{s.daysLeft > 0 ? `${s.daysLeft} gün kaldı` : 'Süre doldu'}</span>
                 <span className="text-muted-foreground">%{s.usedPct} kullanıldı</span>
               </div>
-              <div className="bg-muted h-3 overflow-hidden rounded-full"><div className="bg-primary h-full rounded-full" style={{ width: `${s.usedPct}%` }} /></div>
+              <div className="bg-muted h-4 overflow-hidden rounded-md border-2 border-foreground"><div className="bg-primary h-full" style={{ width: `${s.usedPct}%` }} /></div>
             </div>
             <dl className="grid gap-4 sm:grid-cols-3">
               <div><dt className="text-muted-foreground text-sm">Tutar</dt><dd className="font-semibold">{s.totalTry == null ? '—' : `${money(s.totalTry)}${s.vatNote ? ` ${s.vatNote}` : ''}`}</dd></div>
@@ -74,7 +74,7 @@ export default async function BillingPage() {
           <CardContent>
             <ul className="space-y-2 text-sm">
               {['Tüm oyunlar ve yeni eklenenler', `${v.tables} masa karekodu`, 'Panel, istatistik ve duyurular', 'Ödül kodları', 'Logo ve renkler', 'Konum kilidi', 'WhatsApp desteği'].map((t) => (
-                <li key={t} className="flex items-center gap-2"><IconCheck className="size-4 text-emerald-600" /> {t}</li>
+                <li key={t} className="flex items-center gap-2"><IconCheck className="size-4 text-chart-5" /> {t}</li>
               ))}
             </ul>
           </CardContent>

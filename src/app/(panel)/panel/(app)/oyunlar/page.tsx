@@ -20,17 +20,19 @@ export default async function GamesPage() {
   return (
     <PageContainer title="Oyunlar" description="Mekânınıza uymayan oyunları kapatın; masalardaki liste anında güncellenir.">
       <GamesToggle games={games} initial={v.games} />
-      <Card>
-        <CardHeader>
-          <CardTitle>Yakında eklenecekler</CardTitle>
-          <CardDescription>Yeni oyunlar aboneliğinize ek ücret olmadan eklenir.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="flex flex-wrap gap-2">
-            {soon.map((g) => <li key={g.id} className="text-muted-foreground rounded-full border border-dashed px-3 py-1 text-sm">{g.name}</li>)}
-          </ul>
-        </CardContent>
-      </Card>
+      {soon.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Yakında eklenecekler</CardTitle>
+            <CardDescription>Yeni oyunlar aboneliğinize ek ücret olmadan eklenir.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-wrap gap-2">
+              {soon.map((g) => <li key={g.id} className="text-muted-foreground rounded-md border-2 border-dashed px-3 py-1 text-sm">{g.name}</li>)}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
     </PageContainer>
   );
 }

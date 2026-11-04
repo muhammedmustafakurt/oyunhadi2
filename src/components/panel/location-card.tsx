@@ -43,7 +43,7 @@ export default function LocationCard({ lat, lng }: { lat: number | null; lng: nu
 
   return (
     <div className="grid gap-4">
-      <label className="flex items-center justify-between gap-4 rounded-lg border p-4">
+      <label className="flex items-center justify-between gap-4 rounded-lg border-2 p-4">
         <span>
           <span className="block font-medium">Konum kilidi</span>
           <span className="text-muted-foreground text-sm">Açıkken masaya yalnızca mekânınızdaki telefonlar katılabilir; uzaklaşan oyuncu masadan düşer.</span>

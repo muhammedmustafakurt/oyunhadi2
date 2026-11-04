@@ -79,7 +79,7 @@ export default function VenueEditor({ venue, games }: { venue: V; games: GameOpt
         </CardContent>
       </Card>
 
-      <Card className="border-destructive/50">
+      <Card className="border-destructive">
         <CardHeader>
           <CardTitle className="text-destructive">Mekânı sil</CardTitle>
           <CardDescription>Geri alınamaz. Mekân, masa oyun odaları, oyun kayıtları ve sohbet verisi kalıcı olarak silinir.</CardDescription>

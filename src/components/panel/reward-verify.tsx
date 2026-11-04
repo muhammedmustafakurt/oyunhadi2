@@ -62,12 +62,12 @@ export default function RewardVerify() {
       {res && (
         <div
           role="status"
-          className={`mt-6 rounded-2xl border-2 p-6 text-center ${res.kind === 'ok' || closed ? 'border-emerald-500 bg-emerald-500/10' : res.kind === 'none' ? 'border-destructive bg-destructive/10' : 'border-amber-500 bg-amber-500/10'}`}
+          className={`mt-6 rounded-lg border-2 shadow-md p-6 text-center ${res.kind === 'ok' || closed ? 'border-foreground bg-chart-5' : res.kind === 'none' ? 'border-foreground bg-destructive text-destructive-foreground' : 'border-foreground bg-secondary'}`}
         >
-          {res.kind === 'ok' && <IconCircleCheck className="mx-auto size-12 text-emerald-600" />}
-          {res.kind === 'none' && <IconCircleX className="text-destructive mx-auto size-12" />}
-          {closed && <IconCircleCheck className="mx-auto size-12 text-emerald-600" />}
-          {!closed && (res.kind === 'used' || res.kind === 'expired') && <IconClock className="mx-auto size-12 text-amber-600" />}
+          {res.kind === 'ok' && <IconCircleCheck className="mx-auto size-12" />}
+          {res.kind === 'none' && <IconCircleX className="mx-auto size-12" />}
+          {closed && <IconCircleCheck className="mx-auto size-12" />}
+          {!closed && (res.kind === 'used' || res.kind === 'expired') && <IconClock className="mx-auto size-12 text-foreground" />}
           <p className="mt-3 text-xl font-bold">
             {closed ? 'İkram verildi, kod kapatıldı' : res.kind === 'ok' ? 'Kod geçerli' : res.kind === 'used' ? 'Bu kod daha önce kullanıldı' : res.kind === 'expired' ? 'Kodun süresi dolmuş' : 'Böyle bir kod yok'}
           </p>

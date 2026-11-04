@@ -10,11 +10,11 @@ import { getSubscription } from '@/lib/subscriptions';
 import { gameColor, gameName } from '@/lib/game-meta';
 import { weekDocs, gameDocs, tableRows } from '@/lib/stats';
 import { requireVenue } from '@/lib/venues';
+import { weekSummary, pct } from '@/components/panel/week-summary';
 
 export const metadata = { title: 'Genel bakış' };
 
 const STATUS = { bekliyor: 'Bekliyor', kullanildi: 'Kullanıldı', 'suresi-doldu': 'Süresi doldu' } as const;
-const pct = (a: number, b: number) => (b === 0 ? undefined : Math.round(((a - b) / b) * 100));
 
 export default async function Overview() {
   const v = await requireVenue();
@@ -26,11 +26,7 @@ export default async function Overview() {
     rewardStats(v.id),
     getSubscription(v.id),
   ]);
-  const week = week14.slice(7), prev = week14.slice(0, 7);
-  const games = week.reduce((n, d) => n + d.oyun, 0);
-  const prevGames = prev.reduce((n, d) => n + d.oyun, 0);
-  const players = week.reduce((n, d) => n + d.oyuncu, 0);
-  const prevPlayers = prev.reduce((n, d) => n + d.oyuncu, 0);
+  const { week, games, prevGames, players, prevPlayers } = weekSummary(week14);
   const live = rows.filter((t) => t.status === 'oynaniyor');
   return (
     <PageContainer
@@ -78,8 +74,8 @@ export default async function Overview() {
           <CardContent>
             <ul className="grid gap-2 sm:grid-cols-2">
               {rows.map((t) => (
-                <li key={t.no} className="flex items-center gap-3 rounded-lg border p-3">
-                  <span className={`size-2.5 rounded-full ${t.status === 'oynaniyor' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+                <li key={t.no} className="flex items-center gap-3 rounded-lg border-2 p-3">
+                  <span className={`size-2.5 rounded-full ${t.status === 'oynaniyor' ? 'bg-chart-5 border-2 border-foreground' : 'bg-secondary border-2 border-foreground'}`} />
                   <span className="font-medium">{t.label}</span>
                   <span className="text-muted-foreground ml-auto truncate text-sm">
                     {t.status === 'oynaniyor' ? `${gameName(t.game)} · ${t.players} kişi` : 'Boş'}
@@ -112,12 +108,12 @@ export default async function Overview() {
             <CardHeader>
               <CardTitle>Abonelik</CardTitle>
               {sub ? <CardDescription>{sub.plan} · {new Date(sub.endsAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul' })} tarihine kadar</CardDescription> : <CardDescription>Henüz bir aboneliğiniz görünmüyor.</CardDescription>}
-              {sub && <CardAction><Badge className={sub.status === 'aktif' ? 'bg-emerald-600 text-white' : sub.status === 'deneme' ? 'bg-sky-600 text-white' : sub.status === 'bitti' ? 'bg-amber-600 text-white' : 'bg-destructive text-white'}>{({ aktif: 'Aktif', deneme: 'Deneme', bitti: 'Bitti', iptal: 'İptal' } as Record<string, string>)[sub.status]}</Badge></CardAction>}
+              {sub && <CardAction><Badge className={sub.status === 'aktif' ? 'bg-chart-5 text-primary-foreground' : sub.status === 'deneme' ? 'bg-chart-4 text-primary-foreground' : sub.status === 'bitti' ? 'bg-secondary text-primary-foreground' : 'bg-destructive text-destructive-foreground'}>{({ aktif: 'Aktif', deneme: 'Deneme', bitti: 'Bitti', iptal: 'İptal' } as Record<string, string>)[sub.status]}</Badge></CardAction>}
             </CardHeader>
             {sub && (
               <CardContent>
-                <div className="bg-muted h-2 overflow-hidden rounded-full">
-                  <div className="bg-primary h-full rounded-full" style={{ width: `${sub.usedPct}%` }} />
+                <div className="bg-card h-3 overflow-hidden rounded-md border-2 border-foreground">
+                  <div className="bg-primary h-full" style={{ width: `${sub.usedPct}%` }} />
                 </div>
                 <p className="text-muted-foreground mt-2 text-sm">{sub.daysLeft > 0 ? `${sub.daysLeft} gün kaldı` : 'Süre doldu'}</p>
               </CardContent>

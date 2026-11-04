@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { IconUpload } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Venue } from '@/lib/venue-types';
+import { onColor } from '@/components/oyun/on-color';
 
 const PRESETS = [
   ['#ff4f2e', '#ffc83d'], ['#7c3aed', '#22d3ee'], ['#0f766e', '#fde047'], ['#1d4ed8', '#f472b6'], ['#b91c1c', '#fbbf24'], ['#166534', '#f97316'],
@@ -49,9 +49,8 @@ export default function BrandEditor({ venue }: { venue: Pick<Venue, 'name' | 'in
           <div className="grid gap-2">
             <Label>Logo</Label>
             <div className="flex items-center gap-4">
-              <span className="grid size-16 place-items-center rounded-2xl border-2 border-zinc-900 bg-white text-xl font-extrabold" style={{ color }}>{initials}</span>
-              <Button variant="outline" type="button" onClick={() => toast('Logo yükleme yakında', { description: 'Kare, en az 256×256 px PNG ya da SVG.' })}><IconUpload /> Logo yükle</Button>
-              <span className="text-muted-foreground text-xs">Kare PNG/SVG, en az 256 px</span>
+              <span className="grid size-16 place-items-center rounded-lg border-2 border-foreground bg-white text-xl font-extrabold" style={{ color }}>{initials}</span>
+              <span className="text-muted-foreground text-xs">Logo, mekân adınızın baş harflerinden üretilir.</span>
             </div>
           </div>
           <div className="grid gap-2">
@@ -65,18 +64,18 @@ export default function BrandEditor({ venue }: { venue: Pick<Venue, 'name' | 'in
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="c1">Ana renk</Label>
-              <div className="flex gap-2"><input id="c1" type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded-md border" /><Input value={color} onChange={(e) => setColor(e.target.value)} className="font-mono" /></div>
+              <div className="flex gap-2"><input id="c1" type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded-md border-2 border-foreground" /><Input value={color} onChange={(e) => setColor(e.target.value)} className="font-mono" /></div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="c2">İkinci renk</Label>
-              <div className="flex gap-2"><input id="c2" type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="h-9 w-12 cursor-pointer rounded-md border" /><Input value={accent} onChange={(e) => setAccent(e.target.value)} className="font-mono" /></div>
+              <div className="flex gap-2"><input id="c2" type="color" value={accent} onChange={(e) => setAccent(e.target.value)} className="h-9 w-12 cursor-pointer rounded-md border-2 border-foreground" /><Input value={accent} onChange={(e) => setAccent(e.target.value)} className="font-mono" /></div>
             </div>
           </div>
           <div className="grid gap-2">
             <Label>Hazır renkler</Label>
             <div className="flex flex-wrap gap-2">
               {PRESETS.map(([a, b]) => (
-                <button key={a} type="button" onClick={() => { setColor(a); setAccent(b); }} className="flex overflow-hidden rounded-full border-2 border-transparent hover:border-zinc-900" aria-label={`${a} ve ${b}`}>
+                <button key={a} type="button" onClick={() => { setColor(a); setAccent(b); }} className="flex overflow-hidden rounded-md border-2 border-foreground shadow-xs hover:-translate-y-0.5" aria-label={`${a} ve ${b}`}>
                   <span className="size-7" style={{ background: a }} /><span className="size-7" style={{ background: b }} />
                 </button>
               ))}
@@ -102,12 +101,12 @@ export default function BrandEditor({ venue }: { venue: Pick<Venue, 'name' | 'in
             }}
           >
             <div className="flex items-center gap-2 px-3 pt-5">
-              <span className="grid size-9 flex-none place-items-center rounded-xl border-2 text-xs font-extrabold" style={{ background: '#fff', color, borderColor: ink }}>{initials}</span>
+              <span className="grid size-9 flex-none place-items-center rounded-xl border-2 text-xs font-extrabold" style={{ background: '#fff', color: `color-mix(in srgb, ${color} 42%, #000)`, borderColor: ink }}>{initials}</span>
               <span className="grid min-w-0 text-sm leading-tight font-extrabold">
                 {name}
                 <small className="text-[10px] font-medium opacity-80">Kadıköy, İstanbul</small>
               </span>
-              <span className="ml-auto flex-none rotate-3 rounded-full border-2 px-2.5 py-1 text-[11px] font-extrabold" style={{ background: accent, color: ink, borderColor: ink, boxShadow: `0 2px 0 ${ink}` }}>Masa 5</span>
+              <span className="ml-auto flex-none rotate-3 rounded-full border-2 px-2.5 py-1 text-[11px] font-extrabold" style={{ background: accent, color: onColor(accent), borderColor: ink, boxShadow: `0 2px 0 ${ink}` }}>Masa 5</span>
             </div>
             <div className="px-3 pt-4">
               <p className="m-0 text-[1.35rem] font-extrabold leading-none" style={{ letterSpacing: '-.03em' }}>Hadi, bir oyun seçin!</p>
@@ -123,7 +122,7 @@ export default function BrandEditor({ venue }: { venue: Pick<Venue, 'name' | 'in
                   <p className="m-0 text-xl font-extrabold" style={{ letterSpacing: '-.03em' }}>Tabu</p>
                   <p className="m-0 mt-1 text-[11px] leading-snug" style={{ color: '#5b5470' }}>Kelimeleri anlatın, süreyi rakip takım tutar.</p>
                 </div>
-                <button type="button" className="mx-3 mb-3 block w-[calc(100%-1.5rem)] rounded-[12px] border-2 py-2.5 text-center text-sm font-extrabold text-white" style={{ background: color, borderColor: ink, boxShadow: `0 3px 0 ${ink}` }}>Oyna</button>
+                <button type="button" className="mx-3 mb-3 block w-[calc(100%-1.5rem)] rounded-[12px] border-2 py-2.5 text-center text-sm font-extrabold" style={{ background: color, color: onColor(color), borderColor: ink, boxShadow: `0 3px 0 ${ink}` }}>Oyna</button>
               </div>
             </div>
           </div>

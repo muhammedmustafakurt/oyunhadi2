@@ -70,7 +70,7 @@ export default function ChatSettings({ settings }: { settings: Settings }) {
         <Label htmlFor="chat-retention">Mesaj saklama süresi</Label>
         <select
           id="chat-retention"
-          className="border-input bg-background h-9 w-fit rounded-md border px-3 text-sm"
+          className="border-input bg-background h-9 w-fit rounded-md border-2 px-3 text-sm"
           value={retention}
           disabled={busy}
           onChange={(e) => { const v = Number(e.target.value); setRetention(v); save({ retention_hours: v }, 'Saklama süresi güncellendi'); }}

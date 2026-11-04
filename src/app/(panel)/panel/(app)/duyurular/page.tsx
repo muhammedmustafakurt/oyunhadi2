@@ -6,11 +6,7 @@ import { requireVenue } from '@/lib/venues';
 
 export const metadata = { title: 'Duyurular' };
 
-// Yayındaki duyuru venues tablosundan gelir; geçmiş duyurular henüz kaydedilmiyor (yayına takı alan tek duyuru).
-const PAST = [
-  { title: 'Happy hour 16:00–18:00', body: 'Tüm sıcak içeceklerde %20 indirim.', when: '1–15 Ekim', state: 'Bitti' },
-  { title: 'Yeni: San Sebastian', body: 'Haftanın tatlısı vitrinde.', when: '20–27 Eylül', state: 'Bitti' },
-];
+// Yayındaki duyuru venues tablosundan gelir; geçmiş duyurular kaydedilmediği için listelenmez.
 
 export default async function AnnouncementsPage() {
   const v = await requireVenue();
@@ -24,25 +20,23 @@ export default async function AnnouncementsPage() {
               <CardHeader>
                 <CardTitle>{a.title}</CardTitle>
                 <CardDescription>{a.body}</CardDescription>
-                <CardAction><Badge className="bg-emerald-600 text-white">Yayında</Badge></CardAction>
+                <CardAction><Badge className="bg-chart-5 text-primary-foreground">Yayında</Badge></CardAction>
               </CardHeader>
               <CardContent className="text-muted-foreground text-sm">Yayınlandığı andan kaldırana kadar {v.tables} masada gösterilir</CardContent>
             </Card>
           )}
-          {PAST.map((p) => (
-            <Card key={p.title} className="opacity-70">
+          {!a && (
+            <Card>
               <CardHeader>
-                <CardTitle>{p.title}</CardTitle>
-                <CardDescription>{p.body}</CardDescription>
-                <CardAction><Badge variant="outline">{p.state}</Badge></CardAction>
+                <CardTitle>Yayında duyuru yok</CardTitle>
+                <CardDescription>Yandaki formla yazdığınız duyuru masalardaki oyun listesinin en üstünde görünür.</CardDescription>
               </CardHeader>
-              <CardContent className="text-muted-foreground text-sm">{p.when}</CardContent>
             </Card>
-          ))}
+          )}
         </div>
         <Card className="h-fit">
-          <CardHeader><CardTitle>Yeni duyuru</CardTitle></CardHeader>
-          <CardContent><AnnouncementForm /></CardContent>
+          <CardHeader><CardTitle>{a ? 'Duyuruyu düzenle' : 'Yeni duyuru'}</CardTitle></CardHeader>
+          <CardContent><AnnouncementForm initial={a} /></CardContent>
         </Card>
       </div>
     </PageContainer>

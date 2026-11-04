@@ -33,7 +33,7 @@ export default function AdminSidebar({ email }: { email: string }) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/admin" />}>
-              <span className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+              <span className="bg-primary text-primary-foreground border-foreground flex aspect-square size-8 items-center justify-center rounded-md border-2">
                 <IconShieldLock className="size-4" />
               </span>
               <span className="grid flex-1 text-left text-sm leading-tight">

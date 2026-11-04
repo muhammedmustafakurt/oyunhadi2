@@ -77,7 +77,7 @@ export default function EventsManager({ events, tables }: { events: EventRow[]; 
               <CardTitle>{e.title}</CardTitle>
               {e.body && <CardDescription>{e.body}</CardDescription>}
               <CardAction>
-                <Badge className={e.status === 'acik' ? 'bg-emerald-600 text-white' : ''} variant={e.status === 'acik' ? 'default' : 'outline'}>{STATE[e.status]}</Badge>
+                <Badge className={e.status === 'acik' ? 'bg-chart-5 text-primary-foreground' : ''} variant={e.status === 'acik' ? 'default' : 'outline'}>{STATE[e.status]}</Badge>
               </CardAction>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -108,7 +108,7 @@ export default function EventsManager({ events, tables }: { events: EventRow[]; 
               <div className="grid gap-2"><Label htmlFor="ev-b">Açıklama</Label><Textarea id="ev-b" value={body} onChange={(e) => setBody(e.target.value)} maxLength={200} rows={2} placeholder="Doğru bilen masaya tatlı bizden!" /></div>
               <div className="grid gap-2">
                 <Label htmlFor="ev-k">Tür</Label>
-                <select id="ev-k" value={kind} onChange={(e) => setKind(e.target.value as EventRow['kind'])} className="border-input bg-background h-9 rounded-md border px-3 text-sm">
+                <select id="ev-k" value={kind} onChange={(e) => setKind(e.target.value as EventRow['kind'])} className="border-input bg-background h-9 rounded-md border-2 px-3 text-sm">
                   <option value="sinav">Sınav (soru-cevap)</option><option value="tombala">Tombala (tüm mekân)</option><option value="skor">Turnuva (masa skor tablosu)</option><option value="cekilis">Çekiliş</option>{(kind === 'turnuva' || kind === 'diger') && <option value={kind}>{KIND_INFO[kind].name} (eski)</option>}
                 </select>
               </div>
@@ -120,7 +120,7 @@ export default function EventsManager({ events, tables }: { events: EventRow[]; 
                 <legend className="text-sm font-medium">Mekân Sınavı soruları ({qs.filter((q) => q.q.trim()).length}/{MAX}, en az {MIN})</legend>
                 <p className="text-muted-foreground text-xs">Her sorunun ilk şıkkı doğru cevaptır; oyunda şıklar karıştırılır. Soru eklemezseniz etkinlik sınavsız olur (yalnızca duyuru).</p>
                 {qs.map((q, i) => (
-                  <div key={i} className="grid gap-2 rounded-lg border p-3">
+                  <div key={i} className="grid gap-2 rounded-lg border-2 p-3">
                     <div className="flex items-center justify-between gap-2">
                       <Label htmlFor={`q${i}`}>Soru {i + 1}</Label>
                       <Button type="button" size="sm" variant="ghost" onClick={() => setQs((l) => l.filter((_, k) => k !== i))}>Kaldır</Button>

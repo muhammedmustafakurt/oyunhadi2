@@ -1,18 +1,16 @@
-import { IconPlus } from '@tabler/icons-react';
 import PageContainer from '@/components/panel/page-container';
 import LocationCard from '@/components/panel/location-card';
 import SettingsSave from '@/components/panel/settings-save';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardAction } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { requireVenue } from '@/lib/venues';
 
 export const metadata = { title: 'Ayarlar' };
 export const dynamic = 'force-dynamic';
 
-// Panel kullanıcıları henüz ayrı bir tabloda değil; TASARIM AŞAMASI: tek ekran sahibi + örnek liste.
+// Panel kullanıcıları henüz ayrı bir tabloda değil; yalnızca hesap sahibi listelenir.
 const USERS = [
   { name: 'Mekân sahibi', role: 'Sahip' },
 ];
@@ -35,9 +33,6 @@ export default async function SettingsPage() {
         <CardHeader>
           <CardTitle>Panel kullanıcıları</CardTitle>
           <CardDescription>Girişte kullanılan hesap: {v.email || 'belirlenmedi'}</CardDescription>
-          <CardAction>
-            <Button variant="outline" size="sm" className="no-print"><IconPlus /> Kullanıcı davet et</Button>
-          </CardAction>
         </CardHeader>
         <CardContent>
           <ul className="divide-y">

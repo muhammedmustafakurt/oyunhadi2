@@ -6,10 +6,10 @@ import { Badge } from '@/components/ui/badge';
 export default function StatCard({ label, value, change, note }: { label: string; value: string; change?: number; note: string }) {
   const up = (change ?? 0) >= 0;
   return (
-    <Card className="@container/card from-primary/5 to-card bg-gradient-to-t shadow-xs">
+    <Card className="@container/card shadow-md">
       <CardHeader>
         <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{value}</CardTitle>
+        <CardTitle className="text-2xl font-black tabular-nums @[250px]/card:text-3xl">{value}</CardTitle>
         {change !== undefined && (
           <CardAction>
             <Badge variant="outline">

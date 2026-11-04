@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
 // Duyurular masaların oyun listesinin en üstünde görünür. Yayınla → venues.ann_title/ann_body
-export default function AnnouncementForm() {
+export default function AnnouncementForm({ initial }: { initial?: { title: string; body: string } | null }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -41,9 +41,9 @@ export default function AnnouncementForm() {
   };
 
   return (
-    <form className="grid gap-4" onSubmit={post}>
-      <div className="grid gap-2"><Label htmlFor="t">Başlık</Label><Input id="t" name="t" maxLength={60} placeholder="Cuma akşamı Tabu turnuvası" required /></div>
-      <div className="grid gap-2"><Label htmlFor="b">Metin</Label><Textarea id="b" name="b" maxLength={160} rows={3} placeholder="Saat 20:00'de. Kazanan masaya pizza bizden!" /></div>
+    <form key={`${initial?.title ?? ''}|${initial?.body ?? ''}`} className="grid gap-4" onSubmit={post}>
+      <div className="grid gap-2"><Label htmlFor="t">Başlık</Label><Input id="t" name="t" maxLength={60} defaultValue={initial?.title ?? ''} placeholder="Cuma akşamı Tabu turnuvası" required /></div>
+      <div className="grid gap-2"><Label htmlFor="b">Metin</Label><Textarea id="b" name="b" maxLength={160} rows={3} defaultValue={initial?.body ?? ''} placeholder="Saat 20:00'de. Kazanan masaya pizza bizden!" /></div>
       <Button type="submit" disabled={busy}>{busy ? 'Yayınlanıyor…' : 'Yayınla'}</Button>
       <Button type="button" variant="ghost" onClick={off} disabled={busy}>Yayından kaldır</Button>
     </form>
