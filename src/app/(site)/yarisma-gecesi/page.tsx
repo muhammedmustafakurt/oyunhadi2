@@ -41,7 +41,7 @@ export default function ContestNightPage() {
         <ol className="space-y-4">
           {STEPS.map((s, i) => (
             <li key={s.h} className="card flex gap-4 p-6 sm:gap-5 sm:p-7">
-              <span className="font-display grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ink text-sm font-black text-sun">{i + 1}</span>
+              <span className="font-display grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-ink text-sm font-black text-sun">{i + 1}</span>
               <div>
                 <h3 className="text-xl font-extrabold">{s.h}</h3>
                 <p className="mt-2 text-[15px] leading-relaxed text-muted">{s.p}</p>
@@ -55,7 +55,7 @@ export default function ContestNightPage() {
         <SectionHead title="Akşamı renklendiren fikirler" />
         <div className="grid gap-5 md:grid-cols-3">
           {IDEAS.map(([h, p]) => (
-            <article key={h} className="rounded-2xl bg-paper p-6">
+            <article key={h} className="card p-6">
               <h3 className="text-lg font-extrabold">{h}</h3>
               <p className="mt-2 text-[15px] leading-relaxed text-muted">{p}</p>
             </article>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { jsonLdString } from '@/lib/utils';
 import { notFound } from 'next/navigation';
 import Cta from '@/components/site/cta';
 import { POSTS, findPost, fmtDate } from '@/lib/blog';
@@ -35,7 +36,7 @@ export default async function PostPage({ params }: PageProps<'/blog/[slug]'>) {
   };
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
       <article>
         <header className="hero-light relative overflow-hidden">
           <div className="grid-lines pointer-events-none absolute inset-0" aria-hidden="true" />

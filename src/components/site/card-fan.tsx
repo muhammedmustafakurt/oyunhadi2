@@ -53,7 +53,7 @@ export default function CardFan() {
     <div className="scan-scene relative mx-auto h-[400px] w-full max-w-[520px] sm:h-[460px]" aria-hidden="true">
       {/* Masadaki karekodlu pleksi */}
       <div className="scan-stand absolute bottom-0 left-1/2 w-[132px]">
-        <div className="rounded-t-[14px] border-[3px] border-ink bg-white px-3 pt-2.5 pb-2 text-center text-ink shadow-[0_6px_0_rgba(0,0,0,.25)]">
+        <div className="rounded-t-[14px] border-[3px] border-ink bg-white px-3 pt-2.5 pb-2 text-center text-ink shadow-[4px_4px_0_var(--color-ink)]">
           <p className="text-[11px] leading-none font-extrabold">Masa 5</p>
           <Qr className="mx-auto my-1.5 h-[76px] w-[76px]" />
           <p className="text-[10px] leading-none font-bold">Okut, oyna!</p>
@@ -63,7 +63,7 @@ export default function CardFan() {
 
       {/* Telefon */}
       <div className="scan-phone absolute bottom-[96px] left-1/2 z-20 w-[112px]">
-        <div className="rounded-[22px] border-[3px] border-ink bg-ink p-1.5 shadow-[0_10px_0_rgba(0,0,0,.25)]">
+        <div className="rounded-[22px] border-[3px] border-ink bg-ink p-1.5 shadow-[5px_5px_0_var(--color-ink)]">
           <div className="relative h-[196px] overflow-hidden rounded-[16px] bg-[#2a2440]">
             <span className="absolute top-1.5 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-black/50" />
             {/* Vizör: köşeler ve karekod */}
@@ -73,7 +73,7 @@ export default function CardFan() {
               <span className="absolute bottom-0 left-0 h-4 w-4 rounded-bl-md border-b-[3px] border-l-[3px] border-sun" />
               <span className="absolute right-0 bottom-0 h-4 w-4 rounded-br-md border-r-[3px] border-b-[3px] border-sun" />
               <div className="absolute inset-2 grid place-items-center rounded bg-white/90"><Qr className="h-full w-full p-1" /></div>
-              <span className="scan-line absolute inset-x-1 h-[3px] rounded-full bg-mint shadow-[0_0_8px_#5ef2b5]" />
+              <span className="scan-line absolute inset-x-1 h-[3px] bg-mint" />
             </div>
             {/* Okundu */}
             <div className="scan-ok absolute inset-0 grid place-items-center bg-coral text-center text-white">
@@ -87,7 +87,7 @@ export default function CardFan() {
       </div>
 
       {/* Masa etiketi */}
-      <span className="scan-seat absolute top-0 right-2 z-30 rotate-6 rounded-full border-[2.5px] border-ink bg-sun px-4 py-1.5 font-extrabold text-ink shadow-[0_3px_0_var(--color-ink)] sm:right-8">Masa 5</span>
+      <span className="scan-seat absolute top-0 right-2 z-30 rotate-6 rounded-lg border-[2.5px] border-ink bg-sun px-4 py-1.5 font-extrabold text-ink shadow-[3px_3px_0_var(--color-ink)] sm:right-8">Masa 5</span>
 
       {/* Telefondan çıkıp açılan kartlar */}
       {FAN.map((id, i) => {
@@ -97,7 +97,7 @@ export default function CardFan() {
         return (
           <div
             key={id}
-            className="fan-card absolute top-8 left-1/2 w-[160px] overflow-hidden rounded-[18px] border-[3px] border-ink bg-[#fffdf8] text-ink shadow-[0_10px_0_rgba(0,0,0,.25)] sm:w-[190px]"
+            className="fan-card absolute top-8 left-1/2 w-[160px] overflow-hidden rounded-[18px] border-[3px] border-ink bg-[#fffdf8] text-ink shadow-[5px_5px_0_var(--color-ink)] sm:w-[190px]"
             style={{ '--i': i - (FAN.length - 1) / 2, '--d': `${Math.abs(i - MID) * 60}ms`, zIndex: mid ? 15 : 13 - Math.abs(i - MID) } as React.CSSProperties}
           >
             <div className="relative h-[118px] overflow-hidden border-b-[3px] border-ink sm:h-[140px]" style={{ background: bg }}>

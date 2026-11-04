@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { jsonLdString } from '@/lib/utils';
 import PhoneMock from '@/components/site/phone-mock';
 import CardFan from '@/components/site/card-fan';
 import TableChat from '@/components/site/table-chat';
@@ -34,19 +35,19 @@ const DECK = GAMES.filter((g) => g.play);
 // Ödül kuralını "olay" hapları gibi anlatan parça (sarı bant)
 function Chip({ children, tone }: { children: React.ReactNode; tone: 'sky' | 'coral' | 'leaf' | 'grape' }) {
   const c = { sky: 'text-sky', coral: 'text-coral', leaf: 'text-leaf', grape: 'text-grape' }[tone];
-  return <span className={`inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-white px-3.5 py-1.5 text-sm font-bold shadow-[0_3px_0_var(--color-ink)] ${c}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1.5 rounded-lg border-2 border-ink bg-white px-3.5 py-1.5 text-sm font-bold shadow-[3px_3px_0_var(--color-ink)] ${c}`}>{children}</span>;
 }
 
 export default function Home() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
 
       {/* ---------- Başlık: yeşil çuha ve yelpaze deste ---------- */}
       <section className="felt relative overflow-hidden">
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pt-28 pb-16 sm:px-6 md:pt-36 lg:grid-cols-[1.05fr_1fr] lg:pb-24">
           <div>
-            <p className="mb-6 inline-block rounded-full bg-black/25 px-3.5 py-1.5 text-sm font-bold">Kafe · Bar · Restoran · Otel lobisi</p>
+            <p className="mb-6 inline-block rounded-lg border-2 border-white px-3.5 py-1.5 text-sm font-bold">Kafe · Bar · Restoran · Otel lobisi</p>
             <h1 className="text-5xl leading-[0.98] font-black sm:text-6xl lg:text-[4.2rem]">
               Masaya bir karekod koyun, <span className="text-sun">gerisini oyunhadi halleder.</span>
             </h1>
@@ -63,7 +64,7 @@ export default function Home() {
       </section>
 
       {/* ---------- Mekân türleri ---------- */}
-      <section className="border-b border-line bg-paper">
+      <section className="border-b-[3px] border-ink bg-paper">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-6 text-sm font-semibold text-muted sm:px-6">
           <span className="text-ink">Kimler için?</span>
           {VENUE_TYPES.map((t) => <span key={t}>{t}</span>)}
@@ -84,7 +85,7 @@ export default function Home() {
             {DECK.map((g) => (
               <li key={g.id} className="w-36 shrink-0 sm:w-auto">
                 {/* Mini oyun kartı: takım renginde çerçeve, krem iç yüz, mühür simge, italik logo */}
-                <Link href={`/oyunlar/${g.id}`} className="group block rounded-[14px] border-[2.5px] border-ink p-[5px] shadow-[0_4px_0_var(--color-ink)] transition hover:-translate-y-1" style={{ background: accentOf(g.id) }}>
+                <Link href={`/oyunlar/${g.id}`} className="group block rounded-[14px] border-[2.5px] border-ink p-[5px] shadow-[4px_4px_0_var(--color-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_var(--color-ink)]" style={{ background: accentOf(g.id) }}>
                   <span className="flex flex-col items-center rounded-lg border-[1.5px] border-ink bg-[#fff7ee] px-2 pt-3 pb-2.5 text-center">
                     <GameSeal id={g.id} className="h-[84px] w-[84px] transition-transform duration-300 group-hover:-rotate-6" />
                     <span className="mt-1.5 flex min-h-[2.1em] items-center text-[15px] leading-[1.05] font-extrabold italic" style={{ fontFamily: 'var(--font-logo), Georgia, serif' }}>{g.name}</span>
@@ -105,7 +106,7 @@ export default function Home() {
             <p className="mt-6 max-w-lg text-lg text-muted">Masalar birbirine mesaj atabilir. Takma adla bir sohbet isteği gönderilir, karşı masa kabul ederse özel bir sohbet açılır. Adınız ve numaranız paylaşılmaz; sohbeti istediğiniz an bitirebilir, kişiyi engelleyebilir ya da işletmeye bildirebilirsiniz.</p>
             <ul className="mt-8 grid gap-3 sm:grid-cols-3">
               {[['Takma ad', 'adınız ve numaranız görünmez'], ['İstek + kabul', 'karşı masa kabul edince açılır'], ['Kafe kontrolünde', 'panelden açar, kapatır, modu seçer']].map(([n, t]) => (
-                <li key={n} className="rounded-2xl bg-white p-4">
+                <li key={n} className="rounded-xl border-2 border-ink bg-white p-4 shadow-[3px_3px_0_var(--color-ink)]">
                   <p className="font-display text-2xl font-black text-grape">{n}</p>
                   <p className="text-sm text-muted">{t}</p>
                 </li>
@@ -181,7 +182,7 @@ export default function Home() {
               <div className="mb-5 flex items-center justify-between text-sm"><span className="font-bold">Bu hafta</span><span className="text-muted">Hadi Kafe</span></div>
               <div className="mb-6 grid grid-cols-3 gap-3">
                 {([['242', 'oyun', 'bg-coral'], ['828', 'oyuncu', 'bg-grape'], ['37', 'ödül', 'bg-leaf']] as const).map(([n, l, c]) => (
-                  <div key={l} className={`rounded-xl p-3 text-white ${c}`}><p className="font-display text-3xl font-black">{n}</p><p className="text-xs opacity-85">{l}</p></div>
+                  <div key={l} className={`rounded-xl border-2 border-ink p-3 text-white ${c}`}><p className="font-display text-3xl font-black">{n}</p><p className="text-xs opacity-85">{l}</p></div>
                 ))}
               </div>
               <div className="flex h-40 items-end gap-2">
@@ -224,14 +225,14 @@ export default function Home() {
       {/* ---------- Fiyat şeridi ---------- */}
       <section className="pb-24 md:pb-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="band-coral relative overflow-hidden rounded-[2rem] p-10 md:p-14" data-aos="zoom-y-out">
+          <div className="band-coral relative overflow-hidden rounded-[14px] border-[3px] border-ink shadow-[7px_7px_0_var(--color-ink)] p-10 md:p-14" data-aos="zoom-y-out">
             <div className="grid-lines-light pointer-events-none absolute inset-0" aria-hidden="true" />
             <div className="relative grid items-center gap-8 lg:grid-cols-[1fr_auto]">
               <div>
                 <h2 className="text-4xl font-black md:text-5xl">Tek paket, her şey dahil</h2>
                 <p className="mt-4 max-w-xl text-lg text-white/90">Yıllık <strong className="text-white">{PRICE.yearly}</strong> {PRICE.note}. Tüm oyunlar, pleksiler, panel ve ödül kodları pakete dahil.</p>
                 <ul className="mt-6 flex flex-wrap gap-2">
-                  {PRICE.perks.map((p) => <li key={p} className="flex items-center gap-2 rounded-full bg-white/20 px-3.5 py-1.5 text-sm font-semibold"><Icon name="check" className="fill-sun" /> {p}</li>)}
+                  {PRICE.perks.map((p) => <li key={p} className="flex items-center gap-2 rounded-lg border-2 border-white bg-white/15 px-3.5 py-1.5 text-sm font-bold"><Icon name="check" className="fill-sun" /> {p}</li>)}
                 </ul>
               </div>
               <div className="flex flex-col gap-3">

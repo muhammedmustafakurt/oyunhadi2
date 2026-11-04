@@ -30,10 +30,10 @@ export default function PricePage() {
 
       <section className="pb-20 md:pb-24">
         <div className="mx-auto grid max-w-5xl gap-5 px-4 sm:px-6 lg:grid-cols-[1.1fr_1fr]">
-          <div className="band-grape relative overflow-hidden rounded-[1.75rem] p-8 md:p-10">
+          <div className="band-grape relative overflow-hidden rounded-[14px] border-[3px] border-ink shadow-[6px_6px_0_var(--color-ink)] p-8 md:p-10">
             <div className="confetti pointer-events-none absolute inset-0" aria-hidden="true" />
             <div className="relative">
-              <span className="rounded-full bg-sun px-3 py-1 text-xs font-black text-ink">YILLIK ABONELİK</span>
+              <span className="rounded-md border-2 border-ink bg-sun px-3 py-1 text-xs font-black text-ink">YILLIK ABONELİK</span>
               <h2 className="mt-6 font-sans text-lg font-bold tracking-normal text-white/85">oyunhadi Mekân</h2>
               <p className="mt-2 flex flex-wrap items-baseline gap-2">
                 <span className="font-display text-6xl font-black">{PRICE.yearly}</span>
@@ -41,7 +41,7 @@ export default function PricePage() {
               </p>
               <p className="mt-1 text-sm text-white/75">{PRICE.monthly}</p>
               <ul className="mt-6 flex flex-wrap gap-2">
-                {PRICE.perks.map((p) => <li key={p} className="rounded-full bg-white/20 px-3.5 py-1.5 text-sm font-semibold">{p}</li>)}
+                {PRICE.perks.map((p) => <li key={p} className="rounded-lg border-2 border-white bg-white/15 px-3.5 py-1.5 text-sm font-bold">{p}</li>)}
               </ul>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 <Link href="/teklif" className="btn btn-white">Teklif al</Link>
@@ -57,7 +57,7 @@ export default function PricePage() {
                 <li key={t} className="flex gap-3"><span className="mt-1"><Icon name="check" className="fill-leaf" /></span>{t}</li>
               ))}
             </ul>
-            <p className="mt-8 rounded-xl bg-sun/40 p-4 text-sm font-medium">Birden fazla şubeniz mi var? Şube sayınıza göre ayrı teklif hazırlıyoruz.</p>
+            <p className="mt-8 rounded-xl border-[2.5px] border-ink bg-sun p-4 shadow-[3px_3px_0_var(--color-ink)] text-sm font-medium">Birden fazla şubeniz mi var? Şube sayınıza göre ayrı teklif hazırlıyoruz.</p>
           </div>
         </div>
       </section>

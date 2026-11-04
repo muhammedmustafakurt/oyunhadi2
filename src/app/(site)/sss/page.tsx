@@ -2,6 +2,7 @@ import PageHero from '@/components/site/page-hero';
 import Accordion from '@/components/site/accordion';
 import Cta from '@/components/site/cta';
 import { FAQ } from '@/lib/site';
+import { jsonLdString } from '@/lib/utils';
 
 export const metadata = {
   title: 'Sıkça Sorulan Sorular',
@@ -20,7 +21,7 @@ export default function FaqPage() {
   };
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
       <PageHero eyebrow="SSS" title={<>Sıkça sorulan <span className="hl-coral">sorular</span></>} lead="Aradığınızı bulamazsanız WhatsApp'tan yazın, hemen yanıtlayalım." />
       <section className="py-20 md:py-24">
         <div className="mx-auto max-w-3xl space-y-12 px-4 sm:px-6">

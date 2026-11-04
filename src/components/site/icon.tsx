@@ -24,7 +24,7 @@ export default function Icon({ name, className = 'fill-coral' }: { name: string;
 const TONES = { coral: 'bg-coral', grape: 'bg-grape', sky: 'bg-sky', leaf: 'bg-leaf', rose: 'bg-rose', sun: 'bg-sun' } as const;
 export function IconBox({ name, tone = 'coral' }: { name: string; tone?: keyof typeof TONES }) {
   return (
-    <span className={`grid h-12 w-12 -rotate-6 place-items-center rounded-2xl shadow-md ${TONES[tone]}`}>
+    <span className={`grid h-12 w-12 -rotate-6 place-items-center rounded-xl border-[2.5px] border-ink shadow-[3px_3px_0_var(--color-ink)] ${TONES[tone]}`}>
       <Icon name={name} className={tone === 'sun' ? 'fill-ink' : 'fill-white'} />
     </span>
   );

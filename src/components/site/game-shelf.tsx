@@ -10,7 +10,7 @@ export function GameCard({ g, no, total, className = '' }: { g: G; no?: number; 
   return (
     <Link
       href={`/oyunlar/${g.id}`}
-      className={`group block h-full rounded-[20px] border-[2.5px] border-ink p-2 shadow-[0_6px_0_var(--color-ink)] transition hover:-translate-y-1 hover:shadow-[0_10px_0_var(--color-ink)] ${className}`}
+      className={`group block h-full rounded-[14px] border-[3px] border-ink p-2 shadow-[5px_5px_0_var(--color-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0_var(--color-ink)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_var(--color-ink)] ${className}`}
       style={{ background: accentOf(g.id) }}
     >
       <span className="relative flex h-full items-center gap-4 rounded-[13px] border-2 border-ink bg-[#fff7ee] px-4 py-5 sm:gap-5 sm:px-5">

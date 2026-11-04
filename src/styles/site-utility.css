@@ -1,36 +1,61 @@
 /* Site bileşen sınıfları: hap düğmeler, kartlar, renkli bantlar ve süs arka planları. */
 
+/* ---------- Neobrütalist temel: kalın mürekkep kenar, sert ofset gölge ---------- */
+:root {
+  --nb-border: 2.5px solid var(--color-ink);
+  --nb-shadow: 4px 4px 0 var(--color-ink);
+  --nb-shadow-sm: 3px 3px 0 var(--color-ink);
+  --nb-shadow-lg: 7px 7px 0 var(--color-ink);
+  --nb-radius: 12px;
+}
+
 /* ---------- Düğmeler ---------- */
 .btn, .btn-sm {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-  border-radius: 999px; font-weight: 700; white-space: nowrap; letter-spacing: -.01em;
-  transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease, color .15s ease;
+  border: var(--nb-border); border-radius: 10px; font-weight: 800; white-space: nowrap; letter-spacing: -.01em;
+  box-shadow: var(--nb-shadow);
+  transition: transform .12s ease, background-color .12s ease, box-shadow .12s ease, color .12s ease;
 }
-.btn { padding: .85rem 1.6rem; font-size: 1rem; }
-.btn-sm { padding: .5rem 1.05rem; font-size: .875rem; }
-.btn:active, .btn-sm:active { transform: translateY(1px) scale(.98); }
+.btn { padding: .8rem 1.5rem; font-size: 1rem; }
+.btn-sm { padding: .45rem 1rem; font-size: .875rem; box-shadow: var(--nb-shadow-sm); }
+.btn:hover, .btn-sm:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--color-ink); }
+.btn-sm:hover { box-shadow: 5px 5px 0 var(--color-ink); }
+.btn:active, .btn-sm:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--color-ink); }
 
-.btn-primary { background: var(--color-coral); color: #fff; box-shadow: 0 6px 18px -6px rgba(255, 79, 46, .6); }
-.btn-primary:hover { background: var(--color-coral-deep); box-shadow: 0 10px 26px -8px rgba(255, 79, 46, .7); }
-.btn-dark { background: var(--color-ink); color: #fff; }
-.btn-dark:hover { background: #33255a; }
-.btn-outline { color: var(--color-ink); box-shadow: inset 0 0 0 2px var(--color-ink); }
-.btn-outline:hover { background: var(--color-ink); color: #fff; }
+.btn-primary { background: var(--color-coral); color: #fff; }
+.btn-primary:hover { background: var(--color-coral-deep); }
+.btn-dark { background: var(--color-ink); color: #fff; box-shadow: 4px 4px 0 var(--color-coral); }
+.btn-dark:hover { background: #33255a; box-shadow: 6px 6px 0 var(--color-coral); }
+.btn-dark:active { box-shadow: 1px 1px 0 var(--color-coral); }
+.btn-outline { background: #fff; color: var(--color-ink); }
+.btn-outline:hover { background: var(--color-sun); color: var(--color-ink); }
 .btn-white { background: #fff; color: var(--color-ink); }
-.btn-white:hover { background: var(--color-sand); }
-.btn-ghost { color: #fff; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .9); }
-.btn-ghost:hover { background: rgba(255, 255, 255, .15); }
-.btn:focus-visible, .btn-sm:focus-visible { outline: 3px solid var(--color-grape); outline-offset: 3px; }
+.btn-white:hover { background: var(--color-sun); }
+.btn-ghost { background: transparent; color: #fff; border-color: #fff; box-shadow: 4px 4px 0 var(--color-ink); }
+.btn-ghost:hover { background: rgba(255, 255, 255, .18); }
+.btn:focus-visible, .btn-sm:focus-visible { outline: 3px solid var(--color-grape); outline-offset: 4px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--color-grape); outline-offset: 3px; }
+.band-grape a:focus-visible, .band-coral a:focus-visible, .felt a:focus-visible, .bg-ink a:focus-visible { outline-color: var(--color-sun); }
+
+/* Rozet / çip: hap yerine keskin köşeli etiket */
+.chip {
+  display: inline-flex; align-items: center; gap: .35rem; border: 2px solid var(--color-ink); border-radius: 8px;
+  background: #fff; color: var(--color-ink); font-weight: 800; box-shadow: 2px 2px 0 var(--color-ink);
+}
+a.chip { transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease; }
+a.chip:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--color-ink); background: var(--color-sun); }
+a.chip:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--color-ink); }
 
 /* ---------- Kartlar ---------- */
 .card {
   background: var(--color-paper);
-  border: 1px solid var(--color-line);
-  border-radius: 1.25rem;
-  box-shadow: 0 1px 0 rgba(28, 18, 51, .04), 0 12px 30px -18px rgba(28, 18, 51, .25);
+  border: var(--nb-border);
+  border-radius: var(--nb-radius);
+  box-shadow: var(--nb-shadow);
 }
-.card-hover { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
-.card-hover:hover { transform: translateY(-4px); border-color: var(--color-ink); box-shadow: 0 18px 40px -20px rgba(28, 18, 51, .45); }
+.card-hover { transition: transform .12s ease, box-shadow .12s ease; }
+.card-hover:hover { transform: translate(-3px, -3px); box-shadow: var(--nb-shadow-lg); }
+.card-hover:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--color-ink); }
 
 /* ---------- Arka planlar (renk geçişi yok, düz renkler) ---------- */
 .hero-light { background-color: var(--color-cream); }
@@ -48,6 +73,7 @@
   background-size: 64px 64px;
 }
 /* Düz renkli bantlar */
+.band-grape, .band-coral, .band-sun { border-block: 3px solid var(--color-ink); }
 .band-grape { background-color: var(--color-grape); color: #fff; }
 .band-coral { background-color: var(--color-coral); color: #fff; }
 .band-sun { background-color: var(--color-sun); color: var(--color-ink); }
@@ -70,12 +96,12 @@
 
 /* Form alanları */
 .form-input, .form-textarea, .form-select {
-  width: 100%; border-radius: .9rem; border: 1.5px solid var(--color-line);
-  background: #fff; color: var(--color-ink); padding: .75rem 1rem; font-size: .95rem;
+  width: 100%; border-radius: 10px; border: var(--nb-border);
+  background: #fff; color: var(--color-ink); padding: .75rem 1rem; font-size: .95rem; box-shadow: 3px 3px 0 var(--color-ink);
 }
-.form-input::placeholder, .form-textarea::placeholder { color: #a399b5; }
-.form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--color-grape); box-shadow: 0 0 0 3px rgba(124, 58, 237, .18); }
-.form-checkbox { border-radius: .3rem; border-color: var(--color-line); color: var(--color-grape); }
+.form-input::placeholder, .form-textarea::placeholder { color: #6f6486; }
+.form-input:focus, .form-textarea:focus, .form-select:focus { outline: 3px solid var(--color-grape); outline-offset: 2px; border-color: var(--color-ink); box-shadow: 1px 1px 0 var(--color-ink); }
+.form-checkbox { border-radius: .3rem; border: 2px solid var(--color-ink); color: var(--color-grape); }
 
 /* ---------- Ana sayfa: oyun masası ---------- */
 /* Yeşil çuha (masa ekranıyla aynı) */
@@ -135,14 +161,17 @@
 .chat-in { animation: chat-in .45s ease-out both; }
 @keyframes chat-in { from { opacity: 0; transform: translateY(10px); } }
 /* İskambil kartı adımlar */
-.play-card { position: relative; background: #fff; border: 2.5px solid var(--color-ink); border-radius: 18px; box-shadow: 0 5px 0 var(--color-ink); }
+.play-card { position: relative; background: #fff; border: 2.5px solid var(--color-ink); border-radius: 14px; box-shadow: 5px 5px 0 var(--color-ink); }
 .play-card .rank { position: absolute; left: 18px; top: 16px; display: grid; justify-items: center; font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: .9; }
 .play-card .rank i { font-style: normal; font-size: 22px; }
 .play-card .rank.br { left: auto; top: auto; right: 18px; bottom: 16px; transform: rotate(180deg); }
-.btn-felt { background: var(--color-coral); color: #fff; box-shadow: 0 5px 0 var(--color-ink); border: 2.5px solid var(--color-ink); }
+.btn-felt { background: var(--color-coral); color: #fff; }
 .btn-felt:hover { background: var(--color-coral-deep); }
-.btn-sun { background: var(--color-sun); color: var(--color-ink); border: 2.5px solid var(--color-ink); }
+.btn-sun { background: var(--color-sun); color: var(--color-ink); }
+.btn-sun:hover { background: #ffd666; }
 @media (prefers-reduced-motion: reduce) {
+  .btn, .btn-sm, .card-hover, a.chip { transition: none; }
+  .btn:hover, .btn-sm:hover, .card-hover:hover, .btn:active, .btn-sm:active { transform: none; }
   .fan-card, .chat-in, .animate-wiggle, .scan-stand, .scan-seat, .scan-line, .scan-ok { animation: none; }
   .scan-phone { display: none; }
 }

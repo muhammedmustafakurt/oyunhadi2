@@ -32,7 +32,6 @@ const GUIDE: Record<string, { when: string; who: string; noise: 'sakin' | 'orta'
   catan: { when: 'Hafta sonu akşamı', who: '3-4 kişilik oyun meraklıları', noise: 'orta' },
   pisti: { when: 'Her saat, öğleden sonra', who: 'Kahve içen ikili ve dörtlü masalar, her yaştan oyuncu', noise: 'sakin' },
   okey: { when: 'Akşam, hafta sonu', who: 'Okey geleneği olan arkadaş grupları, 2-4 kişi', noise: 'orta' },
-  tavla: { when: 'Öğleden sonra, akşam', who: 'İki kişilik sohbet masaları, nargile ve çay ortamı', noise: 'sakin' },
   g2048: { when: 'Her saat', who: 'Sipariş beklerken kısa rekabet isteyen masalar', noise: 'sakin' },
   adam: { when: 'Öğleden sonra, aile saatleri', who: 'Çocuklu aileler, kelime seven gruplar', noise: 'orta' },
   risk: { when: 'Hafta sonu akşamı, gece', who: 'Saatlerce oturmayı göze alan gruplar', noise: 'orta' },
@@ -48,11 +47,11 @@ const SLOTS = [
 ];
 
 const KITLE = [
-  ['Çiftler', 'Satranç, Tavla, Azul, Carcassonne, Bil Bakalım'],
+  ['Çiftler', 'Satranç, Azul, Carcassonne, Bil Bakalım'],
   ['4-6 kişilik arkadaş masası', 'Tabu, Casus, Gizli Ajanlar, Kadro, Futbolcuyu Bul'],
   ['Büyük gruplar (7-10 kişi)', 'Vampir Köylü, Tabu, Ben Kimim?, Çiz Bakalım'],
   ['Çocuklu aileler', 'Çiz Bakalım, Ben Kimim?, Bil Bakalım, Adam Asmaca'],
-  ['Okey, Pişti ve Tavla sevenler', 'Okey 101, Pişti, Tavla'],
+  ['Okey ve Pişti sevenler', 'Okey 101, Pişti'],
   ['Strateji sevenler', 'Catan, Risk, Ticket to Ride, Emlak Krallığı'],
   ['Futbol sohbeti edenler', 'Kadro, Futbolcuyu Bul'],
 ];
@@ -78,7 +77,7 @@ export default function GuidePage() {
               <p className="mt-2 text-[15px] leading-relaxed text-muted">{s.body}</p>
               <p className="mt-4 flex flex-wrap gap-2">
                 {s.ids.map((id) => (
-                  <Link key={id} href={`/oyunlar/${id}`} className="inline-flex min-h-11 items-center rounded-full border border-line bg-cream px-4 text-sm font-bold hover:border-ink">{GAMES.find((g) => g.id === id)?.name}</Link>
+                  <Link key={id} href={`/oyunlar/${id}`} className="inline-flex min-h-11 items-center chip px-4 text-sm">{GAMES.find((g) => g.id === id)?.name}</Link>
                 ))}
               </p>
             </article>
@@ -90,7 +89,7 @@ export default function GuidePage() {
         <SectionHead title="Kitleye göre öneri" />
         <ul className="grid gap-4 sm:grid-cols-2">
           {KITLE.map(([k, v]) => (
-            <li key={k} className="rounded-2xl bg-paper p-5">
+            <li key={k} className="card p-5">
               <p className="font-extrabold">{k}</p>
               <p className="mt-1 text-[15px] text-muted">{v}</p>
             </li>
@@ -100,11 +99,11 @@ export default function GuidePage() {
 
       <Wrap max="max-w-7xl">
         <SectionHead title={`${rows.length} oyunun tamamı`} lead="Kişi sayısı ve süreler oyun listesinde yazan değerlerdir. Gürültü sütunu masada çıkan sesi gösterir: sakin, orta, canlı." />
-        <div className="overflow-x-auto rounded-2xl border border-line bg-paper" tabIndex={0} role="region" aria-label="Oyun karşılaştırma tablosu">
+        <div className="overflow-x-auto rounded-xl border-[2.5px] border-ink bg-paper shadow-[4px_4px_0_var(--color-ink)]" tabIndex={0} role="region" aria-label="Oyun karşılaştırma tablosu">
           <table className="w-full min-w-[720px] text-left text-[15px]">
             <caption className="sr-only">Oyunlara göre kişi sayısı, süre, uygun saat ve kitle</caption>
             <thead>
-              <tr className="border-b border-line bg-sand text-sm">
+              <tr className="border-b-[2.5px] border-ink bg-sun text-sm">
                 <th scope="col" className="px-4 py-3 font-extrabold">Oyun</th>
                 <th scope="col" className="px-4 py-3 font-extrabold">Kişi</th>
                 <th scope="col" className="px-4 py-3 font-extrabold">Süre</th>
@@ -123,7 +122,7 @@ export default function GuidePage() {
                     <td className="px-4 py-3 whitespace-nowrap">{g.minutes} dk</td>
                     <td className="px-4 py-3 text-muted">{x?.when}</td>
                     <td className="px-4 py-3 text-muted">{x?.who}</td>
-                    <td className="px-4 py-3">{x && <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${NOISE_TONE[x.noise]}`}>{x.noise}</span>}</td>
+                    <td className="px-4 py-3">{x && <span className={`rounded-md border-2 border-ink px-2.5 py-0.5 text-xs font-extrabold ${NOISE_TONE[x.noise]}`}>{x.noise}</span>}</td>
                   </tr>
                 );
               })}

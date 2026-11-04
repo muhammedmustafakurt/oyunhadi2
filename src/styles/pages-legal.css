@@ -1,6 +1,6 @@
 /* Yasal metin sayfaları: okunur genişlik, rahat satır aralığı, yazdırma için sade görünüm. */
 .legal { font-size: 1.0625rem; line-height: 1.75; color: var(--color-ink); }
-.legal h2 { margin-top: 2.5rem; font-size: 1.5rem; line-height: 1.25; font-weight: 800; scroll-margin-top: 6rem; }
+.legal h2 { margin-top: 2.5rem; font-size: 1.6rem; line-height: 1.25; font-weight: 900; border-left: 6px solid var(--color-coral); padding-left: .75rem; scroll-margin-top: 6rem; }
 .legal p { margin-top: 0.9rem; overflow-wrap: anywhere; }
 .legal ul, .legal ol { margin-top: 0.9rem; padding-left: 1.4rem; }
 .legal ul { list-style: disc; }
@@ -9,8 +9,8 @@
 .legal a:not(.btn) { text-decoration: underline; text-underline-offset: 3px; }
 .legal a:focus-visible, .legal-toc a:focus-visible { outline: 3px solid var(--color-grape); outline-offset: 3px; border-radius: 4px; }
 .legal-toc a { text-decoration: none; }
-.legal-toc a:hover { text-decoration: underline; }
-.legal-notice { border: 1.5px solid var(--color-sun); background: #fff6d9; border-radius: 1rem; padding: 0.9rem 1.1rem; font-size: 0.95rem; line-height: 1.5; }
+.legal-toc a:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+.legal-notice { border: 2.5px solid var(--color-ink); background: #fff6d9; border-radius: 12px; box-shadow: 4px 4px 0 var(--color-ink); padding: 0.9rem 1.1rem; font-size: 0.95rem; line-height: 1.5; }
 
 @media print {
   header, footer, nav.legal-toc, a[href^="https://wa.me"], .no-print { display: none !important; }
@@ -18,5 +18,5 @@
   .legal-wrap { padding: 0 !important; max-width: none !important; }
   .legal { font-size: 11pt; line-height: 1.5; }
   .legal h2 { break-after: avoid; }
-  .legal-notice { background: none; border: 1px solid #000; }
+  .legal-notice { background: none; border: 1px solid #000; box-shadow: none; }
 }

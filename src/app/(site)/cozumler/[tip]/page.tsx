@@ -63,7 +63,7 @@ export default async function SolutionPage({ params }: PageProps<'/cozumler/[tip
         <ul className="flex flex-wrap justify-center gap-3">
           {others.map((o) => (
             <li key={o.slug}>
-              <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-paper px-5 text-sm font-bold hover:border-ink" href={`/cozumler/${o.slug}`}>{o.name}</Link>
+              <Link className="inline-flex min-h-11 items-center chip px-5 text-sm" href={`/cozumler/${o.slug}`}>{o.name}</Link>
             </li>
           ))}
         </ul>

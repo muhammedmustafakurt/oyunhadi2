@@ -10,7 +10,7 @@ const ROWS = [
 // Ana sayfadaki telefon: masada açılan oyuncu ekranının küçük bir kopyası (görsel; tıklanmaz).
 export default function PhoneMock({ color = '#ff4f2e', accent = '#ffc83d', name = 'Hadi Kafe', initials = 'HK' }) {
   return (
-    <div className="relative mx-auto w-[260px] rounded-[2.6rem] bg-gray-900 p-2.5 shadow-2xl shadow-gray-900/30 ring-1 ring-gray-800" aria-hidden="true">
+    <div className="relative mx-auto w-[260px] rounded-[2rem] border-[3px] border-ink bg-gray-900 p-2.5 shadow-[6px_6px_0_var(--color-ink)]" aria-hidden="true">
       <div className="absolute left-1/2 top-3.5 z-10 h-5 w-20 -translate-x-1/2 rounded-full bg-gray-900" />
       <div className="overflow-hidden rounded-[2.1rem] bg-[#fff7ee]">
         <div className="relative overflow-hidden rounded-b-3xl border-b-2 border-gray-900 px-4 pt-9 pb-5 text-white" style={{ background: color }}>

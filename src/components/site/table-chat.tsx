@@ -14,7 +14,7 @@ function Msg({ av, who, text, me = false, delay }: { av: string; who: string; te
   return (
     <div className={`chat-in flex items-end gap-2.5 ${me ? 'flex-row-reverse' : ''}`} style={{ animationDelay: `${delay}ms` }}>
       <Av id={av} />
-      <div className={`max-w-[280px] px-3.5 py-2.5 text-[15px] ${me ? 'rounded-[18px_18px_4px_18px] bg-grape text-white' : 'rounded-[18px_18px_18px_4px] bg-[#f3f0fb]'}`}>
+      <div className={`max-w-[280px] px-3.5 py-2.5 text-[15px] ${me ? 'rounded-[12px_12px_2px_12px] border-2 border-ink bg-grape text-white' : 'rounded-[12px_12px_12px_2px] border-2 border-ink bg-[#f3f0fb]'}`}>
         <small className={`block text-xs font-extrabold ${me ? 'text-[#e3d6ff]' : 'text-grape'}`}>{who}</small>
         {text}
       </div>
@@ -24,8 +24,8 @@ function Msg({ av, who, text, me = false, delay }: { av: string; who: string; te
 
 export default function TableChat() {
   return (
-    <div className="rounded-[28px] border border-[#e3dbf7] bg-white p-5 shadow-[0_30px_60px_-30px_rgba(76,29,149,.45)]" aria-label="Örnek masalar arası sohbet">
-      <div className="mb-4 flex items-center gap-2.5 border-b border-[#eee8fb] pb-3.5">
+    <div className="rounded-[14px] border-[3px] border-ink bg-white p-5 shadow-[6px_6px_0_var(--color-ink)]" aria-label="Örnek masalar arası sohbet">
+      <div className="mb-4 flex items-center gap-2.5 border-b-2 border-ink pb-3.5">
         <Av id="cizim" />
         <div>
           <p className="font-display text-lg leading-tight font-extrabold">Masa 3 ile sohbet</p>

@@ -45,9 +45,9 @@ export default async function GamePage({ params }: PageProps<'/oyunlar/[game]'>)
             <h1 className="text-5xl leading-[0.95] font-black uppercase md:text-7xl">{g.name}</h1>
             <p className="mt-4 text-xl opacity-90">{g.note}</p>
             <ul className="mt-6 flex flex-wrap gap-2 text-sm font-bold">
-              <li className="rounded-full bg-black/15 px-3.5 py-1.5">{g.players.replace('-', '–')} kişi</li>
-              <li className="rounded-full bg-black/15 px-3.5 py-1.5">{g.minutes.replace('-', '–')} dakika</li>
-              {info && <li className="rounded-full bg-black/15 px-3.5 py-1.5">{info.good}</li>}
+              <li className="rounded-lg border-2 border-ink bg-white px-3.5 py-1.5 text-ink">{g.players.replace('-', '–')} kişi</li>
+              <li className="rounded-lg border-2 border-ink bg-white px-3.5 py-1.5 text-ink">{g.minutes.replace('-', '–')} dakika</li>
+              {info && <li className="rounded-lg border-2 border-ink bg-white px-3.5 py-1.5 text-ink">{info.good}</li>}
             </ul>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href={`/demo/masa-1/oyunlar/${g.id}`} className="btn btn-white">Demo masada oyna</Link>

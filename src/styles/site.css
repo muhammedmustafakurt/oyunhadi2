@@ -1,5 +1,4 @@
-/* Tanıtım sitesi. Düzen gdevelop.io'dan esinlendi (kalın başlıklar, kayan oyun kartları, hap düğmeler, uçuşan
-   oyun nesneleri); renkler açık ve canlı: krem zemin, beyaz kartlar, oyun kartlarından gelen renkli bantlar.
+/* Tanıtım sitesi. Neobrütalist: kalın mürekkep kenar, sert ofset gölge, iskambil/oyun çuhası kimliği; renkler açık ve canlı: krem zemin, beyaz kartlar, oyun kartlarından gelen renkli bantlar.
    Yalnızca site dosyaları taranır. */
 @import 'tailwindcss' source(none);
 @source '../app/(site)';
@@ -47,6 +46,7 @@
 
 @layer base {
   *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--color-line); }
+  h1, h2 { font-weight: 900; }
   /* Site yalnızca açık temada tasarlandı; telefonların zorla karartmasını engelle */
   html { color-scheme: light; }
   body { background: var(--color-cream); color: var(--color-ink); }

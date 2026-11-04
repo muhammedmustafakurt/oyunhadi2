@@ -26,7 +26,7 @@ export default function FeaturesPage() {
                 <IconBox name={f.icon} tone={TONES[i % TONES.length]} />
                 <h2 className="mt-5 flex items-center gap-2 text-xl font-extrabold">
                   {f.title}
-                  {f.tag && <span className="rounded-full bg-sun px-2 py-0.5 font-sans text-xs font-bold tracking-normal">{f.tag}</span>}
+                  {f.tag && <span className="rounded-md border-2 border-ink bg-sun px-2 py-0.5 font-sans text-xs font-bold tracking-normal">{f.tag}</span>}
                 </h2>
                 <p className="mt-2 text-[15px] leading-relaxed text-muted">{f.body}</p>
               </article>

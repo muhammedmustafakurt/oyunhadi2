@@ -40,7 +40,7 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line py-6 text-sm text-muted">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t-[3px] border-ink py-6 text-sm text-muted">
           <p>&copy; {new Date().getFullYear()} oyunhadi. Tüm hakları saklıdır.</p>
           <p>Masada oynamayı sevenler için yapıldı.</p>
         </div>

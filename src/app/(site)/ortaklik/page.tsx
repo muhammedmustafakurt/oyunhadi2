@@ -52,7 +52,7 @@ export default function PartnersPage() {
           <ul className="mt-6 space-y-3">
             {PARTNER_GIVES.map((g) => <li key={g} className="flex gap-3 font-semibold"><span className="mt-1"><Icon name="check" className="fill-leaf" /></span>{g}</li>)}
           </ul>
-          <p className="mt-6 rounded-2xl border border-line bg-paper p-5 text-[15px] text-muted">
+          <p className="mt-6 card p-5 text-[15px] text-muted">
             Komisyon, gelir payı ya da fiyat konusunda bu sayfada bir vaadimiz yok. Şartlar başvuru sonrası görüşmede netleşir. Başvuru e-postası: <a className="font-semibold text-ink underline" href={`mailto:${PARTNER_EMAIL}`}>{PARTNER_EMAIL}</a>
           </p>
         </div>

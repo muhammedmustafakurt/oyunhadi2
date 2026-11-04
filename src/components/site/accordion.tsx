@@ -8,7 +8,7 @@ export default function Accordion({ children, title, active = false }: { childre
   const id = useId();
 
   return (
-    <div className={`rounded-2xl border bg-paper transition-colors ${open ? 'border-ink' : 'border-line'}`}>
+    <div className={`rounded-xl border-[2.5px] border-ink bg-paper transition-shadow ${open ? 'shadow-[2px_2px_0_var(--color-ink)]' : 'shadow-[4px_4px_0_var(--color-ink)]'}`}>
       <h3 className="font-sans tracking-normal">
         <button
           id={`${id}-t`}
@@ -18,7 +18,7 @@ export default function Accordion({ children, title, active = false }: { childre
           aria-controls={`${id}-p`}
         >
           <span>{title}</span>
-          <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full transition ${open ? 'rotate-45 bg-sun' : 'bg-sand'}`} aria-hidden="true">
+          <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-md border-2 border-ink transition ${open ? 'rotate-45 bg-sun' : 'bg-white'}`} aria-hidden="true">
             <svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </span>
         </button>

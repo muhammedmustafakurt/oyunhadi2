@@ -2,7 +2,7 @@
 type P = { className?: string; r?: number; delay?: string };
 
 const wrap = (className = '', r = 0, delay = '0s') => ({
-  className: `pointer-events-none absolute animate-float drop-shadow-[0_18px_24px_rgba(29,27,40,.25)] ${className}`,
+  className: `pointer-events-none absolute animate-float drop-shadow-[5px_5px_0_var(--color-ink)] ${className}`,
   style: { '--r': `${r}deg`, animationDelay: delay } as React.CSSProperties,
   'aria-hidden': true as const,
 });

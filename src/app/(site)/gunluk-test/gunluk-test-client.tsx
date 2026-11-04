@@ -172,20 +172,20 @@ export default function DailyQuiz() {
   return (
     <div className="card mx-auto max-w-2xl p-6 md:p-10">
       {solvedToday && step === 0 && (
-        <p className="mb-5 rounded-xl bg-sun/40 px-4 py-3 text-sm font-semibold">
+        <p className="mb-5 rounded-xl border-[2.5px] border-ink bg-sun px-4 py-3 text-sm font-semibold">
           Bugün bu testi çözmüştün: <strong>{GAMES.find((g) => g.id === solvedToday)?.name}</strong> çıkmıştı. İstersen yine çözebilirsin.
         </p>
       )}
       <div className="flex items-center justify-between text-sm font-bold text-muted">
         <span>Soru {step + 1} / {quiz.length}</span>
         <span aria-hidden="true" className="flex gap-1.5">
-          {quiz.map((_, i) => <span key={i} className={`h-2 w-6 rounded-full ${i <= step ? 'bg-grape' : 'bg-sand'}`} />)}
+          {quiz.map((_, i) => <span key={i} className={`h-3 w-6 rounded-sm border-2 border-ink ${i <= step ? 'bg-grape' : 'bg-sand'}`} />)}
         </span>
       </div>
       <h2 className="mt-5 text-2xl leading-tight font-black md:text-3xl">{q.q}</h2>
       <div className="mt-6 grid gap-3">
         {q.o.map((o, idx) => (
-          <button key={o.i} type="button" onClick={() => pick(idx)}className="min-h-12 rounded-2xl border-2 border-line bg-paper px-5 py-3 text-left text-base font-semibold transition hover:border-ink hover:bg-cream focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-grape">
+          <button key={o.i} type="button" onClick={() => pick(idx)}className="min-h-12 rounded-xl border-[2.5px] border-ink bg-paper px-5 py-3 text-left text-base font-bold shadow-[3px_3px_0_var(--color-ink)] transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-sun hover:shadow-[5px_5px_0_var(--color-ink)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-grape">
             {o.t}
           </button>
         ))}

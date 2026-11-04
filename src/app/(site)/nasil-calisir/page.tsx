@@ -48,13 +48,13 @@ export default function HowPage() {
       <section className="pb-20 md:pb-24">
         <div className="mx-auto grid max-w-7xl gap-5 px-4 sm:px-6 lg:grid-cols-2">
           {([['Misafir için', GUEST, 'band-coral'], ['Mekân için', VENUE, 'band-grape']] as const).map(([title, items, band]) => (
-            <div key={title} className={`${band} relative overflow-hidden rounded-[1.75rem] p-8 md:p-10`}>
+            <div key={title} className={`${band} relative overflow-hidden rounded-[14px] border-[3px] border-ink shadow-[6px_6px_0_var(--color-ink)] p-8 md:p-10`}>
               <div className="confetti pointer-events-none absolute inset-0" aria-hidden="true" />
               <h2 className="relative mb-8 text-3xl font-black">{title}</h2>
               <ol className="relative space-y-6">
                 {items.map(([h, p], i) => (
                   <li key={h} className="flex gap-4">
-                    <span className="font-display grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-sm font-black text-ink">{i + 1}</span>
+                    <span className="font-display grid h-9 w-9 shrink-0 place-items-center rounded-lg border-2 border-ink bg-white text-sm font-black text-ink">{i + 1}</span>
                     <div><p className="font-bold">{h}</p><p className="mt-1 text-[15px] text-white/85">{p}</p></div>
                   </li>
                 ))}
