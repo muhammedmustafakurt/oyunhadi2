@@ -34,6 +34,8 @@ body {
   font-size: 1rem;
   line-height: 1.5;
 }
+/* Düğmeler tarayıcı varsayılanı yerine (iOS'ta mavi) sayfa metin rengini alsın */
+button { color: inherit; }
 a { color: var(--blue); text-underline-offset: 3px; }
 @media (prefers-color-scheme: dark) { a { color: #8c98ff; } }
 
@@ -1595,7 +1597,8 @@ polygon.ct-hit:hover { fill: rgba(255, 255, 255, .28); }
 .sf-cats { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: none; }
 .sf-cats::-webkit-scrollbar { display: none; }
 .sf-cats button { flex: none; font: inherit; font-size: .82rem; font-weight: 800; padding: 6px 13px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--white); color: var(--ink); cursor: pointer; }
-.sf-cats button.on { background: var(--c, var(--ink)); border-color: var(--c, var(--ink)); color: #fff; }
+.sf-cats button.on { background: var(--c, var(--ink)); border-color: var(--c, var(--ink)); color: var(--on, #fff); }
+.sf-cats button.on:not([style]) { --on: var(--paper); }
 .sf-locs ul { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 7px; }
 .sf-loc { padding: 9px 3px 7px; gap: 5px; font-size: .74rem; line-height: 1.1; border-radius: 14px; }
 .sf-loc i { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 13px; background: color-mix(in srgb, var(--c, var(--blue)) 16%, var(--white)); color: var(--c, var(--blue)); }
