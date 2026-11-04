@@ -1,5 +1,5 @@
 /* Okey 101 masası. Taşlar CSS ile çizilir. Palet: mürekkep #1c1233, krem #fff7ee. */
-.ok-wrap { display: grid; gap: 12px; max-width: 640px; margin: 0 auto; padding: 0 2px; color: #1c1233; }
+.ok-wrap { display: grid; gap: 12px; max-width: 640px; margin: 0 auto; padding: 0 2px; color: var(--ink-page, #1c1233); }
 .ok-wrap h2, .ok-wrap h3 { margin: 0; }
 .ok-h { font-size: 15px; }
 .ok-h small, .ok-small { font-size: 13px; opacity: .75; margin: 0; }

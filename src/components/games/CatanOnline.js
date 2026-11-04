@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Lobby from './Lobby';
+import LeaveButton from './LeaveButton';
 import useRoom from './useRoom';
 import { layout, RES, RES_TR, COST } from '@/lib/catan';
 
@@ -458,7 +459,7 @@ export default function CatanOnline({ cafe, masa }) {
 
       {err && <p className="mono-err" role="alert">{err}</p>}
       {seated && !g.over && (
-        <button className="btn sm ct-leave" disabled={busy} onClick={() => send('leave')}>Masadan ayrıl</button>
+        <LeaveButton className="ct-leave" busy={busy} onLeave={() => send('leave')} />
       )}
     </div>
   );

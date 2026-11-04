@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Lobby from './Lobby';
 import useRoom, { getPid } from './useRoom';
-import { slide } from '@/lib/g2048';
+import { slide, MIN_MOVE_GAP_MS, TOO_FAST } from '@/lib/g2048';
 import '@/styles/game-2048.css';
 import '@/styles/game-2048-polish.css';
 
@@ -12,6 +12,7 @@ import '@/styles/game-2048-polish.css';
 const DIRS = { l: 'sol', r: 'sağ', u: 'yukarı', d: 'aşağı' };
 const ARROWS = { ArrowLeft: 'l', ArrowRight: 'r', ArrowUp: 'u', ArrowDown: 'd' };
 const MAX_QUEUE = 3;
+const SEND_GAP_MS = MIN_MOVE_GAP_MS + 20; // sunucunun hamle aralığı sınırının biraz üstü (ağ titreşimi payı)
 
 const fmt = (ms) => {
   const s = Math.ceil(ms / 1000);
@@ -38,6 +39,7 @@ export default function G2048Online({ cafe, masa }) {
   const [sure, setSure] = useState(false);
   const pend = useRef([]);
   const flying = useRef(false);
+  const lastSend = useRef(0);
   const endAt = useRef(0);
   const lastVer = useRef(-1);
   const endSent = useRef(0);
@@ -76,7 +78,11 @@ export default function G2048Online({ cafe, masa }) {
     while (pend.current.length) {
       const dir = pend.current[0];
       try {
+        const wait = lastSend.current + SEND_GAP_MS - Date.now();
+        if (wait > 0) await new Promise((res) => setTimeout(res, wait));
+        lastSend.current = Date.now();
         const d = await post('gxmove', { dir });
+        if (d.error === TOO_FAST) continue; // sunucu çok hızlı buldu: hamle sırada kalır, aralık sonrası yeniden denenir
         if (d.seats) { setOwn(d); setLocalErr(d.error && d.error !== 'Bu yönde kayma yok.' ? d.error : ''); }
         else { setLocalErr(d.error || 'Hamle gönderilemedi.'); pend.current = []; }
       } catch {

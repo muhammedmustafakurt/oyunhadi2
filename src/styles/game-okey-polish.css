@@ -21,3 +21,8 @@
 .ok-over { border: 2.5px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink); }
 .ok-over h2, .ok-over h3 { font-family: var(--logo); font-style: italic; font-weight: 800; }
 .ok-h { font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.05rem; }
+
+/* Koyu tema: kök yazısı sayfa mürekkebi (--ink-page); açık tahta yüzeyleri koyu yazısını kendisi taşır. */
+.ok-top, .ok-players li, .ok-panel, .ok-over, .ok-hand, .ok-pile.take { color: #1c1233; }
+.ok-pile { border-color: color-mix(in srgb, var(--ink-page, #1c1233) 33%, transparent); background: color-mix(in srgb, var(--ink-page, #1c1233) 4%, transparent); }
+.ok-pile.take { border-color: #1c1233; background: #fff1c9; }

@@ -1,4 +1,4 @@
-.ps { display: grid; gap: 14px; color: #1c1233; }
+.ps { display: grid; gap: 14px; color: var(--ink-page, #1c1233); }
 .ps button:focus-visible { outline: 3px solid #5a3fd1; outline-offset: 2px; }
 .ps-players { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
 .ps-players li { display: grid; gap: 2px; padding: 10px 12px; background: #fff7ee; border: 2px solid #1c123322; border-radius: 12px; }

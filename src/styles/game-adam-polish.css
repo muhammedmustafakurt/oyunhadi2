@@ -28,3 +28,6 @@
 .ad-over li { border: 2px solid #1c123322; font-weight: 700; }
 .ad-over li.win { background: #f2b01e66; border-color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { .ad-keys button { transition: none; } }
+
+/* Koyu tema: kök yazısı sayfa mürekkebi (--ink-page); açık tahta yüzeyleri koyu yazısını kendisi taşır. */
+.ad-scores li, .ad-board, .ad-over { color: #1c1233; }

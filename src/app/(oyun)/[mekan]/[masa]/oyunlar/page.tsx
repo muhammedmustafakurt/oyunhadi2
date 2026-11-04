@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import GameDeck, { type DeckGame } from '@/components/oyun/GameDeck';
 import VenueBadge from '@/components/oyun/VenueBadge';
+import ActiveReward from '@/components/oyun/ActiveReward';
 import ChatWidget from '@/components/sohbet/ChatWidget';
 import Link from 'next/link';
 import { findCafe, hasTable } from '@/lib/rooms';
@@ -54,6 +55,8 @@ export default async function TableGames({ params }: PageProps<'/[mekan]/[masa]/
       {v.announcement && (
         <p className="felt-news"><b>Duyuru</b> {v.announcement.title}. {v.announcement.body}</p>
       )}
+
+      <ActiveReward cafe={mekan} />
 
       {open.map((e) => (
         <Link key={e.id} href={`/${mekan}/${masa}/etkinlik/${e.id}`} className="felt-live">

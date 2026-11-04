@@ -2,6 +2,7 @@
 import '@/styles/game-pisti.css';
 import '@/styles/game-pisti-polish.css';
 import Lobby from './Lobby';
+import LeaveButton from './LeaveButton';
 import useRoom from './useRoom';
 import { PALETTE } from '@/lib/emlak';
 import { rankOf, suitOf } from '@/lib/pisti';
@@ -116,7 +117,7 @@ export default function PistiOnline({ cafe, masa }) {
 
       <p className="mono-where">Aynı değerde kart ya da vale yeri toplar. Yerde tek kart varken aynı değerle toplamak pişti (10 puan, vale ile 20).</p>
       {err && <p className="mono-err" role="alert">{err}</p>}
-      {seated && !over && <button type="button" className="btn sm" disabled={busy} onClick={() => send('leave')} aria-label="Masadan ayrıl">Masadan ayrıl</button>}
+      {seated && !over && <LeaveButton busy={busy} onLeave={() => send('leave')} />}
     </div>
   );
 }

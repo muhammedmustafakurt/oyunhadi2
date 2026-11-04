@@ -55,17 +55,29 @@ export default function useRoom({ cafe, masa, game, event, pollMs = POLL_MS }) {
   useEffect(() => {
     if (!pid) return;
     let dead = false;
+    let inflight = false; // önceki yoklama bitmeden yenisi başlamaz
+    let fails = 0, nextAt = 0; // hata sonrası üstel geri çekilme (en çok ~10 sn)
+    const fail = () => { fails++; nextAt = Date.now() + Math.min(10000, pollMs * 2 ** fails); };
     const tick = async () => {
-      if (document.hidden) return;
+      if (document.hidden || inflight || Date.now() < nextAt) return;
+      inflight = true;
+      const ctl = new AbortController();
+      const to = setTimeout(() => ctl.abort(), 15000); // asılı kalan istek yoklamayı sonsuza dek kilitlemesin
       try {
-        const r = await fetch(`/api/room?cafe=${cafe}&masa=${masa}&game=${game}&pid=${pid}&v=${ver.current}${event ? `&event=${event}` : ''}`, { cache: 'no-store' });
+        const r = await fetch(`/api/room?cafe=${cafe}&masa=${masa}&game=${game}&pid=${pid}&v=${ver.current}${event ? `&event=${event}` : ''}`, { cache: 'no-store', signal: ctl.signal });
         const d = await r.json();
         if (dead) return;
-        if (!r.ok) { setErr(d.error || 'Masa açılamadı.'); return; }
+        if (!r.ok) { fail(); setErr(d.error || 'Masa açılamadı.'); return; }
+        fails = 0; nextAt = 0;
         setErr('');
         if (!d.unchanged) { ver.current = d.version; setRoom(d); }
       } catch {
-        if (!dead) setErr('Bağlantı koptu, yeniden deneniyor…');
+        if (dead) return;
+        fail();
+        setErr('Bağlantı koptu, yeniden deneniyor…');
+      } finally {
+        clearTimeout(to);
+        inflight = false;
       }
     };
     tick();

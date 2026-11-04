@@ -20,7 +20,6 @@ import KadroOnline from '@/components/games/KadroOnline';
 import FutbolcuOnline from '@/components/games/FutbolcuOnline';
 import PistiOnline from '@/components/games/PistiOnline';
 import OkeyOnline from '@/components/games/OkeyOnline';
-import TavlaOnline from '@/components/games/TavlaOnline';
 import G2048Online from '@/components/games/G2048Online';
 import AdamOnline from '@/components/games/AdamOnline';
 import ResetTable from '@/components/oyun/ResetTable';
@@ -39,7 +38,7 @@ const VIEWS: Record<string, React.ComponentType<{ cafe: string; masa: string }>>
   monopoly: MonopolyOnline, satranc: ChessOnline, spyfall: SpyfallOnline, ajanlar: AjanlarOnline, vampir: VampirOnline,
   tabu: TabuOnline, kimim: KimimOnline, cizim: CizimOnline, bil: BilOnline, azul: AzulOnline, risk: RiskOnline,
   cluedo: CluedoOnline, scrabble: ScrabbleOnline, carcassonne: CarcassonneOnline, catan: CatanOnline, ticket: TicketOnline, kadro: KadroOnline, futbolcu: FutbolcuOnline,
-  pisti: PistiOnline, okey: OkeyOnline, tavla: TavlaOnline, g2048: G2048Online, adam: AdamOnline,
+  pisti: PistiOnline, okey: OkeyOnline, g2048: G2048Online, adam: AdamOnline,
 };
 
 export async function generateMetadata({ params }: PageProps<'/[mekan]/[masa]/oyunlar/[game]'>) {

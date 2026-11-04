@@ -14,15 +14,20 @@ export default function Presence({ cafe, masa, game, event = /** @type {string |
   useEffect(() => {
     let dead = false;
     let ver = -1;
+    let last = null; // son tam görünüm { room, at }
     const pid = getPid();
     const poll = async () => {
       if (document.hidden) return;
       try {
-        const r = await fetch(`/api/room?cafe=${cafe}&masa=${masa}&game=${game}&pid=${pid}&v=${ver}${event ? `&event=${event}` : ''}`, { cache: 'no-store' });
+        // Ping'ler sürümü artırmaz; sunucudaki 'seen' yenilense de sürüm aynı kalır ve 'unchanged' döner. Bu yüzden yerelde
+        // ilerletilen boşta süresi eşiğe yaklaşan biri varsa sürüm yok sayılır (v=-1) ve taze idleMs alınır.
+        const near = last && last.room.me >= 0 && last.room.seats.some((s, i) => i !== last.room.me && !s.left && s.idleMs + (Date.now() - last.at) >= IDLE_MS - 15000);
+        const r = await fetch(`/api/room?cafe=${cafe}&masa=${masa}&game=${game}&pid=${pid}&v=${near ? -1 : ver}${event ? `&event=${event}` : ''}`, { cache: 'no-store' });
         const d = await r.json();
         if (dead || !r.ok || d.unchanged) return;
         ver = d.version;
-        setSnap({ room: d, at: Date.now() });
+        last = { room: d, at: Date.now() };
+        setSnap(last);
       } catch {}
     };
     poll();

@@ -43,3 +43,8 @@ button.ps-card:disabled { opacity: .62; }
 .ps-over thead th { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #1c1233a0; }
 .ps-over tr.win { background: #f2b01e55; font-weight: 800; }
 @media (prefers-reduced-motion: reduce) { .ps-hand.me .cards > button { animation: none; } .ps-card { transition: none; } }
+
+/* Koyu tema: kök yazısı sayfa mürekkebi (--ink-page); açık tahta yüzeyleri koyu yazısını kendisi taşır. Açık temada --ink-page = #1c1233 (görünüm aynı). */
+.ps-players li, .ps-hand.me, .ps-over { color: #1c1233; }
+.ps-hand { border-color: color-mix(in srgb, var(--ink-page, #1c1233) 25%, transparent); background: color-mix(in srgb, var(--ink-page, #1c1233) 4%, transparent); }
+.ps-hand.me { border-color: #1c1233; background: linear-gradient(#fff4d1, #fde9ad); }

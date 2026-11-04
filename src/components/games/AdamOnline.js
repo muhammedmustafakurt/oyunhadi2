@@ -3,6 +3,7 @@ import '@/styles/game-adam.css';
 import '@/styles/game-adam-polish.css';
 import { useEffect, useState } from 'react';
 import Lobby from './Lobby';
+import LeaveButton from './LeaveButton';
 import useRoom from './useRoom';
 import { PALETTE } from '@/lib/emlak';
 
@@ -123,7 +124,7 @@ export default function AdamOnline({ cafe, masa }) {
       )}
 
       {err && <p className="mono-err" role="alert">{err}</p>}
-      {seated && !over && <button type="button" className="btn sm" disabled={busy} onClick={() => send('leave')} aria-label="Masadan ayrıl">Masadan ayrıl</button>}
+      {seated && !over && <LeaveButton busy={busy} onLeave={() => send('leave')} />}
     </div>
   );
 }

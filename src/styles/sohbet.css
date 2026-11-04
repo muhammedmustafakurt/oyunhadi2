@@ -4,7 +4,7 @@
 .sh-fab {
   position: fixed; right: 14px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 60;
   width: 44px; height: 44px; border-radius: 50%;
-  background: var(--brand); color: #fff; border: 2.5px solid var(--ink);
+  background: var(--brand); color: var(--on-brand, #fff); border: 2.5px solid var(--ink);
   box-shadow: 0 4px 0 var(--shadow); display: grid; place-items: center; cursor: pointer;
   transition: transform .08s, box-shadow .08s;
 }
@@ -13,7 +13,7 @@
 .sh-fab-badge {
   position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; padding: 0 5px;
   display: grid; place-items: center; border-radius: 999px;
-  background: var(--accent); color: var(--ink); border: 2px solid var(--ink);
+  background: var(--accent); color: var(--on-accent, #0b1033); border: 2px solid var(--ink);
   font-size: .68rem; font-weight: 800;
 }
 
@@ -30,7 +30,7 @@
   animation: sh-pop .18s ease-out;
 }
 .sh-toast-avatar {
-  flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--brand); color: #fff;
+  flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--brand); color: var(--on-brand, #fff);
   display: grid; place-items: center; font-weight: 800; border: 2px solid var(--ink);
 }
 .sh-toast-body { min-width: 0; display: grid; gap: 1px; }
@@ -58,14 +58,14 @@
 
 .sh-sheet-top {
   flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-  background: var(--brand); color: #fff; border-bottom: 2.5px solid var(--ink);
+  background: var(--brand); color: var(--on-brand, #fff); border-bottom: 2.5px solid var(--ink);
 }
 .sh-sheet-title { flex: 1; min-width: 0; display: grid; line-height: 1.2; }
 .sh-sheet-title b { font-size: 1rem; letter-spacing: -.01em; }
 .sh-sheet-title small { font-size: .76rem; opacity: .9; display: flex; align-items: center; gap: 5px; }
 .sh-sheet-btn {
   flex: none; width: 32px; height: 32px; border-radius: 10px;
-  background: rgba(255, 255, 255, .18); color: #fff; border: 2px solid var(--ink);
+  background: color-mix(in srgb, var(--on-brand, #fff) 18%, transparent); color: var(--on-brand, #fff); border: 2px solid var(--ink);
   font-size: .95rem; font-weight: 800; cursor: pointer; line-height: 1;
 }
 .sh-sheet-btn:active { transform: translateY(1px); }
@@ -81,7 +81,7 @@
 
 .sh-banner {
   flex: none; margin: 0; padding: 8px 12px; font-size: .82rem; font-weight: 700;
-  background: var(--accent); color: var(--ink); border-bottom: 2px solid var(--ink);
+  background: var(--accent); color: var(--on-accent, #0b1033); border-bottom: 2px solid var(--ink);
 }
 .sh-alert {
   margin: 0; padding: 10px 12px; border-radius: 12px; font-size: .88rem; font-weight: 600;
@@ -102,7 +102,7 @@
 
 .sh-avatar {
   flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
-  background: var(--brand); color: #fff; font-weight: 800; font-size: 1.1rem;
+  background: var(--brand); color: var(--on-brand, #fff); font-weight: 800; font-size: 1.1rem;
   border: 2.5px solid var(--ink); box-shadow: 0 3px 0 var(--shadow);
 }
 .sh-avatar.sm { width: 38px; height: 38px; font-size: .95rem; }
@@ -135,7 +135,7 @@
 .sh-sec h2 { margin: 2px 0 0; font-size: .98rem; display: flex; align-items: center; gap: 8px; }
 .sh-count {
   display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 7px;
-  border-radius: 999px; background: var(--brand); color: #fff; font-size: .74rem; font-weight: 800;
+  border-radius: 999px; background: var(--brand); color: var(--on-brand, #fff); font-size: .74rem; font-weight: 800;
 }
 
 .sh-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -155,7 +155,7 @@
 
 .sh-unread {
   flex: none; min-width: 24px; height: 24px; padding: 0 7px; display: grid; place-items: center;
-  border-radius: 999px; background: var(--brand); color: #fff; font-size: .76rem; font-weight: 800;
+  border-radius: 999px; background: var(--brand); color: var(--on-brand, #fff); font-size: .76rem; font-weight: 800;
   border: 2px solid var(--ink);
 }
 .sh-tag { font-size: .76rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
@@ -202,7 +202,7 @@
 }
 .sh-msg p { margin: 0; font-size: .94rem; line-height: 1.35; white-space: pre-wrap; }
 .sh-msg small { display: flex; gap: 6px; align-items: center; margin-top: 3px; font-size: .68rem; color: var(--muted); }
-.sh-msg.mine { align-self: flex-end; background: var(--brand); color: #fff; border-radius: 16px 16px 4px 16px; }
+.sh-msg.mine { align-self: flex-end; background: var(--brand); color: var(--on-brand, #fff); border-radius: 16px 16px 4px 16px; }
 .sh-msg.mine small { color: rgba(255, 255, 255, .8); justify-content: flex-end; }
 .sh-msg.failed { background: color-mix(in srgb, var(--brand) 10%, var(--white)); color: var(--ink); }
 .sh-msg.failed small { color: #c0392b; }

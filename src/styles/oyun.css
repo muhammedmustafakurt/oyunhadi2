@@ -94,7 +94,7 @@ input:focus { outline: none; border-color: var(--blue); }
   transition: background-color .15s, border-color .15s;
 }
 .btn:hover { border-color: var(--ink); }
-.btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn.primary { background: var(--blue); border-color: var(--blue); color: var(--on-brand, #fff); }
 .btn.primary:hover { background: var(--blue-deep); border-color: var(--blue-deep); }
 .btn.danger { color: var(--err); }
 .btn.sm { min-height: 36px; padding: 6px 12px; font-size: .85rem; border-radius: 10px; border-width: 1.5px; }
@@ -936,7 +936,7 @@ code { font: 600 .95em var(--font), sans-serif; font-variant-numeric: tabular-nu
 .cl .btn { white-space: normal; text-align: center; min-height: 48px; }
 .cl .btn.sm { min-height: 44px; padding: 8px 16px; font-size: .92rem; }
 .cl-status { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--white); border: 2.5px solid var(--ink); box-shadow: 0 4px 0 var(--shadow); }
-.cl-status.mine { background: var(--accent); color: #1c1233; }
+.cl-status.mine { background: var(--accent); color: var(--on-accent, #1c1233); }
 .cl-status .av { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-style: normal; font-weight: 800; border: 2.5px solid var(--ink); }
 .cl-status-t { flex: 1; min-width: 0; }
 .cl-status p { margin: 0; font-weight: 800; line-height: 1.3; }
@@ -948,10 +948,10 @@ code { font: 600 .95em var(--font), sans-serif; font-variant-numeric: tabular-nu
 .cl-hint { font-size: .88rem; color: var(--muted); font-weight: 600; margin: 2px 0 6px; }
 .cl-card { padding: 14px; border-radius: 16px; background: var(--white); border: 2.5px solid var(--ink); box-shadow: 0 4px 0 var(--shadow); display: grid; gap: 10px; }
 .cl-card > * { margin: 0; }
-.cl-card.reveal { background: var(--accent); color: #1c1233; animation: cl-pop .25s ease-out; }
+.cl-card.reveal { background: var(--accent); color: var(--on-accent, #1c1233); animation: cl-pop .25s ease-out; }
 .cl-card.reveal small { display: block; opacity: .8; font-weight: 600; }
 .cl-card.refute { background: var(--tint); }
-.cl-card.over { background: var(--accent); color: #1c1233; }
+.cl-card.over { background: var(--accent); color: var(--on-accent, #1c1233); }
 .cl-kicker { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
 .cl-big { font-size: 1.7rem; line-height: 1.1; font-weight: 800; }
 .cl-win { font-size: 1.15rem; font-weight: 800; }
@@ -971,7 +971,7 @@ code { font: 600 .95em var(--font), sans-serif; font-variant-numeric: tabular-nu
 .cl-pn b { font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cl-pn small { font-size: .74rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cl-players em { font-style: normal; font-size: .68rem; font-weight: 800; padding: 2px 7px; border-radius: 999px; background: var(--err); color: #fff; flex: none; }
-.cl-players em.t { background: var(--accent); color: #1c1233; }
+.cl-players em.t { background: var(--accent); color: var(--on-accent, #1c1233); }
 .cl-players .av { flex: none; width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center; color: #fff; font-style: normal; font-size: .8rem; font-weight: 800; border: 2px solid var(--ink); }
 
 .cl-map { width: 100%; height: auto; max-width: 520px; margin: 0 auto; display: block; padding: 4px; border-radius: 20px; background: var(--white); border: 2.5px solid var(--ink); box-shadow: 0 4px 0 var(--shadow); touch-action: manipulation; }
@@ -995,7 +995,7 @@ code { font: 600 .95em var(--font), sans-serif; font-variant-numeric: tabular-nu
 .cl-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .cl-actions .btn { flex: 1 1 150px; }
 .cl-actions.wrap .btn { flex: 1 1 130px; }
-.cl .btn.cl-go { background: var(--accent); border-color: var(--ink); color: #1c1233; box-shadow: 0 3px 0 var(--shadow); }
+.cl .btn.cl-go { background: var(--accent); border-color: var(--ink); color: var(--on-accent, #1c1233); box-shadow: 0 3px 0 var(--shadow); }
 .cl .btn.cl-show { flex-direction: column; gap: 2px; min-height: 64px; font-size: 1.05rem; box-shadow: 0 3px 0 var(--shadow); }
 .cl .btn.cl-show small { font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
 .cl .btn.cl-toggle { width: 100%; }
@@ -1022,7 +1022,7 @@ code { font: 600 .95em var(--font), sans-serif; font-variant-numeric: tabular-nu
 .cl-note.x .cl-note-name { text-decoration: line-through; opacity: .55; }
 .cl-note.x .cl-note-mark { background: var(--err); }
 .cl-note.q button { background: color-mix(in srgb, var(--accent) 30%, transparent); border-color: var(--accent); }
-.cl-note.q .cl-note-mark { background: var(--accent); color: #1c1233; }
+.cl-note.q .cl-note-mark { background: var(--accent); color: var(--on-accent, #1c1233); }
 .cl-note.own button { background: var(--tint); border-color: var(--ink); }
 .cl-note.own .cl-note-mark { background: var(--ink); color: var(--paper); }
 
@@ -1887,4 +1887,6 @@ button.kd-slot { cursor: pointer; touch-action: manipulation; }
   .fb-stats .y b { color: #5fd88c; }
   /* --ink açık olunca beyaz yazı görünmez oluyordu */
   .aj-card.key.a, .aj-card.rev.a { color: var(--paper); }
+  /* Oyuncu rengiyle yazılan "Sıra sizde" (mavi #2438e8) koyu panelde 2.2:1 kalıyordu */
+  .mono-players li.on .pn span:first-of-type { color: color-mix(in srgb, var(--pc) 55%, #fff); }
 }
