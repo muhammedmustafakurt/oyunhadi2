@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless';
-import { randomBytes, scryptSync } from 'node:crypto';
+import { createHash, randomBytes, scryptSync } from 'node:crypto';
 import { isRewardGame } from './reward-games';
 
 // Neon (sunucusuz Postgres). Bağlantı adresi DATABASE_URL ortam değişkeninden gelir.
@@ -71,6 +71,7 @@ const SCHEMA = [
     players INTEGER NOT NULL DEFAULT 0,
     at BIGINT NOT NULL
   )`,
+  `CREATE INDEX IF NOT EXISTS play_logs_biz_at ON play_logs (biz_id, at)`,
 
   // Başarısız panel giriş denemeleri (e-posta ve IP başına hız sınırı için).
   `CREATE TABLE IF NOT EXISTS login_attempts (
@@ -263,7 +264,7 @@ const SCHEMA = [
 // Tohum yalnızca boş veritabanında çalışır; sonradan eklenen oyunlar mevcut mekânların listesine girmez.
 // Bu düzeltme, 5 yeni masa oyununu mevcut mekânlara bir kez ekler (sonra paneldeki seçim geçerlidir).
 const GAME_MIGRATIONS = [
-  { name: 'add-games-2026-11', ids: ['pisti', 'okey', 'tavla', 'g2048', 'adam'] },
+  { name: 'add-games-2026-11', ids: ['pisti', 'okey', 'g2048', 'adam'] },
   { name: 'add-games-2026-11b', ids: ['kadro', 'futbolcu'] },
 ];
 
@@ -282,7 +283,7 @@ const SEED_VENUES = () => {
     {
       slug: 'demo', name: 'Hadi Kafe', city: 'Kadıköy, İstanbul', initials: 'HK', logo_url: null,
       color: '#ff4f2e', accent: '#ffc83d', ntables: 12, lat: null, lng: null,
-      games: 'monopoly,satranc,spyfall,ajanlar,vampir,tabu,kimim,cizim,bil,azul,catan,risk,cluedo,scrabble,ticket,carcassonne,kadro,futbolcu,pisti,okey,tavla,g2048,adam',
+      games: 'monopoly,satranc,spyfall,ajanlar,vampir,tabu,kimim,cizim,bil,azul,catan,risk,cluedo,scrabble,ticket,carcassonne,kadro,futbolcu,pisti,okey,g2048,adam',
       welcome: 'Çaylar bizden değil ama oyunlar bizden!',
       ann_title: 'Cuma akşamı Tabu turnuvası', ann_body: "Saat 20:00'de. Kazanan masaya büyük boy pizza ikramımız.",
       reward_game: 'bil', reward_goal: "Bil Bakalım'da 6.000 puanı geç", reward_prize: '1 tatlı ikram',
@@ -301,12 +302,19 @@ const SEED_VENUES = () => {
   ].map((v) => ({ ...v, created_at: now, updated_at: now }));
 };
 
+const SCHEMA_SIG = SCHEMA.join(';');
 function ensure() {
-  const sig = SCHEMA.join(';');
+  const sig = SCHEMA_SIG;
   if (g.__dbSig !== sig) { g.__dbSig = sig; g.__dbReady = null; }
   g.__dbReady ??= (async () => {
     const q = await client();
-    for (const stmt of SCHEMA) await q(stmt, []);
+    // Şema imzası: aynı imza daha önce işlendiyse ~40 ardışık DDL atlanır (soğuk açılış gecikmesi). Şema değişince imza değişir.
+    const sigName = `schema-${createHash('sha1').update(SCHEMA_SIG).digest('hex').slice(0, 12)}`;
+    await q(SCHEMA[SCHEMA.length - 1], []); // migrations tablosu (SCHEMA'nın son ifadesi olmalı)
+    if (!(await q('SELECT name FROM migrations WHERE name = $1', [sigName])).length) {
+      for (const stmt of SCHEMA) await q(stmt, []);
+      await q('INSERT INTO migrations (name, at) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING', [sigName, Date.now()]);
+    }
     const rows = await q('SELECT count(*)::int AS n FROM venues', []);
     if (rows[0]?.n === 0) {
       for (const v of SEED_VENUES()) {

@@ -3,6 +3,7 @@ import { findCafe, hasTable, nearCafe, MASA_RE, PID_RE } from '@/lib/rooms';
 import { gateEvent } from '@/lib/events';
 import { loadState, playerAct, playerView } from '@/lib/eventgames';
 import { clientIp, floodOk, hit } from '@/lib/ratelimit';
+import { readBody, BODY_ERRORS } from '@/lib/guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,10 @@ const ACTIONS = new Set(['join', 'mark', 'claim']);
 // ve durumu 'acik' olmalı. Tek istisna GET: bitmiş etkinliğin sonuç ekranı (kazananlar) okunabilir (results);
 // kapalı (henüz açılmamış) etkinlik hiçbir istekte geçmez, bitmiş etkinliğe POST ile hiçbir şey yazılamaz.
 async function resolve({ cafe, masa, event, pid }, { write }) {
+  // Tür sıkılığı: dizi/nesne String() ile geçerli görünebilir; yalnızca dize (event: dize ya da tam sayı) kabul edilir.
+  if (![cafe, masa, pid].every((x) => typeof x === 'string') || (typeof event !== 'string' && !Number.isInteger(event))) {
+    return { err: json({ error: 'Geçersiz istek.' }, 400) };
+  }
   if (!/^[a-z0-9-]{1,50}$/.test(String(cafe)) || !MASA_RE.test(String(masa)) || !PID_RE.test(String(pid))) {
     return { err: json({ error: 'Geçersiz istek.' }, 400) };
   }
@@ -44,16 +49,17 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  let body;
-  try { body = await req.json(); } catch { return json({ error: 'Geçersiz istek.' }, 400); }
+  const rb = await readBody(req, 32 * 1024);
+  if (rb.status) return json({ error: BODY_ERRORS[rb.status] }, rb.status);
+  const body = rb.body;
   try {
-    if (!body || typeof body !== 'object') return json({ error: 'Geçersiz istek.' }, 400);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Geçersiz istek.' }, 400);
     const ip = clientIp(req);
     if (!floodOk(`event:${ip}`, 600, 60_000)) return json({ error: 'Çok fazla istek. Biraz yavaşlayın.' }, 429);
     const { biz, ev, err } = await resolve(body, { write: true });
     if (err) return err;
     const a = body.action;
-    if (!a || typeof a.type !== 'string' || !ACTIONS.has(a.type)) return json({ error: 'Bilinmeyen işlem.' }, 400);
+    if (!a || typeof a !== 'object' || typeof a.type !== 'string' || !ACTIONS.has(a.type)) return json({ error: 'Bilinmeyen işlem.' }, 400);
     // Katılım (kart alma / çekilişe girme) kötüye kullanıma açık: IP'ye ve etkinliğe göre sınır.
     if (a.type === 'join') {
       if (!(await hit(`ej:e:${ev.id}`, 400, 10 * 60_000)) || !(await hit(`ej:i:${ip}`, 40, 10 * 60_000))) {

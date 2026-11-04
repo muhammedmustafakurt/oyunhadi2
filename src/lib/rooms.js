@@ -51,7 +51,18 @@ const die = () => 1 + Math.floor(Math.random() * 6);
 const sq = (p) => Array.isArray(p) && p.length === 2 && p.every((n) => Number.isInteger(n) && n >= 0 && n < 8);
 
 // Mekân bilgisi veritabanından gelir (src/lib/venues.js); kayıtlı olmayan masa numarasında oda açılmaz.
-export const findCafe = async (slug) => getVenueBySlug(slug);
+// Her yoklamada veritabanına gitmemek için mekân kaydı birkaç saniye bellekte tutulur (panel değişikliği en geç TTL sonra yansır).
+const VENUE_TTL_MS = 5000;
+const venueCache = (globalThis.__venueCache ??= new Map());
+export const findCafe = async (slug) => {
+  const key = String(slug);
+  const hit = venueCache.get(key);
+  if (hit && Date.now() - hit.t < VENUE_TTL_MS) return hit.p;
+  const p = getVenueBySlug(key).catch((e) => { venueCache.delete(key); throw e; });
+  if (venueCache.size > 500) venueCache.clear();
+  venueCache.set(key, { t: Date.now(), p });
+  return p;
+};
 // Mekân Sınavı odası: oyun motoru 'bil' kalır, ama oda etkinliğe özel bir anahtarla saklanır ('bil@<etkinlik>'); böylece
 // genel Bil Bakalım odasıyla karışmaz. Etkinlik kapısı api/room/route.js'te (events.gateEvent) uygulanır.
 export const roomKey = (game, eventId) => (eventId ? `${game}@${eventId}` : game);
@@ -77,6 +88,13 @@ export function nearCafe(cafe, geo) {
 // biz_id sütunu kafe numarasını (cafes.id) tutar.
 const SELECT = 'SELECT id, state, version, updated_at FROM game_rooms WHERE biz_id = ? AND tbl = ? AND game = ?';
 
+// Yoklamayı ucuz tutar: yalnızca sürümü okur, durum JSON'unu çekmez/ayrıştırmaz. Değişmediyse true.
+export async function roomUnchanged(biz, tbl, game, v) {
+  const r = await get('SELECT version, updated_at FROM game_rooms WHERE biz_id = ? AND tbl = ? AND game = ?', biz, tbl, game);
+  if (!r || Date.now() - Number(r.updated_at) > STALE_MS) return null;
+  return String(r.version) === String(v) ? r.version : null;
+}
+
 export async function readRoom(biz, tbl, game) {
   let r = await get(SELECT, biz, tbl, game);
   if (!r) {
@@ -88,12 +106,29 @@ export async function readRoom(biz, tbl, game) {
   }
   const stale = Date.now() - Number(r.updated_at) > STALE_MS;
   let state = stale ? fresh() : JSON.parse(r.state);
+  if (stale) {
+    // Bayat oda bir kez kalıcı olarak sıfırlanır (sürüm artar); yoksa her yoklamada yeniden okunup 'unchanged' hiç dönmezdi.
+    // Koşullu yazım: araya başka bir yazım girdiyse (sürüm/zaman değişti) bu yazım sessizce atlanır ve oda yeniden okunur.
+    const ok = await get(
+      'UPDATE game_rooms SET state = ?, version = version + 1, updated_at = ? WHERE id = ? AND version = ? AND updated_at = ? RETURNING version',
+      JSON.stringify(state), Date.now(), r.id, r.version, r.updated_at,
+    );
+    if (ok) return { id: r.id, version: ok.version, state };
+    return readRoom(biz, tbl, game);
+  }
   // Eski tahtadan kalan (kare sayısı uyuşmayan) Emlak oyunu varsa masa sıfırlanır.
   if (game === 'monopoly' && state.game && !E.validGame(state.game)) state = fresh();
-  return { id: r.id, version: r.version, state };
+  return { id: r.id, version: r.version, state, updatedAt: r.updated_at };
 }
 
 // İstemciye giden görünüm: başkalarının kimlik kodları (pid) gönderilmez.
+// Emlak: Şans / Kamu Fonu destesinin SIRASI sunucuda kalır (sıradaki kart önceden bilinmesin). İstemci yalnızca son çekilen
+// kartı (g.card) ve oyuncuların elindeki hapis kartlarını kullanır; deste dizilerini hiçbir yerde okumaz (GAME-06).
+function publicMono(g) {
+  const { chance, chest, ...pub } = g;
+  return pub;
+}
+
 export function view(room, pid, game) {
   const s = room.state;
   const me = s.seats.findIndex((x) => x.pid === pid);
@@ -105,7 +140,7 @@ export function view(room, pid, game) {
     // Vampirde kalan süre (ms); istemci geri sayım gösterebilsin diye.
     leftMs: game === 'vampir' && s.game?.endsAt ? Math.max(0, s.game.endsAt - Date.now()) : null,
     // Casus oyununda mekân ve casus sunucuda kalır; her oyuncuya yalnızca kendi kartı gider.
-    game: game === 'spyfall' ? S.viewFor(s.game, me) : game === 'ajanlar' ? A.viewFor(s.game, me) : game === 'vampir' ? V.viewFor(s.game, me) : game === 'tabu' ? T.viewFor(s.game, me) : game === 'kimim' ? K.viewFor(s.game, me) : game === 'cizim' ? P.viewFor(s.game, me) : game === 'bil' ? B.viewFor(s.game, me) : game === 'azul' ? Z.viewFor(s.game, me) : game === 'cluedo' ? CL.viewFor(s.game, me) : game === 'scrabble' ? SC.viewFor(s.game, me) : game === 'risk' ? R.viewFor(s.game, me) : game === 'carcassonne' ? CC.viewFor(s.game, me) : game === 'catan' ? CA.viewFor(s.game, me) : game === 'ticket' ? TK.viewFor(s.game, me) : game === 'kadro' ? KD.viewFor(s.game, me) : game === 'futbolcu' ? FB.viewFor(s.game, me) : PLUGINS[game] ? PLUGINS[game].viewFor(s.game, me) : s.game,
+    game: game === 'spyfall' ? S.viewFor(s.game, me) : game === 'ajanlar' ? A.viewFor(s.game, me) : game === 'vampir' ? V.viewFor(s.game, me) : game === 'tabu' ? T.viewFor(s.game, me) : game === 'kimim' ? K.viewFor(s.game, me) : game === 'cizim' ? P.viewFor(s.game, me) : game === 'bil' ? B.viewFor(s.game, me) : game === 'azul' ? Z.viewFor(s.game, me) : game === 'cluedo' ? CL.viewFor(s.game, me) : game === 'scrabble' ? SC.viewFor(s.game, me) : game === 'risk' ? R.viewFor(s.game, me) : game === 'carcassonne' ? CC.viewFor(s.game, me) : game === 'catan' ? CA.viewFor(s.game, me) : game === 'ticket' ? TK.viewFor(s.game, me) : game === 'kadro' ? KD.viewFor(s.game, me) : game === 'futbolcu' ? FB.viewFor(s.game, me) : PLUGINS[game] ? PLUGINS[game].viewFor(s.game, me) : game === 'monopoly' && s.game ? publicMono(s.game) : s.game,
   };
 }
 
@@ -561,6 +596,9 @@ function apply(s, pid, a, game, extra = {}) {
   }
 }
 
+// Durumun koltuklardaki 'seen' (son görülme) zaman damgaları hariç dökümü; ping'in gerçek bir değişiklik yapıp yapmadığını anlamak için.
+const coreJson = (st) => JSON.stringify({ ...st, seats: st.seats.map(({ seen, ...x }) => x) });
+
 // Hamleyi uygular; aynı anda iki telefon yazarsa sürüm denetimiyle yeniden dener.
 // extra: { event, quiz } yalnızca Mekân Sınavı odasında (kapıdan geçmiş etkinlik) verilir.
 export async function mutate(biz, tbl, game, pid, action, extra = {}) {
@@ -572,6 +610,20 @@ export async function mutate(biz, tbl, game, pid, action, extra = {}) {
     if (game === 'vampir') vampStamp(res.state.game, r.state.game);
     const me = res.state.seats.findIndex((x) => x.pid === pid);
     if (me >= 0 && (action.near !== false || action.type === 'leave')) res.state.seats[me].seen = Date.now();
+    // Durumu hiç değiştirmeyen eylem (ör. koltuğu olmayan pid'in ping'i): yazma yok, sürüm artmaz (GAME-09).
+    if (JSON.stringify(res.state) === JSON.stringify(r.state)) return { room: r };
+    // Sessiz ping: koltuklardaki 'seen' dışında hiçbir şey değişmediyse sürüm ARTMAZ; böylece 20 sn'lik yoklamalar
+    // diğer oyuncuların 'unchanged' kısa devresini bozmaz. Yarış koruması sürüm + updated_at koşuluyla sağlanır
+    // (aynı anda iki ping birbirinin 'seen' değerini ezmesin). Koşul tutmazsa döngü odayı yeniden okuyup dener.
+    // Durum gerçekten değiştiyse (konum uzak → koltuktan düşme, vampir evre damgası vb.) normal yoldan sürüm artar.
+    if (action.type === 'ping' && me >= 0 && r.updatedAt != null && coreJson(res.state) === coreJson(r.state)) {
+      const q = await get(
+        'UPDATE game_rooms SET state = ?, updated_at = ? WHERE id = ? AND version = ? AND updated_at = ? RETURNING version',
+        JSON.stringify(res.state), Date.now(), r.id, r.version, r.updatedAt,
+      );
+      if (q) return { room: { id: r.id, version: q.version, state: res.state } };
+      continue;
+    }
     const ok = await get(
       'UPDATE game_rooms SET state = ?, version = version + 1, updated_at = ? WHERE id = ? AND version = ? RETURNING version',
       JSON.stringify(res.state), Date.now(), r.id, r.version,

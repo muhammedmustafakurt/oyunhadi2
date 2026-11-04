@@ -24,5 +24,9 @@ export const REWARD_GAMES = {
   },
 };
 
+// Kuralda günlük sınır boşsa (NULL) uygulanan varsayılan üst sınır: mekân başına günde (TR saati) en çok bu kadar kod.
+// Sınırsız kural, sahte pid'lerle oda açıp sahte puan toplayan saldırgana sınırsız ücretsiz ikram kodu verirdi.
+export const DEFAULT_DAILY_CODE_LIMIT = 200;
+
 export const REWARD_GAME_IDS = Object.keys(REWARD_GAMES);
 export const isRewardGame = (id) => Object.prototype.hasOwnProperty.call(REWARD_GAMES, id);

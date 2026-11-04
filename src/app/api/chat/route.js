@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { clientIp, floodOk, hit } from '@/lib/ratelimit';
+import { readBody, BODY_ERRORS } from '@/lib/guard';
 import {
   join, state, sendRequest, decideRequest, cancelRequest, sendMessage, closeRoom, blockUser, unblockUser, reportUser, leave, profile, setOpen,
 } from '@/lib/chat';
 
 export const dynamic = 'force-dynamic';
 
+// Sohbet gövdesindeki alan türleri.
+const STR_FIELDS = ['type', 'token', 'cafe', 'masa', 'pid', 'nick', 'bio', 'body', 'reason'];
+const ID_FIELDS = ['target', 'id', 'room'];
 const json = (body, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
 
 // Sohbet durumu yoklaması. Belirteç yoksa/geçersizse { gone } döner; istemci yeni oturum açar.
@@ -20,8 +24,15 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  let body;
-  try { body = await req.json(); } catch { return json({ error: 'Geçersiz istek.' }, 400); }
+  const rb = await readBody(req, 32 * 1024);
+  if (rb.status) return json({ error: BODY_ERRORS[rb.status] }, rb.status);
+  const body = rb.body;
+  // Tür sıkılığı: metin alanları dize, kimlik alanları dize/sayı olmalı (dizi/nesne String() ile geçerli görünürdü).
+  if (!body || typeof body !== 'object' || Array.isArray(body)
+    || STR_FIELDS.some((k) => body[k] != null && typeof body[k] !== 'string')
+    || ID_FIELDS.some((k) => body[k] != null && typeof body[k] !== 'string' && typeof body[k] !== 'number')) {
+    return json({ error: 'Geçersiz istek.' }, 400);
+  }
   try {
     const type = String(body?.type ?? '');
     const ip = clientIp(req);

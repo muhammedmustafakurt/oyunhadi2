@@ -2,13 +2,16 @@
 // updateVenue ile yapılır. Şema src/lib/db.js'te, tip src/lib/venue-types.ts'te tanımlı.
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createHmac, scryptSync, timingSafeEqual, randomBytes } from 'node:crypto';
+import { scrypt, timingSafeEqual, randomBytes } from 'node:crypto';
+import { promisify } from 'node:util';
 import { get, all, run } from './db';
+import { passwordVersion, signToken, parseToken, versionMatches } from './session-token';
 // Venue tipi veren dosya TS olduğu için JS dosyasında yalnızca JSDoc ile Referanslı tip kullanılır:
 
 const COLS = 'id, slug, name, city, initials, logo_url, color, accent, ntables, lat, lng, games, welcome, ann_title, ann_body, email';
-export const VENUE_GAMES = 'monopoly satranc spyfall ajanlar vampir tabu kimim cizim bil azul cluedo scrabble risk ticket carcassonne catan kadro futbolcu pisti okey tavla g2048 adam'.split(' ');
+export const VENUE_GAMES = 'monopoly satranc spyfall ajanlar vampir tabu kimim cizim bil azul cluedo scrabble risk ticket carcassonne catan kadro futbolcu pisti okey g2048 adam'.split(' ');
 const SCRYPT = { N: 16384, r: 8, p: 1 }; // db.js hashPassword ile aynı olmalı
+const scryptAsync = promisify(scrypt); // olay döngüsünü bloke etmez
 
 function deg(raw) {
   if (raw == null || raw === '') return null;
@@ -87,11 +90,13 @@ export async function updateVenue(id, patch = {}) {
   parts.push(['updated_at', Date.now()]);
   const set = parts.map(([c], i) => `${c} = $${i + 1}`).join(', ');
   await run(`UPDATE venues SET ${set} WHERE id = $${parts.length + 1}`, ...parts.map(([, v]) => v), id);
+  globalThis.__venueCache?.clear();
   return getVenue(id);
 }
 
 // ---------- Panel oturumu ----------
-// Oturum çerezi: "<mekânId>.<bitişZamanı>.<HMAC>". İmza SESSION_SECRET ile atılır ve id + bitiş zamanını kapsar.
+// Oturum çerezi: "<mekânId>.<bitiş>.<parolaSürümü>.<HMAC>" (src/lib/session-token.js). İmza SESSION_SECRET ile atılır;
+// sürüm mekânın parola karmasından türer, bu yüzden şifre değişince/sıfırlanınca eski çerezler doğrulamada düşer.
 const CO = 'oh-panel';
 const SESSION_MS = 60 * 60 * 24 * 30 * 1000;
 const IS_PROD = process.env.NODE_ENV === 'production';
@@ -103,28 +108,18 @@ function secret() {
   if (IS_PROD) throw new Error('SESSION_SECRET ayarlanmamış (en az 32 karakter).');
   return 'dev-only-session-secret-not-for-production';
 }
-const sign = (payload) => createHmac('sha256', secret()).update(payload).digest('hex');
-const stamp = (id) => {
-  const payload = `${id}.${Date.now() + SESSION_MS}`;
-  return `${payload}.${sign(payload)}`;
-};
-function verify(raw) {
-  const m = /^(\d{1,10})\.(\d{10,16})\.([a-f0-9]{64})$/.exec(String(raw));
-  if (!m) return null;
-  const a = Buffer.from(sign(`${m[1]}.${m[2]}`), 'hex');
-  const b = Buffer.from(m[3], 'hex');
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-  if (Number(m[2]) < Date.now()) return null;
-  return Number(m[1]);
-}
+const stamp = (id, passwordHash) => signToken(secret(), 'panel', id, Date.now() + SESSION_MS, passwordVersion(secret(), passwordHash));
 
 // Oturum çerezinden güncel mekânı döndürür; girişli değilse null. Oturum yoksa panelleri /panel/giris'e atar.
 export async function panelVenue() {
   try {
     const raw = (await cookies()).get(CO)?.value ?? '';
-    const id = verify(raw);
-    if (!id) return null;
-    return await getVenue(id);
+    const t = parseToken(secret(), 'panel', raw);
+    if (!t) return null; // eski 3 parçalı biçim de burada düşer
+    // Parola karması değiştiyse (şifre sıfırlandı) oturum geçersiz.
+    const row = await get('SELECT password FROM venues WHERE id = ?', t.id);
+    if (!row || !versionMatches(t.version, secret(), row.password)) return null;
+    return await getVenue(t.id);
   } catch {
     return null;
   }
@@ -137,33 +132,23 @@ export async function requireVenue() {
   return v;
 }
 
-export function cookieFor(id) {
-  return { name: CO, value: stamp(String(id)), httpOnly: true, secure: IS_PROD, sameSite: 'lax', maxAge: SESSION_MS / 1000, path: '/' };
+export function cookieFor(id, passwordHash) {
+  return { name: CO, value: stamp(String(id), passwordHash), httpOnly: true, secure: IS_PROD, sameSite: 'lax', maxAge: SESSION_MS / 1000, path: '/' };
 }
 
-// Giriş: e-posta + şifre venues tablosundaki kayıtla karşılaştırılır (scrypt). Başarılıysa mekân id'si.
+// Giriş: e-posta + şifre venues tablosundaki kayıtla karşılaştırılır (scrypt). Başarılıysa { id, password (karma) }.
 // Kayıt ya da şifre yoksa da scrypt çalışır; yanıt süresinden e-postanın var olup olmadığı anlaşılmasın.
 const DUMMY_SALT = randomBytes(16).toString('hex');
 export async function loginVenue(email, password) {
   const em = String(email ?? '').trim().toLowerCase().slice(0, 200);
   const r = await get('SELECT id, password FROM venues WHERE lower(email) = ? LIMIT 1', em);
   const [salt, h] = String(r?.password ?? '').split(':');
-  const got = scryptSync(String(password ?? '').slice(0, 256), salt || DUMMY_SALT, 32, SCRYPT);
+  const got = await scryptAsync(String(password ?? '').slice(0, 256), salt || DUMMY_SALT, 32, SCRYPT);
   if (!r || !salt || !h || !/^[a-f0-9]{64}$/.test(h)) return null;
-  return timingSafeEqual(got, Buffer.from(h, 'hex')) ? r.id : null;
+  return timingSafeEqual(got, Buffer.from(h, 'hex')) ? { id: r.id, password: r.password } : null;
 }
 
-// Giriş denemesi sınırı (15 dakikada başarısız deneme): e-posta + IP çifti başına 8, yalnızca e-posta başına 40,
-// IP başına 30. Çift sınırı, hesap sahibini üçüncü kişinin kilitlemesini zorlaştırır (sahibin kendi IP'si ayrı
-// sayılır); e-posta toplamı ise sahte IP başlıklarıyla kaba kuvveti sınırlar. Sayaç veritabanında tutulur.
-const LOGIN_WINDOW = 15 * 60 * 1000;
-export async function loginBlocked(email, ip) {
-  const since = Date.now() - LOGIN_WINDOW;
-  const count = async (key) => Number((await get('SELECT count(*)::int AS n FROM login_attempts WHERE key = ? AND at > ?', key, since))?.n) || 0;
-  return (await count(`p:${email}|${ip}`)) >= 8 || (await count(`e:${email}`)) >= 40 || (await count(`i:${ip}`)) >= 30;
-}
-export async function recordLoginFailure(email, ip) {
-  const t = Date.now();
-  await run('INSERT INTO login_attempts (key, at) VALUES (?, ?), (?, ?), (?, ?)', `e:${email}`, t, `i:${ip}`, t, `p:${email}|${ip}`, t);
-  await run('DELETE FROM login_attempts WHERE at < ?', t - 24 * 60 * 60 * 1000);
-}
+// Giriş denemesi sınırı: artan gecikmeli (hesap+IP) ve IP sayaçları, src/lib/ratelimit.js loginGate. Anahtarlar
+// "p:<e-posta>|<ip>" ve "i:<ip>"; GLOBAL (yalnız e-posta) sayaç yoktur.
+export { loginGate, loginSuccess } from './ratelimit';
+export const loginKeys = (email, ip) => [`p:${email}|${ip}`, `i:${ip}`];

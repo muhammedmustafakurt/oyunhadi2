@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { panelVenue } from '@/lib/venues';
+import { originOk, readBody, BODY_ERRORS } from '@/lib/guard';
 import { panelChat, panelSettings, panelAction } from '@/lib/chat';
 
 export const dynamic = 'force-dynamic';
@@ -19,11 +20,14 @@ export async function GET() {
 }
 
 export async function POST(req) {
-  let body;
-  try { body = await req.json(); } catch { return json({ error: 'Geçersiz istek.' }, 400); }
+  if (!originOk(req)) return json({ error: 'İstek reddedildi.' }, 403);
   try {
     const venue = await panelVenue();
     if (!venue) return json({ error: 'Yetkisiz.' }, 401);
+    const r = await readBody(req, 32 * 1024);
+    if (r.status) return json({ error: BODY_ERRORS[r.status] }, r.status);
+    const body = r.body;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Geçersiz istek.' }, 400);
     if (body?.type === 'settings') {
       return json(await panelSettings(venue.id, body.patch && typeof body.patch === 'object' ? body.patch : {}));
     }

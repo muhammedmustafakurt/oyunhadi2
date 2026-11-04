@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { panelVenue } from '@/lib/venues';
 import { createEvent, updateEvent, setStatus, deleteEvent, gateEvent } from '@/lib/events';
+import { originOk, readBody, BODY_ERRORS } from '@/lib/guard';
 import { loadState, panelAct, panelView } from '@/lib/eventgames';
 
 export const dynamic = 'force-dynamic';
@@ -11,10 +12,13 @@ const json = (body, status = 200) => NextResponse.json(body, { status, headers: 
 // Mekân numarası ASLA istekten alınmaz; yalnızca panel oturumundaki mekâna (panelVenue) yazılır, başka mekânın
 // etkinlik numarası verilse bile events.js sorguları biz_id ile sınırlı olduğundan bulunamadı döner.
 export async function POST(req) {
+  if (!originOk(req)) return json({ error: 'İstek reddedildi.' }, 403);
   try {
     const v = await panelVenue();
     if (!v) return json({ error: 'Oturum yok.' }, 401);
-    const b = await req.json().catch(() => null);
+    const rb = await readBody(req, 64 * 1024);
+    if (rb.status) return json({ error: BODY_ERRORS[rb.status] }, rb.status);
+    const b = rb.body;
     if (!b || typeof b !== 'object' || Array.isArray(b)) return json({ error: 'Geçersiz istek.' }, 400);
     const id = Number(b.id);
     const needId = () => Number.isInteger(id) && id > 0;

@@ -1,7 +1,7 @@
 // Masalar arası sohbet: uçtan uca güvenlik ve akış testleri.
 // Kullanım: npm run test:chat   (BASE_URL=http://localhost:3002, DATABASE_URL .env'den gelir)
 // Testler gerçek API'yi ve gerçek veritabanını kullanır; sonunda oluşturduğu veriyi siler.
-import { createHmac } from 'node:crypto';
+import { signToken, passwordVersion } from '../src/lib/session-token.js';
 import { neon } from '@neondatabase/serverless';
 
 const BASE = process.env.BASE_URL || 'http://localhost:3002';
@@ -34,18 +34,18 @@ const join = (cafe, masa, p, nick) => post({ type: 'join', cafe, masa, pid: p, n
 const state = (token, room = '', after = 0) => get({ token, room, after });
 const act = (token, type, extra = {}) => post({ token, type, ...extra });
 
-// Panel çerezi: "<id>.<bitiş>.<HMAC(SESSION_SECRET)>" (src/lib/venues.js ile aynı biçim). SESSION_SECRET yoksa
-// geliştirme sunucusunun sabit anahtarı kullanılır; üretim sunucusuna karşı çalıştırırken SESSION_SECRET gerekir.
+// Panel çerezi: "<id>.<bitiş>.<parolaSürümü>.<HMAC>" (src/lib/session-token.js; sürüm mekânın parola karmasından türer).
+// SESSION_SECRET yoksa geliştirme sunucusunun sabit anahtarı kullanılır; üretim sunucusuna karşı çalıştırırken SESSION_SECRET gerekir.
 const SECRET = (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32)
   ? process.env.SESSION_SECRET
   : 'dev-only-session-secret-not-for-production';
+const PW = {}; // mekân id -> parola karması (main içinde veritabanından doldurulur)
 function cookie(id) {
-  const payload = `${id}.${Date.now() + 60 * 60 * 1000}`;
-  return `oh-panel=${payload}.${createHmac('sha256', SECRET).update(payload).digest('hex')}`;
+  return `oh-panel=${signToken(SECRET, 'panel', id, Date.now() + 60 * 60 * 1000, passwordVersion(SECRET, PW[id]))}`;
 }
 const panelPost = async (id, body) => {
   const r = await fetch(`${BASE}/api/panel/chat`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie(id) }, body: JSON.stringify(body),
+    method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie(id), Origin: BASE }, body: JSON.stringify(body),
   });
   return { status: r.status, body: await r.json() };
 };
@@ -54,6 +54,7 @@ async function main() {
   const [demo] = await sql.query("SELECT id FROM venues WHERE slug = 'demo'", []);
   const [lav] = await sql.query("SELECT id FROM venues WHERE slug = 'lavanta-bistro'", []);
   ok(!!demo && !!lav, 'seed mekânları bulundu');
+  for (const v of [demo, lav]) PW[v.id] = (await sql.query('SELECT password FROM venues WHERE id = $1', [v.id]))[0]?.password;
 
   // --- Oturumlar ---
   section('1. Oturum ve aynı mekân görünürlüğü');

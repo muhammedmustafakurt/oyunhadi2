@@ -22,3 +22,9 @@ export function formatBytes(
     sizeType === 'accurate' ? (accurateSizes[i] ?? 'Bytest') : (sizes[i] ?? 'Bytes')
   }`;
 }
+
+// JSON-LD <script> içeriği için güvenli dizge: '<' karakteri < olarak kaçırılır ki veri içindeki "</script>"
+// betik bloğunu kapatamasın. Yalnızca çıktıyı etkiler (JSON olarak ayrıştırılınca aynı değer).
+export function jsonLdString(data: unknown) {
+  return JSON.stringify(data).replace(/</g, '\u003c');
+}

@@ -3,7 +3,9 @@
 // gelen hiçbir puan/iddia kullanılmaz. Hangi oyunların puanı güvenilir: src/lib/reward-games.js.
 import { createHash, randomInt } from 'node:crypto';
 import { get, all, run } from './db';
-import { REWARD_GAMES, isRewardGame } from './reward-games';
+import { REWARD_GAMES, isRewardGame, DEFAULT_DAILY_CODE_LIMIT } from './reward-games';
+
+export { DEFAULT_DAILY_CODE_LIMIT };
 
 export const CODE_TTL_MS = 4 * 60 * 60 * 1000; // kod 4 saat geçerli
 export const MAX_RULES = 30; // mekân başına en çok kural
@@ -60,7 +62,7 @@ function ruleInput(raw, venue, { creating }) {
   const prize = clean(raw?.prize, 60);
   if (!prize) return { error: 'Ödül (ikram) gerekli.' };
   const dailyLimit = optInt(raw?.dailyLimit, 1, 100000);
-  if (Number.isNaN(dailyLimit)) return { error: 'Günlük sınır 1 ya da daha büyük bir tam sayı olmalı (boş = sınırsız).' };
+  if (Number.isNaN(dailyLimit)) return { error: `Günlük sınır 1 ya da daha büyük bir tam sayı olmalı (boş = varsayılan: günde ${DEFAULT_DAILY_CODE_LIMIT}).` };
   const costTry = optInt(raw?.costTry, 0, 1_000_000);
   if (Number.isNaN(costTry)) return { error: 'İkram maliyeti geçersiz.' };
   return { data: { game, target, prize, dailyLimit, costTry } };
@@ -142,13 +144,18 @@ const roundKey = (tbl, game, round, pid) => createHash('sha256').update(`${tbl}|
 async function insertCode(biz, rule, { tbl, game, key, score }, now) {
   for (let i = 0; i < 6; i++) {
     const code = makeCode(biz.initials);
-    const lim = rule.dailyLimit;
+    const lim = rule.dailyLimit; // null: kural sınırsız bırakılmış -> mekân genelinde varsayılan üst sınır uygulanır
     const params = [biz.id, rule.id, key, code, tbl, game, rule.prize, score, rule.costTry, now, now + CODE_TTL_MS];
     let sql = `INSERT INTO reward_codes (biz_id, rule_id, round_key, code, masa, game, prize, score, cost_try, status, issued_at, expires_at)
       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, 'bekliyor', ?, ?`;
+    // Sayma + ekleme tek ifade. Açık limitli kural kendi kural sayacına, limitsiz kural mekân genelindeki varsayılan
+    // üst sınıra bağlanır. (READ COMMITTED: eşzamanlı iki ekleme aynı sayıyı görebilir; aşım istek eşzamanlılığıyla sınırlıdır.)
     if (lim != null) {
       sql += ' WHERE (SELECT count(*) FROM reward_codes WHERE rule_id = ? AND issued_at >= ?) < ?';
       params.push(rule.id, dayStart(now), lim);
+    } else {
+      sql += ' WHERE (SELECT count(*) FROM reward_codes WHERE biz_id = ? AND issued_at >= ?) < ?';
+      params.push(biz.id, dayStart(now), DEFAULT_DAILY_CODE_LIMIT);
     }
     sql += ' ON CONFLICT (biz_id, round_key) DO NOTHING RETURNING id';
     try {

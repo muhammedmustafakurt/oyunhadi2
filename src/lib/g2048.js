@@ -4,6 +4,11 @@
 export const CONFIG = { min: 2, max: 6 };
 export const PREFIX = 'gx';
 export const DURATION_MS = 3 * 60 * 1000;
+// Oyuncu başına iki hamle arası en az süre (sunucu saati). Hamle betiğiyle saniyede yüzlerce istek göndererek
+// 3 dakikada yüksek puan toplamayı ve ödül kodu almayı yavaşlatır; elle oynayan insan (en çok ~8-10 hamle/sn) etkilenmez.
+// İstemci (G2048Online) hamleleri bundan biraz geniş aralıkla gönderir ve reddedilen hamleyi yeniden dener.
+export const MIN_MOVE_GAP_MS = 120;
+export const TOO_FAST = 'Çok hızlı.';
 
 export function mulberry32(a) {
   return function () {
@@ -84,7 +89,7 @@ export function newGame(seats, now = Date.now()) {
     startAt: now,
     endsAt: now + DURATION_MS,
     names: seats.map((s) => String(s?.name || 'Oyuncu').slice(0, 24)),
-    players: seats.map(() => ({ b: b.slice(), s: 0, n: 2, m: 0, dead: false })),
+    players: seats.map(() => ({ b: b.slice(), s: 0, n: 2, m: 0, dead: false, t: 0 })), // t: son kabul edilen hamlenin sunucu zamanı
     over: null,
   };
 }
@@ -126,6 +131,7 @@ export function act(g, seats, idx, type, payload, now = Date.now()) {
   if (dir !== 'l' && dir !== 'r' && dir !== 'u' && dir !== 'd') return { error: 'Geçersiz yön.' };
   const me = g.players[idx];
   if (me.dead) return { error: 'Hamleniz kalmadı.' };
+  if (now - (me.t || 0) < MIN_MOVE_GAP_MS) return { error: TOO_FAST }; // durum yazılmaz; istemci kısa süre sonra yeniden dener
   const r = slide(me.b, dir);
   if (!r.moved) return { error: 'Bu yönde kayma yok.' };
   const n = structuredClone(g);
@@ -134,6 +140,7 @@ export function act(g, seats, idx, type, payload, now = Date.now()) {
   p.n = me.n + 1;
   p.s = me.s + r.gained;
   p.m = (me.m || 0) + 1;
+  p.t = now;
   if (!canMove(p.b)) p.dead = true;
   if (allDone(n, seats)) return finish(n, seats);
   return n;

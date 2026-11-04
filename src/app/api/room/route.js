@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { findCafe, hasTable, nearCafe, readRoom, mutate, view, roomKey, ROOM_GAMES, MASA_RE, PID_RE } from '@/lib/rooms';
+import { findCafe, hasTable, nearCafe, readRoom, roomUnchanged, mutate, view, roomKey, ROOM_GAMES, MASA_RE, PID_RE } from '@/lib/rooms';
 import { gateEvent, QUIZ_CAT } from '@/lib/events';
 import { run } from '@/lib/db';
 import { PLUGINS } from '@/lib/plugins';
 import { settleRoom } from '@/lib/rewards';
 import { isRewardGame } from '@/lib/reward-games';
-import { clientIp, floodOk, hit } from '@/lib/ratelimit';
+import { clientIp, floodOk, hitUnder, hitRecord } from '@/lib/ratelimit';
+import { readBody, BODY_ERRORS } from '@/lib/guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,10 @@ const ACTIONS = new Set(['rdeploy', 'rtrade', 'rattack', 'rmove', 'rendattack', 
 // (oda okuma, katılma, hamle) geçmez; kapalı/bitmiş etkinlikte yalnızca masadan ayrılma (leave) kabul edilir.
 // Bu kontrol her GET ve POST'ta, oda okunmadan önce çalışır; istemcinin gizlemesine güvenilmez.
 async function resolve({ cafe, masa, game, pid, event }, { leave = false } = {}) {
+  // Tür sıkılığı: dizi/nesne String() ile geçerli görünebilir; yalnızca gerçek dize (event: dize ya da tam sayı) kabul edilir.
+  if (![cafe, masa, game, pid].every((x) => typeof x === 'string') || (event != null && typeof event !== 'string' && !Number.isInteger(event))) {
+    return { err: json({ error: 'Geçersiz istek.' }, 400) };
+  }
   if (!/^[a-z0-9-]{1,50}$/.test(String(cafe)) || !MASA_RE.test(String(masa)) || !ROOM_GAMES.has(game) || !PID_RE.test(String(pid))) {
     return { err: json({ error: 'Geçersiz istek.' }, 400) };
   }
@@ -38,8 +43,10 @@ export async function GET(req) {
     const q = Object.fromEntries(new URL(req.url).searchParams);
     const { biz, ev, err } = await resolve(q);
     if (err) return err;
-    const room = await readRoom(biz.id, q.masa, roomKey(q.game, ev?.id));
-    if (String(room.version) === q.v) return json({ unchanged: true, version: room.version });
+    const key = roomKey(q.game, ev?.id);
+    const same = await roomUnchanged(biz.id, q.masa, key, q.v);
+    if (same != null) return json({ unchanged: true, version: same });
+    const room = await readRoom(biz.id, q.masa, key);
     return json({ ...view(room, q.pid, q.game), locked: biz.lat != null });
   } catch (e) {
     console.error('[room GET]', e);
@@ -48,26 +55,33 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  let body;
-  try { body = await req.json(); } catch { return json({ error: 'Geçersiz istek.' }, 400); }
+  // Gövde sınırı: en büyük meşru yük çizim parçaları (30 x 600 tam sayı, ~92 KB); 256 KB ~2,8 katı.
+  const rb = await readBody(req, 256 * 1024);
+  if (rb.status) return json({ error: BODY_ERRORS[rb.status] }, rb.status);
+  const body = rb.body;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Geçersiz istek.' }, 400);
   try {
     const ip = clientIp(req);
     // Kaba taşkın koruması (örnek başına).
     if (!floodOk(`room:${ip}`, 600, 60_000)) return json({ error: 'Çok fazla istek. Biraz yavaşlayın.' }, 429);
     const { biz, ev, err } = await resolve(body, { leave: body?.action?.type === 'leave' });
+    if (body.action != null && (typeof body.action !== 'object' || Array.isArray(body.action))) return json({ error: 'Geçersiz istek.' }, 400);
     if (err) return err;
     const a = body.action;
     const plugAct = !!a && typeof a.type === 'string' && /^[a-z0-9]{3,24}$/.test(a.type) && !!PLUGINS[body.game] && a.type.startsWith(PLUGINS[body.game].PREFIX);
     if (!a || !(ACTIONS.has(a.type) || plugAct)) return json({ error: 'Bilinmeyen işlem.' }, 400);
     // Masaya katılma kötüye kullanıma açık (rastgele pid'lerle koltuk doldurma): hem IP'ye hem masaya göre sınır.
-    // Masa sınırı IP'den bağımsızdır; sahte IP başlığı onu aşamaz.
-    if (a.type === 'join') {
-      const slot = `${biz.id}:${body.masa}:${body.game}`;
-      if (!(await hit(`rj:t:${slot}`, 40, 10 * 60_000)) || !(await hit(`rj:i:${ip}`, 40, 10 * 60_000))) {
-        return json({ error: 'Çok fazla katılma denemesi. Biraz sonra tekrar deneyin.' }, 429);
+    // Masa sınırı IP'den bağımsızdır; sahte IP başlığı onu aşamaz. Sayaç YALNIZCA başarılı joinde artar (aşağıda):
+    // konum/doluluk gibi nedenlerle reddedilen denemeler sayılmaz, böylece başarısız denemelerle masa kilitlenemez.
+    // Burada yalnızca mevcut sayaca bakılır.
+    const joinKeys = a.type === 'join' ? [`rj:t:${biz.id}:${body.masa}:${body.game}`, `rj:i:${ip}`] : null;
+    if (joinKeys) {
+      for (const k of joinKeys) {
+        if (!(await hitUnder(k, 40, 10 * 60_000))) return json({ error: 'Çok fazla katılma denemesi. Biraz sonra tekrar deneyin.' }, 429);
       }
     }
     const res = await mutate(biz.id, body.masa, body.game, body.pid, { type: a.type, t: a.t, n: a.n, cards: a.cards, dice: a.dice, tiles: a.tiles, idxs: a.idxs, name: a.name, tok: a.tok, from: a.from, to: a.to, target: a.target, yes: a.yes, loc: a.loc, word: a.word, num: a.num, card: a.card, strokes: a.strokes, keep: a.keep, text: a.text, choice: a.choice, ms: a.ms, amount: a.amount, prop: a.prop, promo: a.promo, src: a.src, factory: a.factory, color: a.color, line: a.line, sus: a.sus, wpn: a.wpn, rm: a.rm, slot: a.slot, route: a.route, near:nearCafe(biz, a.geo), noGeo: !a.geo, cc: a.cc, cat: a.cat, pl: plugAct && JSON.stringify(a.pl ?? {}).length <= 4000 ? a.pl : undefined }, ev ? { event: ev.id, quiz: ev.quiz.map((x) => ({ c: QUIZ_CAT, q: x.q, a: x.a })) } : {});
+    if (joinKeys && !res.error) await Promise.all(joinKeys.map((k) => hitRecord(k))).catch(() => {});
     if (a.type === 'start') {
       // İstatistikler için oyun başlangıcını kaydet; başarısızsa odayı etkilemesin.
       run('INSERT INTO play_logs (biz_id, masa, game, players, at) VALUES (?, ?, ?, ?, ?)',

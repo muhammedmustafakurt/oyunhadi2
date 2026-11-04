@@ -20,7 +20,8 @@ export async function GET(req) {
     const biz = await findCafe(q.cafe);
     if (!biz || !hasTable(biz, q.masa) || !biz.games.includes(q.game)) return json({ error: 'Bulunamadı.' }, 404);
     const room = await readRoom(biz.id, q.masa, q.game);
-    if (room.state.phase !== 'play') return json({ reward: null });
+    // Oda sıfırlanmış/yeniden kurulmuş olsa da (phase != play) sahibinin kodu kaybolmasın: settleRoom yalnızca 'play' fazında
+    // üretir (idempotent), rewardFor ise yalnızca isteyen pid'in round_key'ini okur.
     await settleRoom(biz, q.masa, q.game, room).catch((e) => console.error('[reward settle]', e));
     return json({ reward: await rewardFor(biz.id, q.masa, q.game, room, q.pid) });
   } catch (e) {

@@ -11,6 +11,12 @@ export const stateKey = (id) => `ev@${id}`;
 const TBL = 'etkinlik';
 const MAX_CARDS = 300; // etkinlik başına en çok kart / çekiliş katılımı
 const MAX_ENTRIES = 500;
+// Masa başına kontenjan: rastgele pid'lerle tek masadan binlerce kart/giriş alıp etkinliği doldurmayı sınırlar. Pid başına
+// tek kart/giriş zaten korunur; bu sınır sahte pid'i ENGELLEMEZ, yalnızca bir masanın alabileceği payı kısıtlar (maliyet sınırı).
+// Değer: bir masa en çok 25 kişiyi alır; 80 kişilik gece 4+ masaya yayılır (masa başına ~20), genel sınırlar (300/500) ayrıca geçerli.
+export const MAX_CARDS_PER_MASA = 25;
+export const MAX_ENTRIES_PER_MASA = 25;
+const countMasa = (map, masa) => Object.values(map).filter((x) => x?.masa === masa).length;
 const CLAIM_GAP_MS = 4000; // hatalı talepten sonra aynı oyuncu bu kadar bekler
 export const AUTO_OPTIONS = [0, 5, 8, 10, 15, 20, 30];
 const clean = (s, max) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, max);
@@ -108,6 +114,7 @@ function tombalaAct(s, pid, masa, a, ctx) {
     const name = clean(a.name, 16);
     if (!name) return { error: 'Bir takma ad girin.' };
     if (Object.keys(s.cards).length >= MAX_CARDS) return { error: 'Bu etkinlikte kart kalmadı.' };
+    if (countMasa(s.cards, masa) >= MAX_CARDS_PER_MASA) return { error: 'Bu masanın kart kontenjanı doldu.' };
     s.cards[pid] = { grid: newCard(), marks: [], name, masa, badAt: 0 };
     return { state: s };
   }
@@ -163,6 +170,7 @@ function cekilisAct(s, pid, masa, a, ctx) {
   const name = clean(a.name, 16);
   if (!name) return { error: 'Bir takma ad girin.' };
   if (Object.keys(s.entries).length >= MAX_ENTRIES) return { error: 'Katılım sınırına ulaşıldı.' };
+  if (countMasa(s.entries, masa) >= MAX_ENTRIES_PER_MASA) return { error: 'Bu masanın katılım kontenjanı doldu.' };
   s.entries[pid] = { name, masa, at: Date.now() };
   return { state: s };
 }

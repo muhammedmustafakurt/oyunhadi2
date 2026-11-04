@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test:chat": "node --env-file=.env scripts/chat-test.mjs"
+    "test:chat": "node --env-file=.env scripts/chat-test.mjs",
+    "test:security": "node scripts/security-test.mjs",
+    "test:session": "node scripts/session-token-test.mjs"
   },
   "engines": {
     "node": ">=22.13"

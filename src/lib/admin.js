@@ -5,13 +5,17 @@
 // boşken ilk yöneticiyi tohumlamak içindir; tablo doluysa yok sayılır. Ortam: SESSION_SECRET.
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
+import { promisify } from 'node:util';
 import { all, get, run, hashPassword } from './db';
 import { VENUE_GAMES, getVenue, updateVenue } from './venues';
-import { clientIp } from './ratelimit';
+import { clientIp, loginGate, loginSuccess } from './ratelimit';
+import { passwordVersion, signToken, parseToken, versionMatches } from './session-token';
+import { originOk, readBody } from './guard';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 const SCRYPT = { N: 16384, r: 8, p: 1 }; // db.js hashPassword ile aynı
+const scryptAsync = promisify(scrypt); // olay döngüsünü bloke etmez
 export const ADMIN_COOKIE = IS_PROD ? '__Host-oh-admin' : 'oh-admin';
 const SESSION_MS = 8 * 60 * 60 * 1000;
 export const NO_STORE = { 'Cache-Control': 'no-store' };
@@ -39,13 +43,13 @@ export async function adminConfigured() {
 }
 
 // ---------- Oturum ----------
-// Çerez: "<adminId>.<bitiş>.<HMAC>". İmza anahtarı SESSION_SECRET'tan ayrı bir önekle türetilir ve yük "admin|" ile
-// başlar. Her istekte admin satırının hâlâ var olduğu doğrulanır (silinen yöneticinin oturumu düşer).
-const sig = (payload) => createHmac('sha256', `oyunhadi-admin-v1|${sessionSecret()}`).update(`admin|${payload}`).digest('hex');
+// Çerez: "<adminId>.<bitiş>.<parolaSürümü>.<HMAC>" (src/lib/session-token.js). İmza anahtarı SESSION_SECRET'tan ayrı bir
+// önekle türetilir, alan adı "admin". Sürüm admins.password karmasından türer (env tohumlu yönetici de tabloya yazıldığından
+// tek kaynak tablodur): şifre değişince eski çerezler düşer. Her istekte admin satırının var olduğu da doğrulanır.
+const sigKey = () => `oyunhadi-admin-v1|${sessionSecret()}`;
 
-export function adminCookie(id) {
-  const payload = `${id}.${Date.now() + SESSION_MS}`;
-  return { name: ADMIN_COOKIE, value: `${payload}.${sig(payload)}`, httpOnly: true, secure: IS_PROD, sameSite: 'strict', maxAge: SESSION_MS / 1000, path: '/' };
+export function adminCookie(id, passwordHash) {
+  return { name: ADMIN_COOKIE, value: signToken(sigKey(), 'admin', id, Date.now() + SESSION_MS, passwordVersion(sigKey(), passwordHash)), httpOnly: true, secure: IS_PROD, sameSite: 'strict', maxAge: SESSION_MS / 1000, path: '/' };
 }
 export function clearAdminCookie() {
   return { name: ADMIN_COOKIE, value: '', httpOnly: true, secure: IS_PROD, sameSite: 'strict', maxAge: 0, path: '/' };
@@ -55,13 +59,10 @@ export function clearAdminCookie() {
 export async function currentAdminId() {
   try {
     if (!sessionSecret()) return null;
-    const m = /^(\d{1,9})\.(\d{10,16})\.([a-f0-9]{64})$/.exec((await cookies()).get(ADMIN_COOKIE)?.value ?? '');
-    if (!m) return null;
-    const a = Buffer.from(sig(`${m[1]}.${m[2]}`), 'hex');
-    const b = Buffer.from(m[3], 'hex');
-    if (a.length !== b.length || !timingSafeEqual(a, b) || Number(m[2]) <= Date.now()) return null;
-    const row = await get('SELECT id FROM admins WHERE id = ?', Number(m[1]));
-    return row ? Number(row.id) : null;
+    const t = parseToken(sigKey(), 'admin', (await cookies()).get(ADMIN_COOKIE)?.value ?? '');
+    if (!t) return null; // eski 3 parçalı biçim de burada düşer
+    const row = await get('SELECT id, password FROM admins WHERE id = ?', t.id);
+    return row && versionMatches(t.version, sigKey(), row.password) ? Number(row.id) : null;
   } catch {
     return null;
   }
@@ -84,19 +85,15 @@ function deny(status, error) {
 export const fail = deny;
 export async function guardApi(req, { auth = true } = {}) {
   if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-    // CSRF: Origin başlığı varsa sitenin kendi Host'uyla aynı olmalı; yoksa tarayıcı same-origin bildirmeli.
-    const origin = req.headers.get('origin');
-    let ok = false;
-    if (origin) {
-      try { ok = new URL(origin).host.toLowerCase() === String(req.headers.get('host') ?? '').toLowerCase(); } catch { ok = false; }
-    } else ok = req.headers.get('sec-fetch-site') === 'same-origin';
+    // CSRF: ortak Origin denetimi (lib/guard.js).
+    const ok = originOk(req);
     if (!ok) return deny(403, 'İstek reddedildi.');
   }
   if (auth && !(await sessionOk())) return deny(401, 'Oturum gerekli.');
   return null;
 }
 export async function readJson(req) {
-  const b = await req.json().catch(() => null);
+  const { body: b } = await readBody(req, 64 * 1024);
   return b && typeof b === 'object' && !Array.isArray(b) ? b : null;
 }
 
@@ -105,10 +102,10 @@ const DUMMY_SALT = randomBytes(16).toString('hex');
 const digest = (s) => createHash('sha256').update(String(s)).digest();
 
 // scrypt her zaman çalışır (hesap yoksa sahte salt ile); karşılaştırma sabit zamanlı.
-function verifyPw(stored, password) {
+async function verifyPw(stored, password) {
   const [salt, h] = String(stored ?? '').split(':');
   const valid = !!salt && /^[a-f0-9]{64}$/.test(h ?? '');
-  const got = scryptSync(String(password ?? '').slice(0, 256), salt || DUMMY_SALT, 32, SCRYPT);
+  const got = await scryptAsync(String(password ?? '').slice(0, 256), salt || DUMMY_SALT, 32, SCRYPT);
   return timingSafeEqual(got, valid ? Buffer.from(h, 'hex') : Buffer.alloc(32)) && valid;
 }
 
@@ -119,16 +116,16 @@ async function seedFirstAdmin() {
   await run('INSERT INTO admins (email, password, created_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM admins) ON CONFLICT DO NOTHING', cfg.email, cfg.hash, Date.now());
 }
 
-// Başarılıysa yönetici id'si, değilse null.
+// Başarılıysa { id, password (karma) }, değilse null.
 export async function checkAdminLogin(email, password) {
   if (!sessionSecret()) return null;
   await seedFirstAdmin();
   const em = String(email ?? '').trim().toLowerCase().slice(0, 200);
   const row = await get('SELECT id, password FROM admins WHERE lower(email) = ? LIMIT 1', em);
-  const ok = verifyPw(row?.password, password);
+  const ok = await verifyPw(row?.password, password);
   if (!row || !ok) return null;
   await run('UPDATE admins SET last_login_at = ? WHERE id = ?', Date.now(), row.id);
-  return Number(row.id);
+  return { id: Number(row.id), password: row.password };
 }
 
 // ---------- Yöneticiler ----------
@@ -149,11 +146,12 @@ export async function createAdmin(b) {
 // Kendi şifresini değiştirir; mevcut şifre doğrulanır (scrypt, sabit zamanlı).
 export async function changeOwnPassword(id, current, next) {
   const row = await get('SELECT password FROM admins WHERE id = ?', id);
-  if (!row || !verifyPw(row.password, current)) return { error: 'Mevcut şifre hatalı.', bad: true };
+  if (!row || !(await verifyPw(row.password, current))) return { error: 'Mevcut şifre hatalı.', bad: true };
   const n = String(next ?? '');
   if (n.length < 12 || n.length > 256) return { error: 'Yeni şifre 12-256 karakter olmalı.' };
-  await run('UPDATE admins SET password = ? WHERE id = ?', hashPassword(n), id);
-  return { ok: true };
+  const hash = hashPassword(n);
+  await run('UPDATE admins SET password = ? WHERE id = ?', hash, id);
+  return { ok: true, hash }; // çağıran, bu oturum için yeni sürümlü çerez yazar (diğer oturumlar düşer)
 }
 
 // Başka bir yöneticiyi siler; kendini ve son yöneticiyi silemez (kural tek ifadede uygulanır).
@@ -165,20 +163,11 @@ export async function deleteAdmin(actingId, targetId) {
   return exists ? { error: 'Son yönetici silinemez.' } : { error: 'Yönetici bulunamadı.', status: 404 };
 }
 
-// Sınır, login_attempts tablosunda "adm:" önekli anahtarlarla (mekân girişiyle karışmaz): 15 dakikada IP başına 8
-// ve (tek hesap olduğu için) toplam 40 başarısız deneme.
-const WINDOW = 15 * 60 * 1000;
+// Giriş sınırı: src/lib/ratelimit.js loginGate (artan gecikme; login_attempts tablosunda "adm:" önekli anahtarlar,
+// mekân girişiyle karışmaz). (hesap+IP) çifti ve IP ayrı sayılır; GLOBAL "adm:all" sayacı yoktur.
 export const adminIp = clientIp;
-export async function adminLoginBlocked(ip) {
-  const since = Date.now() - WINDOW;
-  const count = async (key) => Number((await get('SELECT count(*)::int AS n FROM login_attempts WHERE key = ? AND at > ?', key, since))?.n) || 0;
-  return (await count(`adm:i:${ip}`)) >= 8 || (await count('adm:all')) >= 40;
-}
-export async function adminLoginFailure(ip) {
-  const t = Date.now();
-  await run('INSERT INTO login_attempts (key, at) VALUES (?, ?), (?, ?)', `adm:i:${ip}`, t, 'adm:all', t);
-  await run('DELETE FROM login_attempts WHERE at < ?', t - 24 * 60 * 60 * 1000);
-}
+export const adminGate = (email, ip) => loginGate(`adm:p:${email}|${ip}`, `adm:i:${ip}`);
+export { loginSuccess as adminGateSuccess };
 
 // ---------- Girdi temizliği ----------
 const clean = (s, max) => String(s ?? '').replace(/[<>\u0000-\u001f]/g, '').trim().slice(0, max);
@@ -272,10 +261,14 @@ export async function deleteVenue(id, confirmName) {
      d10 AS (DELETE FROM reward_codes WHERE biz_id = $1),
      d11 AS (DELETE FROM reward_rules WHERE biz_id = $1),
      d12 AS (DELETE FROM subscriptions WHERE biz_id = $1),
-     d13 AS (DELETE FROM payments WHERE biz_id = $1)
+     d13 AS (DELETE FROM payments WHERE biz_id = $1),
+     d14 AS (DELETE FROM events WHERE biz_id = $1),
+     d15 AS (DELETE FROM login_attempts WHERE key = $4 OR starts_with(key, $5)),
+     d16 AS (DELETE FROM rate_hits WHERE starts_with(key, $2) OR key = $3 OR key IN (SELECT 'ej:e:' || id::text FROM events WHERE biz_id = $1))
      DELETE FROM venues WHERE id = $1`,
-    id,
+    id, `rj:t:${id}:`, `rwv:b:${id}`, `e:${String(v.email ?? '').toLowerCase()}`, `p:${String(v.email ?? '').toLowerCase()}|`,
   );
+  globalThis.__venueCache?.clear(); // findCafe önbelleği (rooms.js) silinen mekânı 5 sn daha vermesin
   return { ok: true };
 }
 

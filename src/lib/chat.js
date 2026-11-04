@@ -376,10 +376,24 @@ export async function reportUser(token, { targetId, roomId, reason }) {
   const t = now();
   const n = Number((await get('SELECT count(*)::int AS n FROM chat_reports WHERE by_id = ? AND created_at > ?', me.id, t - REQ_WINDOW)).n) || 0;
   if (n >= REPORT_HOURLY) return fail('Çok fazla şikâyet gönderdiniz.');
+  // Yalnızca gerçekten etkileşim olan hedef şikâyet edilebilir: ortak oda ya da (iki yönden biri) sohbet isteği (CHT-03).
+  const pairRoom = await get(
+    'SELECT id FROM chat_rooms WHERE biz_id = ? AND ((a_id = ? AND b_id = ?) OR (a_id = ? AND b_id = ?)) ORDER BY id DESC LIMIT 1',
+    me.biz_id, me.id, target.id, target.id, me.id,
+  );
+  const hadReq = pairRoom ? null : await get(
+    'SELECT id FROM chat_requests WHERE biz_id = ? AND ((from_id = ? AND to_id = ?) OR (from_id = ? AND to_id = ?)) LIMIT 1',
+    me.biz_id, me.id, target.id, target.id, me.id,
+  );
+  if (!pairRoom && !hadReq) return fail('Bu kullanıcıyla etkileşiminiz yok.', 403);
   let rid = Number(roomId) || null;
   if (rid) {
-    const room = await get('SELECT id FROM chat_rooms WHERE id = ? AND biz_id = ?', rid, me.biz_id);
-    if (!room) rid = null;
+    // Oda numarası yalnızca şikâyet edenle hedef arasındaki odaysa kabul edilir; başkasının odası reddedilir.
+    const room = await get(
+      'SELECT id FROM chat_rooms WHERE id = ? AND biz_id = ? AND ((a_id = ? AND b_id = ?) OR (a_id = ? AND b_id = ?))',
+      rid, me.biz_id, me.id, target.id, target.id, me.id,
+    );
+    if (!room) return fail('Bu odayla ilgili şikâyet gönderemezsiniz.', 403);
   }
   await run('INSERT INTO chat_reports (biz_id, by_id, target_id, room_id, reason, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)', me.biz_id, me.id, target.id, rid, text, 'open', t);
   return { ok: true };
