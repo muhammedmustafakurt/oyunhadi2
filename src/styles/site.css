@@ -47,6 +47,8 @@
 
 @layer base {
   *, ::after, ::before, ::backdrop, ::file-selector-button { border-color: var(--color-line); }
+  /* Site yalnızca açık temada tasarlandı; telefonların zorla karartmasını engelle */
+  html { color-scheme: light; }
   body { background: var(--color-cream); color: var(--color-ink); }
   h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.035em; }
   ::selection { background: var(--color-sun); color: var(--color-ink); }

@@ -11,6 +11,7 @@
   --tint: #e6e9ff;
   --mint: #1f9d6b;
   --err: #c0261e;
+  color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
   :root {
