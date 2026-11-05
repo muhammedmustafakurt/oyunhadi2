@@ -55,7 +55,7 @@ export default function AdamOnline({ cafe, masa }) {
   if (room.phase === 'lobby') {
     return (
       <Lobby
-        masaNo={masa.replace('masa-', '')} room={room} ui={ui} max={8} min={2}
+        masaNo={masa.replace('masa-', '')} room={room} ui={ui} max={8} min={1}
         seatNote={(k) => (k === 0 ? 'masayı açan' : '')}
       />
     );

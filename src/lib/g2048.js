@@ -1,7 +1,7 @@
-// 2048 yarışı (2-6 kişi): herkes aynı başlangıç tahtası ve aynı tohumlu karo dizisiyle kendi 4x4 tahtasında
+// 2048 yarışı (1-6 kişi): herkes aynı başlangıç tahtası ve aynı tohumlu karo dizisiyle kendi 4x4 tahtasında
 // 3 dakika oynar; en yüksek puan kazanır. Tahtayı sunucu simüle eder; istemciden yalnızca yön gelir.
 // Tohum yalnızca sunucuda tutulur, viewFor ile gönderilmez. Süre sunucu saatiyle denetlenir.
-export const CONFIG = { min: 2, max: 6 };
+export const CONFIG = { min: 1, max: 6 };
 export const PREFIX = 'gx';
 export const DURATION_MS = 3 * 60 * 1000;
 // Oyuncu başına iki hamle arası en az süre (sunucu saati). Hamle betiğiyle saniyede yüzlerce istek göndererek

@@ -154,7 +154,7 @@ export default function G2048Online({ cafe, masa }) {
   if (best.phase === 'lobby') {
     return (
       <Lobby
-        masaNo={masa.replace('masa-', '')} room={room} ui={ui} max={6} min={2}
+        masaNo={masa.replace('masa-', '')} room={room} ui={ui} max={6} min={1}
         seatNote={(k) => (k === 0 ? 'Masayı açan' : '')}
       />
     );

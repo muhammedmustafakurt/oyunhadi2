@@ -1,6 +1,6 @@
 // Adam Asmaca: sunucu rastgele bir kelime seçer, oyuncular sırayla harf tahmin eder; 7 yanlış hak ortaktır.
 // Doğru harf: bulunan harf başına 10 puan. Kelimeyi tamamlayan: 25 + kalan hak başına 5 bonus. 5 tur; toplam puana göre kazanan.
-export const CONFIG = { min: 2, max: 8 };
+export const CONFIG = { min: 1, max: 8 };
 export const PREFIX = 'ad';
 export const ROUNDS = 5;
 export const MAX_WRONG = 7;

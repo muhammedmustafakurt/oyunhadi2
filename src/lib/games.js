@@ -21,6 +21,6 @@ export const GAMES = [
   { id: 'azul', name: 'Azul', players: '2-4', minutes: '30-45', note: 'Fayanslarla duvar ör', play: true, tableOnly: true },
   { id: 'pisti', name: 'Pişti', players: '2-4', minutes: '10-15', note: 'Yerdeki kartı topla, pişti yap', play: true, tableOnly: true },
   { id: 'okey', name: 'Okey 101', players: '2-4', minutes: '15-25', note: 'Perlerle 101 say, elini ilk bitir', play: true, tableOnly: true },
-  { id: 'g2048', name: '2048', players: '2-6', minutes: '3-5', note: 'Aynı tahta, 3 dakika, en yüksek puan', play: true, tableOnly: true },
-  { id: 'adam', name: 'Adam Asmaca', players: '2-8', minutes: '15', note: 'Gizli kelimeyi harf harf bul', play: true, tableOnly: true },
+  { id: 'g2048', name: '2048', players: '1-6', minutes: '3-5', note: 'Aynı tahta, 3 dakika, en yüksek puan', play: true, tableOnly: true },
+  { id: 'adam', name: 'Adam Asmaca', players: '1-8', minutes: '15', note: 'Gizli kelimeyi harf harf bul', play: true, tableOnly: true },
 ];
