@@ -10,19 +10,26 @@ import { PALETTE } from '@/lib/emlak';
 // Kelime listesi istemciye gitmesin diye lib/adam.js içe aktarılmaz; alfabe burada tekrarlanır.
 const ALPHABET = ['A', 'B', 'C', 'Ç', 'D', 'E', 'F', 'G', 'Ğ', 'H', 'I', 'İ', 'J', 'K', 'L', 'M', 'N', 'O', 'Ö', 'P', 'R', 'S', 'Ş', 'T', 'U', 'Ü', 'V', 'Y', 'Z'];
 
-// Adam çizimi: yanlış sayısına göre parça parça belirir (7 aşama).
-function Gallows({ wrong }) {
-  const p = { stroke: '#1c1233', strokeWidth: 5, strokeLinecap: 'round', fill: 'none' };
+// Adam çizimi: yanlış sayısına göre parça parça belirir (7 aşama). Renkler CSS sınıflarından gelir (tema + mekân rengi).
+// pathLength=1 sayesinde her parça "çizilerek" belirir (game-adam-polish.css).
+function Gallows({ wrong, max = 7 }) {
+  const dead = wrong >= max;
+  const part = { pathLength: 1, className: 'asm-part' };
   return (
-    <svg viewBox="0 0 160 190" className="ad-svg" role="img" aria-label={`${wrong} yanlış, 7 haktan`}>
-      <path d="M20 180 H100 M40 180 V15 H105 V38" {...p} stroke="#5a3fd1" />
-      {wrong > 0 && <circle cx="105" cy="55" r="17" {...p} stroke="#ff5a36" />}
-      {wrong > 1 && <path d="M105 72 V120" {...p} stroke="#ff5a36" />}
-      {wrong > 2 && <path d="M105 82 L82 105" {...p} stroke="#ff5a36" />}
-      {wrong > 3 && <path d="M105 82 L128 105" {...p} stroke="#ff5a36" />}
-      {wrong > 4 && <path d="M105 120 L88 152" {...p} stroke="#ff5a36" />}
-      {wrong > 5 && <path d="M105 120 L122 152" {...p} stroke="#ff5a36" />}
-      {wrong > 6 && <path d="M98 50 l5 5 M103 50 l-5 5 M108 50 l5 5 M113 50 l-5 5" {...p} strokeWidth={2.5} stroke="#1c1233" />}
+    <svg viewBox="0 0 160 190" className={`asm-svg${dead ? ' dead' : ''}`} role="img" aria-label={`${wrong} yanlış, ${max} haktan`}>
+      <ellipse className="asm-ground" cx="70" cy="183" rx="62" ry="5" />
+      <path className="asm-wood" d="M18 180 H104 M40 180 V15 H105" />
+      <path className="asm-wood asm-brace" d="M40 52 L72 15" />
+      <path className="asm-rope" d="M105 15 V38" />
+      <g className="asm-man">
+        {wrong > 0 && <circle className="asm-part asm-head" pathLength="1" cx="105" cy="55" r="17" />}
+        {wrong > 1 && <path {...part} d="M105 72 V120" />}
+        {wrong > 2 && <path {...part} d="M105 82 L82 106" />}
+        {wrong > 3 && <path {...part} d="M105 82 L128 106" />}
+        {wrong > 4 && <path {...part} d="M105 120 L88 154" />}
+        {wrong > 5 && <path {...part} d="M105 120 L122 154" />}
+        {dead && <path className="asm-eyes" d="M97 49 l6 6 M103 49 l-6 6 M107 49 l6 6 M113 49 l-6 6" />}
+      </g>
     </svg>
   );
 }
@@ -62,12 +69,14 @@ export default function AdamOnline({ cafe, masa }) {
   const timedOut = playing && deadline > 0 && now >= deadline;
   const roundDone = !playing && !over;
   const av = (i) => <i className="av" style={{ background: PALETTE[i % PALETTE.length] }}>{i + 1}</i>;
+  const left = g.maxWrong - g.wrong;
+  const lost = roundDone && g.state !== 'won';
 
   return (
-    <div className="ad">
+    <div className="asm">
       {!seated && <p className="mono-where">Oyun başladı; izleyici olarak takip ediyorsunuz.</p>}
 
-      <ul className="ad-scores">
+      <ul className="asm-scores">
         {room.seats.map((s, i) => (
           <li key={i} className={`${playing && g.turn === i ? 'on' : ''}${s.left ? ' left' : ''}`}>
             {av(i)}<b>{s.name}{i === me ? ' (sen)' : ''}</b><span>{g.scores[i]} puan</span>
@@ -75,16 +84,30 @@ export default function AdamOnline({ cafe, masa }) {
         ))}
       </ul>
 
-      <section className={`ad-board${myTurn ? ' me' : ''}`}>
-        <p className="ad-meta">Tur {g.round + 1} / {g.rounds} · Tür: <b>{g.cat}</b> · Kalan hak: <b>{g.maxWrong - g.wrong}</b></p>
-        <Gallows wrong={g.wrong} />
-        <div className="ad-word" role="img" aria-label={g.mask.map((c) => c || 'boş').join(' ')}>
-          {g.mask.map((c, i) => <span key={i} className={c ? 'f' : ''}>{c || ''}</span>)}
+      <section className={`asm-board${myTurn ? ' me' : ''}${lost ? ' lost' : ''}${roundDone && !lost ? ' won' : ''}`}>
+        <p className="asm-meta">
+          <span className="asm-chip">Tur {g.round + 1} / {g.rounds}</span>
+          <span className="asm-chip">Tür: <b>{g.cat}</b></span>
+        </p>
+
+        <div className="asm-stage">
+          <Gallows wrong={g.wrong} max={g.maxWrong} />
+          <div className="asm-gauge">
+            <p className="asm-hak-label">Kalan hak: <b>{left}</b></p>
+            <ul className="asm-lives" aria-hidden="true">
+              {Array.from({ length: g.maxWrong }, (_, i) => <li key={i} className={i < left ? '' : 'gone'} />)}
+            </ul>
+            {playing && <h2 className="asm-turn">{myTurn ? 'Sıra sende' : `${names[g.turn] ?? ''} tahmin ediyor`}</h2>}
+          </div>
         </div>
-        {playing && <h2 className="ad-turn">{myTurn ? 'Sıra sende' : `${names[g.turn] ?? ''} tahmin ediyor`}</h2>}
-        {g.note && <p className="ad-note" role="status">{g.note}</p>}
+
+        <div className="asm-word" role="img" aria-label={g.mask.map((c) => c || 'boş').join(' ')}>
+          {g.mask.map((c, i) => <span key={`${i}${c || ''}`} className={c ? 'f' : ''}>{c || ''}</span>)}
+        </div>
+
+        {g.note && <p className="asm-msg" role="status">{g.note}</p>}
         {roundDone && (
-          <div className="ad-round" role="status">
+          <div className="asm-round" role="status">
             <p>{g.state === 'won' ? `${names[g.solver]} kelimeyi tamamladı!` : 'Haklar bitti.'} Kelime: <b>{g.word}</b></p>
             {seated && <button type="button" className="btn primary" disabled={busy} onClick={() => send('adnext')} aria-label="Sonraki tura geç">Sonraki tur</button>}
           </div>
@@ -95,7 +118,7 @@ export default function AdamOnline({ cafe, masa }) {
       </section>
 
       {playing && (
-        <div className="ad-keys" role="group" aria-label="Türkçe harf tuş takımı">
+        <div className={`asm-keys${myTurn ? ' mine' : ''}`} role="group" aria-label="Türkçe harf tuş takımı">
           {ALPHABET.map((L) => {
             const used = g.guessed.includes(L);
             const hit = g.hits.includes(L);
@@ -112,11 +135,13 @@ export default function AdamOnline({ cafe, masa }) {
       )}
 
       {over && (
-        <section className="ad-over" role="status">
+        <section className="asm-over" role="status">
           <h2>{over.text}</h2>
           <ol>
-            {over.ranking.map((i) => (
-              <li key={i} className={over.winners.includes(i) ? 'win' : ''}><b>{names[i]}</b><span>{over.scores[i]} puan</span></li>
+            {over.ranking.map((i, k) => (
+              <li key={i} className={over.winners.includes(i) ? 'win' : ''}>
+                <em>{k + 1}</em><b>{names[i]}</b><span>{over.scores[i]} puan</span>
+              </li>
             ))}
           </ol>
           <button type="button" className="btn primary" disabled={busy} onClick={() => send('reset')} aria-label="Yeniden oyna, lobiye dön">Yeniden oyna</button>

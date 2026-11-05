@@ -23,7 +23,9 @@ function Board({ b, label, mini }) {
   return (
     <div className={mini ? 'gx-board mini' : 'gx-board'} role="img" aria-label={label}>
       {b.map((v, i) => (
-        <span key={i} className="gx-t" data-v={v > 2048 ? 'big' : v}>{v || ''}</span>
+        // Anahtara değer katılır: karo değişince (yeni/birleşen) yeniden oluşur ve açılış animasyonu oynar.
+        <span key={mini ? i : `${i}:${v}`} className="gx-t" data-v={v > 2048 ? 'big' : v}
+          data-len={String(v).length}>{v || ''}</span>
       ))}
     </div>
   );
@@ -177,9 +179,14 @@ export default function G2048Online({ cafe, masa }) {
       {!seated && <p className="mono-where">Oyun başladı; izleyici olarak takip ediyorsunuz.</p>}
 
       <div className="gx-top">
-        <div className="gx-stat"><small>Puan</small><b>{show ? show.s : '–'}</b></div>
+        <div className="gx-stat score">
+          <small>Puan</small><b>{show ? show.s : '–'}</b>
+          {show && <span className="gx-max">en yüksek karo <i>{Math.max(0, ...show.b)}</i></span>}
+        </div>
         <div className={`gx-stat time${left > 0 && left < 20000 ? ' low' : ''}`}>
-          <small>Süre</small><b role="timer" aria-label={`Kalan süre ${fmt(left)}`}>{fmt(left)}</b>
+          <small>Süre</small>
+          <b role="timer" aria-label={`Kalan süre ${fmt(left)}`}>{fmt(left)}</b>
+          <span className="gx-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, (left / (g.total || 180000)) * 100)}%` }} /></span>
         </div>
       </div>
 
@@ -192,12 +199,12 @@ export default function G2048Online({ cafe, masa }) {
             onPointerCancel={() => { touch.current = null; }}
           >
             <Board b={show.b} label="Sizin 2048 tahtanız" />
-            {(g.over || timeUp) && <div className="gx-veil">Süre doldu</div>}
-            {!g.over && !timeUp && mine.dead && <div className="gx-veil">Hamle kalmadı</div>}
+            {(g.over || timeUp) && <div className="gx-veil"><b>Süre doldu</b><span>{show.s} puan</span></div>}
+            {!g.over && !timeUp && mine.dead && <div className="gx-veil"><b>Hamle kalmadı</b><span>Diğerlerinin bitmesini bekleyin</span></div>}
           </div>
           <div className="gx-pad" role="group" aria-label="Yön tuşları">
-            <button type="button" className="btn gx-u" aria-label="Yukarı" disabled={!playing} onClick={() => move('u')}>▲</button>
             <button type="button" className="btn gx-l" aria-label="Sola" disabled={!playing} onClick={() => move('l')}>◀</button>
+            <button type="button" className="btn gx-u" aria-label="Yukarı" disabled={!playing} onClick={() => move('u')}>▲</button>
             <button type="button" className="btn gx-d" aria-label="Aşağı" disabled={!playing} onClick={() => move('d')}>▼</button>
             <button type="button" className="btn gx-r" aria-label="Sağa" disabled={!playing} onClick={() => move('r')}>▶</button>
           </div>
@@ -210,7 +217,7 @@ export default function G2048Online({ cafe, masa }) {
             {i !== me && <Board b={p.b} mini label={`${g.names[i]} tahtası`} />}
             <span className="nm">{g.names[i]}{i === me ? ' (sen)' : ''}</span>
             <b>{i === me && show ? show.s : p.s}</b>
-            <small>en yüksek {p.mx}{p.dead ? ' · bitti' : ''}</small>
+            <small>en yüksek karo {p.mx}{p.dead ? ' · bitti' : ''}</small>
           </li>
         ))}
       </ul>
@@ -220,7 +227,11 @@ export default function G2048Online({ cafe, masa }) {
           <h3>{g.over.text}</h3>
           <ol>
             {g.over.ranking.map((i) => (
-              <li key={i}>{g.names[i]}: {g.over.scores[i]} puan, en yüksek karo {g.over.tiles[i]}</li>
+              <li key={i} className={i === me ? 'me' : undefined}>
+                <span className="nm">{g.names[i]}{i === me ? ' (sen)' : ''}</span>
+                <b>{g.over.scores[i]} puan</b>
+                <small>en yüksek karo {g.over.tiles[i]}</small>
+              </li>
             ))}
           </ol>
           {seated && <button type="button" className="btn" disabled={busy} onClick={() => send('reset')}>Rövanş (lobiye dön)</button>}

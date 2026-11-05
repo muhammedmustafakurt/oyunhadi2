@@ -1,33 +1,90 @@
-/* Adam Asmaca cilası */
-.ad { --ink: #1c1233; --paper: #fff7ee; --logo: var(--font-logo), Georgia, serif; }
-.ad-scores li { position: relative; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; padding: 9px 11px; border: 2.5px solid var(--ink); border-radius: 14px; background: var(--paper); box-shadow: 0 3px 0 var(--ink); }
-.ad-scores li > b { font-family: var(--logo); font-style: italic; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ad-scores li > small, .ad-scores li > span:not(.av) { grid-column: 1 / -1; }
-.ad-scores li.on { background: #fff1c9; box-shadow: 0 3px 0 var(--ink), 0 0 0 4px #f2b01e88; }
-.ad-scores li.on::after { content: 'SIRA'; position: absolute; bottom: -11px; right: 10px; padding: 1px 8px; border: 2px solid var(--ink); border-radius: 99px; background: #f2b01e; font: 800 .62rem/1.5 inherit; letter-spacing: .08em; }
+/* Adam Asmaca cilası: neobrütalist katman (tok kenar + sert gölge), tema ve mekân rengiyle uyumlu.
+   Yüzeyler sayfa jetonlarından (--white, --paper, --ink-page) gelir: koyu temada kendiliğinden döner. */
+.asm {
+  --asm-ink: var(--ink-page, #1c1233);
+  --asm-sur: var(--white, #fff);
+  --asm-sh: var(--shadow, #1c1233);
+  --asm-brand: var(--brand, #ff4f2e);
+  --asm-on-brand: var(--on-brand, #fff);
+  --asm-tint: color-mix(in srgb, var(--asm-brand) 14%, var(--asm-sur));
+  --asm-soft: color-mix(in srgb, var(--asm-ink) 9%, transparent);
+  --asm-hit: #0d8a73;
+  --asm-logo: var(--font-logo), Georgia, serif;
+}
 
-.ad-board { position: relative; gap: 12px; padding: 18px 12px 16px; border: 2.5px solid var(--ink); border-radius: 22px; background: radial-gradient(ellipse at 50% 20%, #fffdf8, #fff2de); box-shadow: 0 5px 0 var(--ink); }
-.ad-board::before { content: ''; position: absolute; inset: 6px; border: 1px solid #1c123326; border-radius: 16px; pointer-events: none; }
-.ad-board.me { box-shadow: 0 5px 0 var(--ink), 0 0 0 4px #f2b01e88; }
-.ad-meta { padding: 3px 12px; border-radius: 99px; background: #1c12330f; font-size: .9rem; }
-.ad-svg { width: 170px; filter: drop-shadow(0 3px 0 #1c123326); }
-.ad-word { gap: 7px; }
-.ad-word span { width: 32px; height: 46px; border-bottom: 4px solid var(--ink); font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.9rem; color: #5a3fd1; }
-.ad-turn { font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.25rem; }
-.ad-note { padding: 4px 12px; border-radius: 12px; background: #f2b01e33; }
+/* Oyuncu şeridi */
+.asm-scores li { position: relative; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; padding: 9px 11px; border: 2.5px solid var(--asm-ink); border-radius: 14px; background: var(--asm-sur); color: var(--asm-ink); box-shadow: 0 3px 0 var(--asm-sh); transition: background .2s, transform .2s; }
+.asm-scores li > b { font-family: var(--asm-logo); font-style: italic; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asm-scores li > span:not(.av) { grid-column: 1 / -1; font-size: .85rem; font-weight: 700; opacity: .8; }
+.asm-scores li.on { background: var(--asm-brand); color: var(--asm-on-brand); transform: translateY(-2px); box-shadow: 0 5px 0 var(--asm-sh); }
+.asm-scores li.on > span:not(.av) { opacity: 1; }
+.asm-scores li.on::after { content: 'SIRA'; position: absolute; top: -10px; right: 10px; padding: 0 8px; border: 2px solid var(--asm-ink); border-radius: 99px; background: var(--accent, #ffc83d); color: #1c1233; font: 800 .62rem/1.5 inherit; letter-spacing: .08em; }
 
-.ad-keys { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; }
-.ad-keys button { min-width: 0; border: 2.5px solid var(--ink); border-radius: 11px; background: var(--paper); box-shadow: 0 3px 0 var(--ink); font-family: var(--logo); font-weight: 800; transition: transform .1s, box-shadow .1s, background .15s; }
-.ad-keys button:not(:disabled):hover { background: #fff1c9; transform: translateY(-2px); box-shadow: 0 5px 0 var(--ink); }
-.ad-keys button:not(:disabled):active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
-.ad-keys button:disabled { box-shadow: 0 1px 0 var(--ink); transform: translateY(2px); }
-.ad-keys button.hit { background: #14a38b; border-color: var(--ink); color: #fff; }
-.ad-keys button.miss { background: #ece3d6; border-color: #1c123366; color: #1c123380; opacity: 1; text-decoration: line-through; box-shadow: none; }
-.ad-over { border: 2.5px solid var(--ink); border-radius: 20px; box-shadow: 0 5px 0 var(--ink); padding: 18px 14px; }
-.ad-over h2 { font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.5rem; }
-.ad-over li { border: 2px solid #1c123322; font-weight: 700; }
-.ad-over li.win { background: #f2b01e66; border-color: var(--ink); }
-@media (prefers-reduced-motion: reduce) { .ad-keys button { transition: none; } }
+/* Tahta: tebeşir tahtası yerine kâğıt yüzey, köşede mekân renginde bant */
+.asm-board { position: relative; padding: 16px 12px 16px; border: 2.5px solid var(--asm-ink); border-radius: 22px; background: var(--asm-sur); color: var(--asm-ink); box-shadow: 0 5px 0 var(--asm-sh); overflow: hidden; transition: box-shadow .2s; }
+.asm-board::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 8px; background: repeating-linear-gradient(135deg, var(--asm-brand) 0 10px, var(--accent, #ffc83d) 10px 20px); border-bottom: 2.5px solid var(--asm-ink); }
+.asm-board > * { position: relative; }
+.asm-board { padding-top: 24px; }
+.asm-board.me { box-shadow: 0 5px 0 var(--asm-sh), 0 0 0 4px color-mix(in srgb, var(--asm-brand) 45%, transparent); }
+.asm-chip { padding: 3px 11px; border: 2px solid var(--asm-ink); border-radius: 99px; background: var(--asm-tint); font-size: .85rem; font-weight: 600; }
+.asm-chip b { font-weight: 800; }
 
-/* Koyu tema: kök yazısı sayfa mürekkebi (--ink-page); açık tahta yüzeyleri koyu yazısını kendisi taşır. */
-.ad-scores li, .ad-board, .ad-over { color: #1c1233; }
+/* Darağacı çizimi */
+.asm-svg { filter: drop-shadow(0 3px 0 var(--asm-soft)); }
+.asm-svg path, .asm-svg circle { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.asm-svg .asm-wood { stroke: var(--asm-ink); }
+.asm-svg .asm-brace { stroke-width: 4; opacity: .7; }
+.asm-svg .asm-rope { stroke: var(--asm-brand); stroke-width: 4; stroke-dasharray: 2 5; }
+.asm-svg .asm-ground { fill: var(--asm-soft); }
+.asm-svg .asm-man { transform-box: fill-box; transform-origin: 50% 0; }
+.asm-svg .asm-part { stroke: var(--asm-brand); stroke-dasharray: 1; stroke-dashoffset: 0; animation: asm-draw .45s ease-out both; }
+.asm-svg .asm-head { fill: var(--asm-tint); }
+.asm-svg .asm-eyes { stroke: var(--asm-ink); stroke-width: 2.5; }
+.asm-svg.dead .asm-man { transform-origin: 105px 38px; transform-box: view-box; animation: asm-sway 2.6s ease-in-out .3s infinite; }
+@keyframes asm-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes asm-sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+
+/* Kalan haklar: dolu kareler tükendikçe boşalır */
+.asm-hak-label { font-weight: 600; }
+.asm-lives li { border: 2px solid var(--asm-ink); border-radius: 5px; background: var(--asm-brand); transition: background .25s, transform .25s; }
+.asm-lives li.gone { background: transparent; opacity: .35; transform: scale(.8) rotate(-8deg); }
+.asm-turn { font-family: var(--asm-logo); font-style: italic; font-weight: 800; }
+.asm-board.me .asm-turn { color: color-mix(in srgb, var(--asm-brand) 72%, var(--asm-ink)); }
+
+/* Kelime harf kutuları */
+.asm-word { gap: 7px; }
+.asm-word span { border: 2.5px solid var(--asm-ink); border-radius: 9px; background: var(--asm-soft); box-shadow: 0 3px 0 var(--asm-sh); font-family: var(--asm-logo); font-style: italic; font-weight: 800; font-size: 1.7rem; color: var(--asm-ink); }
+.asm-word span.f { background: var(--asm-tint); animation: asm-pop .32s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes asm-pop { from { transform: translateY(8px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.asm-msg { padding: 4px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent, #ffc83d) 30%, transparent); }
+.asm-round p { margin: 0; }
+.asm-round b { padding: 1px 8px; border-radius: 8px; background: var(--asm-tint); border: 2px solid var(--asm-ink); font-family: var(--asm-logo); font-style: italic; letter-spacing: .04em; }
+.asm-board.lost .asm-word span { border-color: color-mix(in srgb, var(--asm-brand) 80%, var(--asm-ink)); }
+.asm-board.lost { animation: asm-shake .45s both; }
+@keyframes asm-shake { 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+
+/* Klavye: sıra bende değilse soluk, bendeyse canlı */
+.asm-keys { gap: 7px; }
+.asm-keys button { border: 2.5px solid var(--asm-ink); border-radius: 11px; background: var(--asm-sur); color: var(--asm-ink); box-shadow: 0 3px 0 var(--asm-sh); font: 800 1.1rem/1 var(--asm-logo); transition: transform .1s, box-shadow .1s, background .15s; }
+.asm-keys.mine button:not(:disabled) { background: var(--asm-tint); }
+.asm-keys button:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--asm-sh); }
+.asm-keys button:not(:disabled):active { transform: translateY(3px); box-shadow: 0 0 0 var(--asm-sh); }
+.asm-keys button:disabled { box-shadow: 0 1px 0 var(--asm-sh); transform: translateY(2px); opacity: .6; }
+.asm-keys button.hit { background: var(--asm-hit); border-color: var(--asm-ink); color: #fff; opacity: 1; }
+.asm-keys button.miss { background: transparent; border-color: var(--asm-soft); color: color-mix(in srgb, var(--asm-ink) 55%, transparent); opacity: 1; text-decoration: line-through; box-shadow: none; }
+
+/* Final */
+.asm-over { padding: 18px 14px; border: 2.5px solid var(--asm-ink); border-radius: 20px; background: var(--asm-sur); color: var(--asm-ink); box-shadow: 0 5px 0 var(--asm-sh); }
+.asm-over h2 { font-family: var(--asm-logo); font-style: italic; font-weight: 800; font-size: 1.5rem; }
+.asm-over li { padding: 8px 12px; border: 2px solid var(--asm-soft); border-radius: 12px; font-weight: 700; }
+.asm-over li em { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--asm-soft); font-style: normal; font-size: .8rem; }
+.asm-over li.win { background: color-mix(in srgb, var(--accent, #ffc83d) 40%, var(--asm-sur)); border-color: var(--asm-ink); box-shadow: 0 3px 0 var(--asm-sh); }
+.asm-over li.win em { background: var(--accent, #ffc83d); color: #1c1233; }
+
+@media (max-width: 380px) {
+  .asm-word span { font-size: 1.45rem; height: 42px; }
+  .asm-keys { gap: 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .asm *, .asm *::before, .asm *::after { animation: none !important; transition: none !important; }
+}

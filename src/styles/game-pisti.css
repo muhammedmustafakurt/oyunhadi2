@@ -1,33 +1,96 @@
-.ps { display: grid; gap: 14px; color: var(--ink-page, #1c1233); }
+/* Pişti: yapı ve iskambil kartı. Kâğıt/mürekkep jetonları .ps üzerinde sabit açık palettir (koyu temada da kartlar krem kalır). */
+.ps { --ink: #1c1233; --paper: #fff7ee; --logo: var(--font-logo), Georgia, serif; --red: #cf2a16; --felt: #0f7a68; display: grid; gap: 14px; color: var(--ink-page, #1c1233); }
 .ps button:focus-visible { outline: 3px solid #5a3fd1; outline-offset: 2px; }
-.ps-players { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-.ps-players li { display: grid; gap: 2px; padding: 10px 12px; background: #fff7ee; border: 2px solid #1c123322; border-radius: 12px; }
-.ps-players li.on { border-color: #ff5a36; box-shadow: 0 0 0 3px #ff5a3640; }
-.ps-players li.left { opacity: 0.5; }
-.ps-players small { color: #1c1233b0; font-size: 0.8rem; }
-.ps-table { display: grid; justify-items: center; gap: 8px; padding: 18px 12px; border-radius: 18px; background: #14a38b; background-image: radial-gradient(circle at 50% 40%, #1ec0a5, #0f7f6c); color: #fff; }
-.ps-table .pile { display: grid; justify-items: center; gap: 8px; }
-.ps-table small { color: #ffffffe0; }
-.ps-empty { display: grid; place-items: center; width: 84px; height: 118px; border: 2px dashed #ffffff90; border-radius: 10px; color: #ffffffd0; font-size: 0.85rem; }
-.ps-note { margin: 0; font-weight: 600; text-align: center; }
-.ps-card { display: inline-grid; grid-template-rows: auto auto; place-items: center; align-content: center; gap: 2px; min-width: 56px; min-height: 80px; padding: 6px; background: #fff7ee; color: #1c1233; border: 2px solid #1c1233; border-radius: 10px; font: 700 1.3rem/1 inherit; box-shadow: 0 3px 0 #1c123340; cursor: default; }
-.ps-card.red { color: #d3321b; }
-.ps-card .s { font-size: 1.6rem; }
-.ps-card.big { min-width: 84px; min-height: 118px; font-size: 1.8rem; }
-.ps-card.big .s { font-size: 2.2rem; }
-button.ps-card { cursor: pointer; transition: transform 0.12s; }
-button.ps-card:not(:disabled):hover { transform: translateY(-4px); }
-button.ps-card:disabled { opacity: 0.55; cursor: not-allowed; }
-.ps-hand { display: grid; gap: 8px; padding: 12px; border: 3px solid transparent; border-radius: 16px; }
-.ps-hand.me { border-color: #f2b01e; background: #f2b01e22; box-shadow: 0 0 14px #f2b01e90; }
-.ps-hand h2 { margin: 0; font-size: 1.1rem; }
-.ps-hand .cards { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.ps-over { display: grid; gap: 12px; justify-items: center; padding: 14px; background: #fff7ee; border: 2px solid #5a3fd1; border-radius: 16px; }
-.ps-over h2 { margin: 0; text-align: center; }
+
+/* Rakipler */
+.ps-players { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px 10px; }
+.ps-players li { position: relative; display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; row-gap: 6px; padding: 9px 11px 10px; color: var(--ink); background: var(--paper); border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 0 3px 0 var(--ink); transition: transform .15s, background-color .2s; }
+.ps-players li > b { font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.02rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ps-players li > .fan, .ps-players li > .stats { grid-column: 1 / -1; }
+.ps-players li.on { background: #fff1c9; box-shadow: 0 3px 0 var(--ink), 0 0 0 4px #f2b01e88; transform: translateY(-1px); }
+.ps-players li.on::after { content: 'SIRA'; position: absolute; top: -11px; right: 10px; padding: 1px 8px; border: 2px solid var(--ink); border-radius: 99px; background: #f2b01e; font: 800 .62rem/1.5 inherit; letter-spacing: .08em; }
+.ps-players li.left { opacity: .5; }
+.ps .av { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font-style: normal; font-size: .78rem; font-weight: 800; border: 2px solid #fff; box-shadow: 0 0 0 1px #1c123355; }
+
+/* Rakip eli: kapalı kart yelpazesi */
+.ps .fan { display: flex; justify-content: center; align-items: flex-end; min-height: 46px; padding-top: 2px; }
+.ps .fan .ps-back { --w: 30px; margin-left: -14px; transform-origin: 50% 120%; rotate: calc((var(--i) - (var(--n) - 1) / 2) * 7deg); }
+.ps .fan .ps-back:first-child { margin-left: 0; }
+.ps .fan small { align-self: center; opacity: .7; }
+.ps .stats { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; font-size: .78rem; color: #1c1233b8; }
+.ps .stats b { color: var(--ink); font-size: .92rem; }
+.ps .stats em { font-style: normal; font-weight: 800; color: #a2570a; }
+
+/* Kart arkası: mekân rengi, eşkenar dörtgen ağı, krem çerçeve */
+.ps-back { --w: 56px; position: relative; display: inline-block; flex: none; width: var(--w); aspect-ratio: 5 / 7; background: var(--paper); border: 2px solid var(--ink); border-radius: calc(var(--w) * .13); box-shadow: 0 2px 0 var(--ink); }
+.ps-back::before { content: ''; position: absolute; inset: 11%; border-radius: calc(var(--w) * .07); border: 1.5px solid var(--ink);
+  background:
+    repeating-linear-gradient(45deg, #ffffff33 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, #ffffff33 0 2px, transparent 2px 6px),
+    var(--brand, #ff4f2e); }
+.ps-back::after { content: ''; position: absolute; left: 50%; top: 50%; width: 26%; aspect-ratio: 1; translate: -50% -50%; rotate: 45deg; background: var(--accent, #ffc83d); border: 1.5px solid var(--ink); }
+
+/* Masa: çuha yüzey, deste solda, yer ortada */
+.ps-table { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; justify-items: center; gap: 12px 6px; padding: 26px 10px 16px; border: 2.5px solid var(--ink); border-radius: 22px; box-shadow: 0 5px 0 var(--ink); color: #fff; overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 42%, #ffffff2e 0%, transparent 62%),
+    repeating-linear-gradient(0deg, #00000010 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, #00000010 0 1px, transparent 1px 4px),
+    var(--felt); }
+.ps-table::before { content: ''; position: absolute; inset: 7px; border: 1.5px dashed #ffffff55; border-radius: 16px; pointer-events: none; }
+.ps-table small { color: #fff; font-weight: 600; }
+.ps-deck { grid-column: 1; display: grid; justify-items: center; gap: 8px; }
+.ps-deck .stack { position: relative; display: block; width: 52px; aspect-ratio: 5 / 7; }
+.ps-deck .stack .ps-back { --w: 52px; position: absolute; left: 0; top: 0; }
+.ps-deck .stack .ps-back:nth-child(2) { translate: 2px -2px; }
+.ps-deck .stack .ps-back:nth-child(3) { translate: 4px -4px; }
+.ps-deck small, .pile small { padding: 2px 10px; border-radius: 99px; background: #06322bd0; white-space: nowrap; font-size: .8rem; }
+.ps-table .pile { grid-column: 2; display: grid; justify-items: center; gap: 10px; }
+.pile .spot { display: grid; place-items: center; width: 132px; height: 150px; }
+.pile .spot > * { grid-area: 1 / 1; }
+.pile .spot .ps-back { --w: 92px; rotate: calc(var(--j) * 9deg - 14deg); translate: calc(var(--j) * -2px) calc(var(--j) * 1px); }
+.ps-empty { display: grid; place-items: center; width: 92px; height: 129px; border: 2px dashed #ffffffa0; border-radius: 12px; background: #ffffff14; color: #ffffffd8; font-size: .85rem; }
+.ps-note { grid-column: 1 / -1; margin: 0; padding: 6px 14px; border-radius: 99px; background: #06322bd0; font-weight: 700; font-size: .92rem; text-align: center; }
+
+/* İskambil kartı: köşe indeksleri, işaret dizilimi; boyut --w ile ölçeklenir */
+.ps-card { --w: 68px; position: relative; display: block; flex: none; width: var(--w); aspect-ratio: 5 / 7; padding: 0; font: 800 calc(var(--w) * .25)/1 var(--logo); color: var(--ink); background: linear-gradient(#fffdf8, #fff2e0); border: 2.5px solid var(--ink); border-radius: calc(var(--w) * .13); box-shadow: 0 3px 0 var(--ink); cursor: default; }
+.ps-card.red { color: var(--red); }
+.ps-card.big { --w: 92px; box-shadow: 0 5px 0 var(--ink); }
+.ps-card .ix { position: absolute; left: 7%; top: 5%; display: grid; justify-items: center; gap: 1px; line-height: 1; }
+.ps-card .ix b { font-size: 1em; font-weight: 800; }
+.ps-card .ix i { font-style: normal; font-size: .82em; }
+.ps-card .ix.lo { left: auto; top: auto; right: 7%; bottom: 5%; rotate: 180deg; }
+.ps-card .face { position: absolute; inset: 0; }
+.ps-card .pip { position: absolute; translate: -50% -50%; font-style: normal; font-size: calc(var(--w) * .235); line-height: 1; }
+.ps-card .pip.flip { rotate: 180deg; }
+.ps-card .ace { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-style: normal; font-size: calc(var(--w) * .6); line-height: 1; }
+.ps-card .court { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: grid; place-items: center; align-content: center; gap: 2px; width: 44%; height: 54%; border: 1.5px solid currentColor; border-radius: 6px; background: repeating-linear-gradient(135deg, color-mix(in srgb, currentColor 10%, transparent) 0 3px, transparent 3px 7px); }
+.ps-card .court b { font-size: calc(var(--w) * .34); font-weight: 800; }
+.ps-card .court i { font-style: normal; font-size: calc(var(--w) * .2); }
+button.ps-card { cursor: pointer; transition: transform .14s, box-shadow .14s; touch-action: manipulation; }
+button.ps-card:not(:disabled):hover { transform: translateY(-6px) rotate(-1.5deg); box-shadow: 0 8px 0 var(--ink); }
+button.ps-card:not(:disabled):active { transform: translateY(0); box-shadow: 0 2px 0 var(--ink); }
+button.ps-card:disabled { cursor: not-allowed; }
+
+/* Elim */
+.ps-hand { position: relative; display: grid; gap: 10px; margin-top: 2px; padding: 12px 10px 16px; border: 2.5px dashed color-mix(in srgb, var(--ink-page, #1c1233) 28%, transparent); border-radius: 20px; background: color-mix(in srgb, var(--ink-page, #1c1233) 4%, transparent); }
+.ps-hand.me { color: #1c1233; border: 2.5px solid #1c1233; background: linear-gradient(#fff4d1, #fde9ad); box-shadow: 0 4px 0 #1c1233; }
+.ps-hand .head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.ps-hand h2 { margin: 0; font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.15rem; }
+.ps-hand .me { display: flex; align-items: center; gap: 8px; }
+.ps-hand .stats { gap: 2px 10px; justify-content: flex-end; }
+.ps-hand .cards { display: flex; justify-content: center; gap: clamp(4px, 1.6vw, 10px); padding-top: 4px; }
+.ps-hand .cards .ps-card { --w: clamp(58px, 19.5vw, 84px); }
+.ps-hand .cards > :nth-child(odd) { rotate: -2deg; }
+.ps-hand .cards > :nth-child(even) { rotate: 2deg; }
+.ps-hand .muted { margin: 0; }
+
+/* Oyun sonu */
+.ps-over { display: grid; gap: 12px; justify-items: center; padding: 18px 14px; color: #1c1233; background: var(--paper); border: 2.5px solid var(--ink); border-radius: 20px; box-shadow: 0 5px 0 var(--ink); }
+.ps-over h2 { margin: 0; text-align: center; font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.5rem; }
 .ps-tablewrap { width: 100%; overflow-x: auto; }
-.ps-over table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.ps-over table { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .ps-over th, .ps-over td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #1c123322; }
 .ps-over tbody th { text-align: left; }
-.ps-over tr.win { background: #f2b01e44; }
-
-.ps .av { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font-style: normal; font-size: .78rem; font-weight: 800; border: 2px solid #fff; box-shadow: 0 0 0 1px #1c123333; }
+.ps-over thead th { font-size: .7rem; letter-spacing: .05em; text-transform: uppercase; color: #1c1233a0; }
+.ps-over tr.win { background: #f2b01e55; font-weight: 800; }

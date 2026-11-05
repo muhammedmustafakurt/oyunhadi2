@@ -1,28 +1,10 @@
-/* Okey cilası: gerçek taş görünümü, ahşap ıstaka */
-.ok-wrap { --ink: #1c1233; --logo: var(--font-logo), Georgia, serif; }
-.ok-tile { background: linear-gradient(#fffcf6, #f6e8d0); border: 1.5px solid #b79e78; border-bottom: 4px solid #cbb48c; border-radius: 8px; box-shadow: 0 2px 0 #1c123350; font-family: var(--logo); font-style: normal; font-weight: 800; }
-.ok-tile i { box-shadow: inset 0 -2px 0 #00000033; }
-.ok-tile.joker { box-shadow: 0 2px 0 #1c123350, inset 0 0 0 2px #f2b01ebf; }
-.ok-tile.on { transform: translateY(-10px); border-color: var(--ink); border-bottom-color: var(--ink); box-shadow: 0 8px 0 #1c123340; }
-.ok-tile.sm { box-shadow: 0 1px 0 #1c123350; }
-.ok-hand { padding: 20px 8px 10px; gap: 5px; border: 2.5px solid var(--ink); border-radius: 16px; background: linear-gradient(#b87a3e, #98622d 70%, #84531f); box-shadow: 0 4px 0 var(--ink), inset 0 4px 0 #ffffff22, inset 0 -6px 0 #00000026; }
-.ok-top { padding: 8px 12px; border: 2.5px solid var(--ink); border-radius: 14px; background: #fff7ee; box-shadow: 0 3px 0 var(--ink); }
-.ok-deck { border: 2px solid var(--ink); border-radius: 10px; background: var(--ink); box-shadow: 0 3px 0 #00000055; }
-.ok-deck b { font-family: var(--logo); font-style: italic; }
-.ok-players li { border: 2.5px solid var(--ink); border-radius: 12px; box-shadow: 0 3px 0 var(--ink); font-family: var(--logo); font-style: italic; font-weight: 800; }
-.ok-players li small { font-family: inherit; font-style: normal; font-weight: 600; }
-.ok-players li.turn { background: #fff1c9; box-shadow: 0 3px 0 var(--ink), 0 0 0 4px #f2b01e88; }
-.ok-turn { border: 2.5px solid var(--ink); border-radius: 12px; box-shadow: 0 3px 0 var(--ink); font-family: var(--logo); font-style: italic; font-weight: 800; }
-.ok-pile { border: 2px dashed #1c123355; border-radius: 12px; background: #1c12330a; }
-.ok-pile.take { border: 2.5px solid var(--ink); background: #fff1c9; box-shadow: 0 3px 0 var(--ink); }
-.ok-panel { border: 2.5px solid var(--ink); border-radius: 16px; background: #fff7ee; box-shadow: 0 4px 0 var(--ink); }
-.ok-plus { border: 2.5px dashed var(--ink); border-radius: 10px; }
-.ok-x { border-radius: 10px; }
-.ok-over { border: 2.5px solid var(--ink); border-radius: 18px; box-shadow: 0 5px 0 var(--ink); }
-.ok-over h2, .ok-over h3 { font-family: var(--logo); font-style: italic; font-weight: 800; }
-.ok-h { font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.05rem; }
+/* Okey cilası: ince ayarlar. Ana stil game-okey.css'te; burada yalnız sıra/odak ve küçük ekran düzeltmeleri. */
+.ok-players li.turn .ok-dot { background: var(--on-accent, #0b1033); }
+.ok-wrap .btn.sm { font-size: 14px; }
 
-/* Koyu tema: kök yazısı sayfa mürekkebi (--ink-page); açık tahta yüzeyleri koyu yazısını kendisi taşır. */
-.ok-top, .ok-players li, .ok-panel, .ok-over, .ok-hand, .ok-pile.take { color: #1c1233; }
-.ok-pile { border-color: color-mix(in srgb, var(--ink-page, #1c1233) 33%, transparent); background: color-mix(in srgb, var(--ink-page, #1c1233) 4%, transparent); }
-.ok-pile.take { border-color: #1c1233; background: #fff1c9; }
+@media (max-width: 380px) {
+  .ok-table { padding: 10px; }
+  .ok-rack { padding: 20px 6px 10px; }
+  .ok-hand { gap: 12px 3px; }
+  .ok-top { gap: 8px; padding: 8px 10px; }
+}

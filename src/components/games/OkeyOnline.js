@@ -157,42 +157,75 @@ export default function OkeyOnline({ cafe, masa }) {
         </section>
       )}
 
-      <div className="ok-top">
-        <div className="ok-ind">
-          <span>Gösterge</span>
-          <Tile id={g.ind} ok={{ c: -1, n: -1 }} small label={`Gösterge: ${COLOR_NAMES[indFace.c]} ${indFace.n}`} />
-          <span>Okey: <b className={'ok-' + COLORS[ok.c]}>{COLOR_NAMES[ok.c]} {ok.n}</b></span>
+      <div className="ok-table">
+        <ul className="ok-players" aria-label="Oyuncular">
+          {names.map((nm, i) => {
+            const turn = i === g.turn && running;
+            return (
+              <li key={i} className={`${turn ? 'turn' : ''} ${g.out[i] ? 'left' : ''} ${i === me ? 'me' : ''}`} aria-current={turn ? 'true' : undefined}>
+                <span className="ok-pn">{turn && <em className="ok-dot" aria-hidden="true" />}{nm}{i === me ? ' (sen)' : ''}</span>
+                <small>
+                  {g.out[i] ? 'ayrıldı' : (
+                    <>
+                      <span className="ok-bk" aria-hidden="true">{g.counts[i]}</span>
+                      {`${g.counts[i]} taş · ${g.opened[i] === 'pairs' ? 'çift açtı' : g.opened[i] ? 'açtı' : 'açmadı'}`}
+                    </>
+                  )}
+                </small>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="ok-top">
+          <div className="ok-ind">
+            <span>Gösterge</span>
+            <Tile id={g.ind} ok={{ c: -1, n: -1 }} small label={`Gösterge: ${COLOR_NAMES[indFace.c]} ${indFace.n}`} />
+            <span className="ok-okey">Okey <b className={'ok-' + COLORS[ok.c]}><i aria-hidden="true" />{COLOR_NAMES[ok.c]} {ok.n}</b></span>
+          </div>
+          <div className="ok-deck">
+            <span className="ok-stack" aria-hidden="true"><i /><i /><i /></span>
+            <b>{g.deck}</b><span>destede</span>
+          </div>
         </div>
-        <div className="ok-deck"><b>{g.deck}</b><span>destede</span></div>
+
+        <div className="ok-piles" aria-label="Atılan taşlar">
+          {names.map((nm, i) => {
+            const pile = g.disc[i];
+            const top = pile[pile.length - 1];
+            const takeable = myTurn && g.step === 'draw' && g.prev === i && top !== undefined;
+            return (
+              <div key={i} className={'ok-pile' + (takeable ? ' take' : '')}>
+                <span>{nm}</span>
+                {top !== undefined ? <Tile id={top} ok={ok} small /> : <i className="ok-empty">boş</i>}
+                <small>{pile.length} atık</small>
+              </div>
+            );
+          })}
+        </div>
+
+        <section aria-label="Masadaki perler" className="ok-melds-wrap">
+          <h3 className="ok-h">Masadaki perler</h3>
+          {g.melds.length === 0 ? <p className="ok-small">Henüz per açılmadı.</p> : (
+            <ul className="ok-melds">
+              {g.melds.map((m, mi) => (
+                <li key={mi}>
+                  <span className="ok-owner">{names[m.owner]}</span>
+                  <div className="ok-mrow">
+                    {canAdd && m.k === 'run' && <button type="button" className="ok-plus" aria-label="Perin başına işle" onClick={() => send('okadd', { pl: { meld: mi, tile: sel[0], pos: 0 } })}>+</button>}
+                    {m.tiles.map((t) => <Tile key={t.id} id={t.id} ok={ok} small />)}
+                    {canAdd && m.k !== 'pair' && <button type="button" className="ok-plus" aria-label={m.k === 'run' ? 'Perin sonuna işle' : 'Pere işle'} onClick={() => send('okadd', { pl: { meld: mi, tile: sel[0], pos: m.tiles.length } })}>+</button>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
 
-      <ul className="ok-players" aria-label="Oyuncular">
-        {names.map((nm, i) => (
-          <li key={i} className={`${i === g.turn && running ? 'turn' : ''} ${g.out[i] ? 'left' : ''}`}>
-            <span>{nm}{i === me ? ' (sen)' : ''}</span>
-            <small>{g.out[i] ? 'ayrıldı' : `${g.counts[i]} taş · ${g.opened[i] === 'pairs' ? 'çift açtı' : g.opened[i] ? 'açtı' : 'açmadı'}`}</small>
-          </li>
-        ))}
-      </ul>
-
-      {myTurn && <p className="ok-turn" role="status">Sıra sende{g.step === 'draw' ? ': taş çek' : ': taş at'}</p>}
+      {myTurn && <p className="ok-turn" role="status"><em className="ok-dot" aria-hidden="true" />Sıra sende{g.step === 'draw' ? ': taş çek' : ': taş at'}</p>}
       <p className="mono-where">{g.note} {hint}</p>
       {err && <p className="mono-err" role="alert">{err}</p>}
-
-      <div className="ok-piles" aria-label="Atılan taşlar">
-        {names.map((nm, i) => {
-          const pile = g.disc[i];
-          const top = pile[pile.length - 1];
-          const takeable = myTurn && g.step === 'draw' && g.prev === i && top !== undefined;
-          return (
-            <div key={i} className={'ok-pile' + (takeable ? ' take' : '')}>
-              <span>{nm}</span>
-              {top !== undefined ? <Tile id={top} ok={ok} small /> : <i className="ok-empty">boş</i>}
-              <small>{pile.length} atık</small>
-            </div>
-          );
-        })}
-      </div>
 
       {myTurn && g.step === 'draw' && (
         <div className="ok-actions">
@@ -203,37 +236,21 @@ export default function OkeyOnline({ cafe, masa }) {
         </div>
       )}
 
-      <section aria-label="Masadaki perler">
-        <h3 className="ok-h">Masadaki perler</h3>
-        {g.melds.length === 0 ? <p className="ok-small">Henüz per açılmadı.</p> : (
-          <ul className="ok-melds">
-            {g.melds.map((m, mi) => (
-              <li key={mi}>
-                <span className="ok-owner">{names[m.owner]}</span>
-                <div className="ok-mrow">
-                  {canAdd && m.k === 'run' && <button type="button" className="ok-plus" aria-label="Perin başına işle" onClick={() => send('okadd', { pl: { meld: mi, tile: sel[0], pos: 0 } })}>+</button>}
-                  {m.tiles.map((t) => <Tile key={t.id} id={t.id} ok={ok} small />)}
-                  {canAdd && m.k !== 'pair' && <button type="button" className="ok-plus" aria-label={m.k === 'run' ? 'Perin sonuna işle' : 'Pere işle'} onClick={() => send('okadd', { pl: { meld: mi, tile: sel[0], pos: m.tiles.length } })}>+</button>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
       {seated && (
         <section aria-label="Elin">
           <h3 className="ok-h">Elin <small>({g.hand.length} taş)</small></h3>
+          <div className="ok-rack">
+            <div className="ok-hand">
+              {handShown.map((id) => (
+                <Tile key={id} id={id} ok={ok} on={sel.includes(id)} drawn={id === g.drawn} onClick={() => toggle(id)} drag={drag(id)} />
+              ))}
+            </div>
+          </div>
           <div className="ok-sort">
             <button type="button" className="btn sm" onClick={() => sortBy(false)}>Renge göre diz</button>
             <button type="button" className="btn sm" onClick={() => sortBy(true)}>Sayıya göre diz</button>
             <button type="button" className="btn sm" disabled={sel.length !== 1} onClick={() => shift(-1)} aria-label="Seçili taşı sola kaydır">◀</button>
             <button type="button" className="btn sm" disabled={sel.length !== 1} onClick={() => shift(1)} aria-label="Seçili taşı sağa kaydır">▶</button>
-          </div>
-          <div className="ok-hand">
-            {handShown.map((id) => (
-              <Tile key={id} id={id} ok={ok} on={sel.includes(id)} drawn={id === g.drawn} onClick={() => toggle(id)} drag={drag(id)} />
-            ))}
           </div>
 
           {myTurn && g.step === 'discard' && (

@@ -1,50 +1,18 @@
-/* Pişti cilası: premium kutu oyunu dili (mürekkep çerçeve, sert gölge, krem kâğıt, çuha masa) */
-.ps { --ink: #1c1233; --paper: #fff7ee; --logo: var(--font-logo), Georgia, serif; }
-.ps-players li { position: relative; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; padding: 9px 11px; border: 2.5px solid var(--ink); border-radius: 14px; background: var(--paper); box-shadow: 0 3px 0 var(--ink); }
-.ps-players li > b { font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.02rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ps-players li > small { grid-column: 1 / -1; }
-.ps-players li.on { background: #fff1c9; box-shadow: 0 3px 0 var(--ink), 0 0 0 4px #f2b01e88; transform: translateY(-1px); }
-.ps-players li.on::after { content: 'SIRA'; position: absolute; bottom: -11px; right: 10px; padding: 1px 8px; border: 2px solid var(--ink); border-radius: 99px; background: #f2b01e; font: 800 .62rem/1.5 inherit; letter-spacing: .08em; }
-
-.ps-table { position: relative; gap: 10px; padding: 22px 12px 18px; border: 2.5px solid var(--ink); border-radius: 22px; box-shadow: 0 5px 0 var(--ink); background: radial-gradient(ellipse at 50% 38%, #1fc4a7 0%, #14a38b 45%, #0b6f5f 100%); overflow: hidden; }
-.ps-table::before { content: ''; position: absolute; inset: 7px; border: 1.5px dashed #ffffff66; border-radius: 16px; pointer-events: none; }
-.ps-table .pile { position: relative; }
-.ps-table .pile::before, .ps-table .pile::after { content: ''; position: absolute; left: 50%; top: 0; width: 88px; height: 124px; border: 2px solid var(--ink); border-radius: 11px; background: var(--paper); z-index: 0; }
-.ps-table .pile::before { transform: translateX(-50%) rotate(-7deg); }
-.ps-table .pile::after { transform: translateX(-50%) rotate(6deg); }
-.ps-table .pile > * { position: relative; z-index: 1; }
-.ps-table .pile small { margin-top: 4px; padding: 2px 10px; border-radius: 99px; background: #0b3f36cc; font-weight: 700; }
-.ps-note { padding: 5px 12px; border-radius: 99px; background: #ffffff26; font-size: .92rem; }
-.ps-empty { border-color: #ffffffa0; background: #ffffff14; }
-
-.ps-card { position: relative; align-content: space-between; min-width: 58px; min-height: 84px; padding: 7px 6px 6px; border: 2.5px solid var(--ink); border-radius: 11px; background: linear-gradient(#fffaf2, #fff1de); box-shadow: 0 3px 0 var(--ink); font-family: var(--logo); font-style: normal; font-weight: 800; }
-.ps-card::after { content: ''; position: absolute; inset: 3px; border: 1px solid #1c123322; border-radius: 7px; pointer-events: none; }
-.ps-card .r { font-size: 1.35rem; line-height: 1; }
-.ps-card .s { font-size: 1.75rem; line-height: 1; }
-.ps-card.red { color: #d3321b; }
-.ps-card.big { min-width: 88px; min-height: 124px; box-shadow: 0 5px 0 var(--ink); }
-.ps-card.big .r { font-size: 1.9rem; }
-.ps-card.big .s { font-size: 2.5rem; }
-button.ps-card:not(:disabled):hover { transform: translateY(-6px) rotate(-1.5deg); box-shadow: 0 8px 0 var(--ink); }
-button.ps-card:not(:disabled):active { transform: translateY(0); box-shadow: 0 2px 0 var(--ink); }
-button.ps-card:disabled { opacity: .62; }
-
-.ps-hand { position: relative; margin-top: 2px; padding: 16px 10px 14px; border: 2.5px dashed #1c123340; border-radius: 20px; background: #1c12330a; }
-.ps-hand.me { border: 2.5px solid var(--ink); background: linear-gradient(#fff4d1, #fde9ad); box-shadow: 0 4px 0 var(--ink); }
-.ps-hand h2 { font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.15rem; text-align: center; }
-.ps-hand .cards { gap: 8px; padding-top: 6px; }
-.ps-hand .cards > :nth-child(odd) { rotate: -2deg; }
-.ps-hand .cards > :nth-child(even) { rotate: 2deg; }
+/* Pişti cilası: hareket ve küçük ayrıntılar (yapı game-pisti.css içinde) */
+/* Yere atılan kart: yukarıdan hafif eğimle düşer */
+.ps-card.big.fresh { rotate: var(--tilt, 0deg); animation: ps-throw .34s cubic-bezier(.2, .9, .3, 1.15) both; }
+@keyframes ps-throw { from { opacity: 0; translate: 0 -46px; scale: 1.25; rotate: calc(var(--tilt, 0deg) + 18deg); } 60% { opacity: 1; } to { translate: 0 0; scale: 1; } }
+/* Sıra sende: eldeki kartlar yavaşça kabarır */
 .ps-hand.me .cards > button:not(:disabled) { animation: ps-bob 2.4s ease-in-out infinite; }
 .ps-hand.me .cards > button:nth-child(2n) { animation-delay: .25s; }
 @keyframes ps-bob { 50% { translate: 0 -3px; } }
-.ps-over { border: 2.5px solid var(--ink); border-radius: 20px; box-shadow: 0 5px 0 var(--ink); background: var(--paper); padding: 18px 14px; }
-.ps-over h2 { font-family: var(--logo); font-style: italic; font-weight: 800; font-size: 1.5rem; }
-.ps-over thead th { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #1c1233a0; }
-.ps-over tr.win { background: #f2b01e55; font-weight: 800; }
-@media (prefers-reduced-motion: reduce) { .ps-hand.me .cards > button { animation: none; } .ps-card { transition: none; } }
-
-/* Koyu tema: kök yazısı sayfa mürekkebi (--ink-page); açık tahta yüzeyleri koyu yazısını kendisi taşır. Açık temada --ink-page = #1c1233 (görünüm aynı). */
-.ps-players li, .ps-hand.me, .ps-over { color: #1c1233; }
-.ps-hand { border-color: color-mix(in srgb, var(--ink-page, #1c1233) 25%, transparent); background: color-mix(in srgb, var(--ink-page, #1c1233) 4%, transparent); }
-.ps-hand.me { border-color: #1c1233; background: linear-gradient(#fff4d1, #fde9ad); }
+.ps-hand button.ps-card:disabled { filter: saturate(.7) brightness(.94); }
+/* Koyu temada kutu gölgeleri zeminde kaybolmasın */
+@media (prefers-color-scheme: dark) {
+  .ps-table, .ps-players li, .ps-over, .ps-hand.me { box-shadow: 0 4px 0 #000, 0 0 0 1px #ffffff1a; }
+  .ps-hand:not(.me) { border-color: #ffffff40; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ps-card.big.fresh, .ps-hand.me .cards > button { animation: none; }
+  .ps-card, .ps-players li { transition: none; }
+}
